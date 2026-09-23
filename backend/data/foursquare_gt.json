@@ -1,0 +1,466 @@
+[
+ {
+  "name": "Hacienda de Rivera",
+  "detail": "Farm · General Tinio",
+  "lat": 15.339568,
+  "lng": 121.072304,
+  "type": "farm",
+  "source": "foursquare"
+ },
+ {
+  "name": "Pentagon Cockpit Arena",
+  "detail": "Playground · General Tinio",
+  "lat": 15.343938,
+  "lng": 121.051102,
+  "type": "playground",
+  "source": "foursquare"
+ },
+ {
+  "name": "General Tinio Public Market",
+  "detail": "Market · General Tinio",
+  "lat": 15.348044,
+  "lng": 121.046008,
+  "type": "market",
+  "source": "foursquare"
+ },
+ {
+  "name": "Hilltop Methodist Church",
+  "detail": "Church · General Tinio",
+  "lat": 15.346418,
+  "lng": 121.040235,
+  "type": "church",
+  "source": "foursquare"
+ },
+ {
+  "name": "Plaza Demetria",
+  "detail": "Structure · General Tinio",
+  "lat": 15.346288,
+  "lng": 121.0415,
+  "type": "structure",
+  "source": "foursquare"
+ },
+ {
+  "name": "Kambingan",
+  "detail": "Filipino Restaurant · General Tinio",
+  "lat": 15.348878,
+  "lng": 121.039543,
+  "type": "filipino restaurant",
+  "source": "foursquare"
+ },
+ {
+  "name": "Yamaha 3S Shop - Royce",
+  "detail": "Motorcycle Dealership · General Tinio",
+  "lat": 15.347114,
+  "lng": 121.038001,
+  "type": "motorcycle dealership",
+  "source": "foursquare"
+ },
+ {
+  "name": "Gethsemane United Methodist Church",
+  "detail": "Non-Profit Organization · General Tinio",
+  "lat": 15.349235,
+  "lng": 121.033974,
+  "type": "non-profit organization",
+  "source": "foursquare"
+ },
+ {
+  "name": "Maria’s Kitchen",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.348054,
+  "lng": 121.032858,
+  "type": "restaurant",
+  "source": "foursquare"
+ },
+ {
+  "name": "NEECO II- AREA 2",
+  "detail": "Government Building · General Tinio",
+  "lat": 15.342054,
+  "lng": 121.024059,
+  "type": "government building",
+  "source": "foursquare"
+ },
+ {
+  "name": "Minalungao National Park",
+  "detail": "National Park · General Tinio",
+  "lat": 15.34723,
+  "lng": 121.026082,
+  "type": "national park",
+  "source": "foursquare"
+ },
+ {
+  "name": "Sierra Casas Hotel",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.350473,
+  "lng": 121.035434,
+  "type": "hotel",
+  "source": "foursquare"
+ },
+ {
+  "name": "Simvy's Garden Resort",
+  "detail": "Garden · General Tinio",
+  "lat": 15.350723,
+  "lng": 121.036363,
+  "type": "garden",
+  "source": "foursquare"
+ },
+ {
+  "name": "Tasteshift",
+  "detail": "Bubble Tea Shop · General Tinio",
+  "lat": 15.349901,
+  "lng": 121.038705,
+  "type": "bubble tea shop",
+  "source": "foursquare"
+ },
+ {
+  "name": "Iglesia Ni Cristo",
+  "detail": "Church · General Tinio",
+  "lat": 15.349337,
+  "lng": 121.041749,
+  "type": "church",
+  "source": "foursquare"
+ },
+ {
+  "name": "Shell",
+  "detail": "Fuel Station · General Tinio",
+  "lat": 15.349867,
+  "lng": 121.043528,
+  "type": "fuel station",
+  "source": "foursquare"
+ },
+ {
+  "name": "VFEM Salon",
+  "detail": "Health And Beauty Service · General Tinio",
+  "lat": 15.349193,
+  "lng": 121.043356,
+  "type": "health and beauty service",
+  "source": "foursquare"
+ },
+ {
+  "name": "Minalungao",
+  "detail": "Rock Climbing Spot · General Tinio",
+  "lat": 15.351714,
+  "lng": 121.04118,
+  "type": "rock climbing spot",
+  "source": "foursquare"
+ },
+ {
+  "name": "Antonio’s Resort",
+  "detail": "Resort · General Tinio",
+  "lat": 15.362838,
+  "lng": 121.035505,
+  "type": "resort",
+  "source": "foursquare"
+ },
+ {
+  "name": "Casa Tejada",
+  "detail": "Resort · General Tinio",
+  "lat": 15.359841,
+  "lng": 121.04351,
+  "type": "resort",
+  "source": "foursquare"
+ },
+ {
+  "name": "Sibug Farm and Resort",
+  "detail": "Swimming Pool · General Tinio",
+  "lat": 15.366415,
+  "lng": 121.055226,
+  "type": "swimming pool",
+  "source": "foursquare"
+ },
+ {
+  "name": "La-Lafz",
+  "detail": "Tapas Restaurant · General Tinio",
+  "lat": 15.361343,
+  "lng": 121.051714,
+  "type": "tapas restaurant",
+  "source": "foursquare"
+ },
+ {
+  "name": "Sto. Cristo Parish Church",
+  "detail": "Church · General Tinio",
+  "lat": 15.354959,
+  "lng": 121.051989,
+  "type": "church",
+  "source": "foursquare"
+ },
+ {
+  "name": "Ave Maria Memorial Park",
+  "detail": "Place · General Tinio",
+  "lat": 15.353027,
+  "lng": 121.047493,
+  "type": "place",
+  "source": "foursquare"
+ },
+ {
+  "name": "Palas na Tuod",
+  "detail": "Garden Center · General Tinio",
+  "lat": 15.35154,
+  "lng": 121.046682,
+  "type": "garden center",
+  "source": "foursquare"
+ },
+ {
+  "name": "Umuarama Clube",
+  "detail": "Arts And Entertainment · General Tinio",
+  "lat": 15.349852,
+  "lng": 121.046181,
+  "type": "arts and entertainment",
+  "source": "foursquare"
+ },
+ {
+  "name": "NEECO II - Area 2",
+  "detail": "Office · General Tinio",
+  "lat": 15.34987,
+  "lng": 121.04615,
+  "type": "office",
+  "source": "foursquare"
+ },
+ {
+  "name": "General Tinio Municipal Hall",
+  "detail": "City Hall · General Tinio",
+  "lat": 15.349489,
+  "lng": 121.045881,
+  "type": "city hall",
+  "source": "foursquare"
+ },
+ {
+  "name": "7-Eleven",
+  "detail": "Convenience Store · General Tinio",
+  "lat": 15.348593,
+  "lng": 121.04567,
+  "type": "convenience store",
+  "source": "foursquare"
+ },
+ {
+  "name": "General Tinio Jeepney Terminal",
+  "detail": "Travel And Transportation · General Tinio",
+  "lat": 15.348661,
+  "lng": 121.045819,
+  "type": "travel and transportation",
+  "source": "foursquare"
+ },
+ {
+  "name": "General Tinio, Nueva Ecija",
+  "detail": "Town · General Tinio",
+  "lat": 15.348765,
+  "lng": 121.046301,
+  "type": "town",
+  "source": "foursquare"
+ },
+ {
+  "name": "junlorie saver's mart",
+  "detail": "Grocery Store · General Tinio",
+  "lat": 15.34853,
+  "lng": 121.046233,
+  "type": "grocery store",
+  "source": "foursquare"
+ },
+ {
+  "name": "Tagatay",
+  "detail": "Apartment Or Condo · General Tinio",
+  "lat": 15.348239,
+  "lng": 121.046654,
+  "type": "apartment or condo",
+  "source": "foursquare"
+ },
+ {
+  "name": "Charm's boutique",
+  "detail": "Boutique · General Tinio",
+  "lat": 15.34902,
+  "lng": 121.046443,
+  "type": "boutique",
+  "source": "foursquare"
+ },
+ {
+  "name": "Venice Grand Canal",
+  "detail": "Other Great Outdoors · General Tinio",
+  "lat": 15.348751,
+  "lng": 121.046911,
+  "type": "other great outdoors",
+  "source": "foursquare"
+ },
+ {
+  "name": "Tukang Krupuk",
+  "detail": "Asian Restaurant · General Tinio",
+  "lat": 15.35,
+  "lng": 121.050003,
+  "type": "asian restaurant",
+  "source": "foursquare"
+ },
+ {
+  "name": "Jesus of Zion MC",
+  "detail": "Church · General Tinio",
+  "lat": 15.348613,
+  "lng": 121.056597,
+  "type": "church",
+  "source": "foursquare"
+ },
+ {
+  "name": "zion methodist mission",
+  "detail": "Church · General Tinio",
+  "lat": 15.348555,
+  "lng": 121.056702,
+  "type": "church",
+  "source": "foursquare"
+ },
+ {
+  "name": "Analyn C. Bote Dental Clinic",
+  "detail": "Dentist · General Tinio",
+  "lat": 15.349009,
+  "lng": 121.056736,
+  "type": "dentist",
+  "source": "foursquare"
+ },
+ {
+  "name": "Hunger Vapes",
+  "detail": "Vape Store · General Tinio",
+  "lat": 15.350398,
+  "lng": 121.06194,
+  "type": "vape store",
+  "source": "foursquare"
+ },
+ {
+  "name": "Villa Corazon",
+  "detail": "Resort · General Tinio",
+  "lat": 15.350727,
+  "lng": 121.059296,
+  "type": "resort",
+  "source": "foursquare"
+ },
+ {
+  "name": "Ave Maria Cemetery",
+  "detail": "Funeral Home · General Tinio",
+  "lat": 15.35007,
+  "lng": 121.058618,
+  "type": "funeral home",
+  "source": "foursquare"
+ },
+ {
+  "name": "jecsons",
+  "detail": "Medical Center · General Tinio",
+  "lat": 15.35502,
+  "lng": 121.059288,
+  "type": "medical center",
+  "source": "foursquare"
+ },
+ {
+  "name": "Petron",
+  "detail": "Fuel Station · General Tinio",
+  "lat": 15.352804,
+  "lng": 121.064618,
+  "type": "fuel station",
+  "source": "foursquare"
+ },
+ {
+  "name": "Gen. Tinio",
+  "detail": "Road · General Tinio",
+  "lat": 15.352119,
+  "lng": 121.063213,
+  "type": "road",
+  "source": "foursquare"
+ },
+ {
+  "name": "Ilog Na Munti",
+  "detail": "Place · General Tinio",
+  "lat": 15.353325,
+  "lng": 121.066236,
+  "type": "place",
+  "source": "foursquare"
+ },
+ {
+  "name": "Papaya",
+  "detail": "Road · General Tinio",
+  "lat": 15.349761,
+  "lng": 121.069623,
+  "type": "road",
+  "source": "foursquare"
+ },
+ {
+  "name": "Rio Chico Elementary School",
+  "detail": "Sports Club · General Tinio",
+  "lat": 15.355467,
+  "lng": 121.067736,
+  "type": "sports club",
+  "source": "foursquare"
+ },
+ {
+  "name": "3J Barber Shop",
+  "detail": "Hair Salon · General Tinio",
+  "lat": 15.382978,
+  "lng": 121.066071,
+  "type": "hair salon",
+  "source": "foursquare"
+ },
+ {
+  "name": "Minalungao National Park",
+  "detail": "River · General Tinio",
+  "lat": 15.363453,
+  "lng": 121.21685,
+  "type": "river",
+  "source": "foursquare"
+ },
+ {
+  "name": "General Tinio Iemelif Church",
+  "detail": "Church · General Tinio",
+  "lat": 15.363661,
+  "lng": 121.216766,
+  "type": "church",
+  "source": "foursquare"
+ },
+ {
+  "name": "Ireneville Subdivision",
+  "detail": "Housing Development · General Tinio",
+  "lat": 15.409637,
+  "lng": 121.09187,
+  "type": "housing development",
+  "source": "foursquare"
+ },
+ {
+  "name": "Gare-Ji Sushi Bar",
+  "detail": "Snack Place · General Tinio",
+  "lat": 15.40979,
+  "lng": 121.092224,
+  "type": "snack place",
+  "source": "foursquare"
+ },
+ {
+  "name": "Zetryl Integrated Farm",
+  "detail": "Farm · General Tinio",
+  "lat": 15.388682,
+  "lng": 121.09979,
+  "type": "farm",
+  "source": "foursquare"
+ },
+ {
+  "name": "Sitio Sibug General Tinio Training Center",
+  "detail": "Police Station · General Tinio",
+  "lat": 15.364041,
+  "lng": 121.100333,
+  "type": "police station",
+  "source": "foursquare"
+ },
+ {
+  "name": "Pahingahan, Fort Magsaysay",
+  "detail": "Lake · General Tinio",
+  "lat": 15.349558,
+  "lng": 121.103886,
+  "type": "lake",
+  "source": "foursquare"
+ },
+ {
+  "name": "Minalungao",
+  "detail": "National Park · General Tinio",
+  "lat": 15.298769,
+  "lng": 121.12269,
+  "type": "national park",
+  "source": "foursquare"
+ },
+ {
+  "name": "operating room dr. pjgmrmc",
+  "detail": "Hospital · General Tinio",
+  "lat": 15.31264,
+  "lng": 121.216065,
+  "type": "hospital",
+  "source": "foursquare"
+ }
+]

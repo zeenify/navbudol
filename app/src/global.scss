@@ -1,0 +1,219 @@
+/*
+ * NavBudol global styles
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Dark mode is toggled by a `dark` class on <body> (SettingsService).
+ */
+@import "@ionic/angular/css/palettes/dark.class.css";
+/* Leaflet css is bundled via angular.json "styles" (sass @import of .css
+   files would stay a runtime link, not inline). */
+
+// ============================================================================
+// Map marker styles (must be global — Leaflet panes live outside Angular's
+// component encapsulation)
+// ============================================================================
+
+// Apple Maps-style pulsing blue location dot
+.user-dot {
+  background: transparent !important;
+  border: none !important;
+}
+.user-dot .nb-dot {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  margin: 0 auto;
+  background: #007aff;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+.user-dot .nb-halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  background: rgba(0, 122, 255, 0.25);
+  animation: nb-pulse 2.2s ease-out infinite;
+}
+@keyframes nb-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+// Destination pin (classic teardrop, Apple red)
+.dest-pin {
+  background: transparent !important;
+  border: none !important;
+}
+.dest-pin .nb-pin {
+  width: 26px;
+  height: 26px;
+  margin: 0 auto;
+  background: #ff3b30;
+  border: 3px solid #ffffff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.dest-pin .nb-pin::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+// AI / search result dots
+.place-dot {
+  background: transparent !important;
+  border: none !important;
+}
+.place-dot .nb-place {
+  width: 14px;
+  height: 14px;
+  margin: 0 auto;
+  background: #007aff;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.place-dot .nb-place-label {
+  margin-top: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1c1c1e;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+// Route polyline casing (Leaflet clones SVG paths; style globally)
+.nb-route-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+// Leaflet attribution — keep, but tone down to match the glass aesthetic
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.6) !important;
+  font-size: 9px !important;
+  border-radius: 6px 0 0 0;
+}
+body.dark .leaflet-control-attribution {
+  background: rgba(28, 28, 30, 0.6) !important;
+  color: #bbb;
+}
+body.dark .leaflet-control-attribution a {
+  color: #9ecbff;
+}
+
+// ============================================================================
+// Shared UI atoms
+// ============================================================================
+
+// Frosted material — the signature Apple Maps surface
+.nb-glass {
+  background: var(--nb-glass);
+  -webkit-backdrop-filter: var(--nb-blur);
+  backdrop-filter: var(--nb-blur);
+  border: 0.5px solid var(--nb-glass-border);
+  box-shadow: var(--nb-shadow);
+}
+
+.nb-glass-soft {
+  background: var(--nb-glass);
+  -webkit-backdrop-filter: var(--nb-blur);
+  backdrop-filter: var(--nb-blur);
+  box-shadow: var(--nb-shadow-soft);
+}
+
+// iOS-style grouped card
+.nb-card {
+  background: var(--nb-card);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-soft);
+}
+
+// iOS grabber for sheets
+.nb-grabber {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--nb-label-3);
+  margin: 8px auto 4px;
+}
+
+// Hide scrollbars in chat lists for a cleaner look
+.nb-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.nb-hide-scrollbar {
+  scrollbar-width: none;
+}
+
+// Typing dots
+.nb-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  height: 20px;
+}
+.nb-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nb-label-3);
+  animation: nb-bounce 1.2s infinite ease-in-out;
+}
+.nb-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.nb-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes nb-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}

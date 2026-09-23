@@ -1,0 +1,184 @@
+.map-content {
+  --background: var(--ion-background-color);
+}
+
+#map-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--ion-background-color);
+}
+
+// --- overlays sit above Leaflet (panes go up to z 700) ----------------------
+
+.backend-banner {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-color-danger);
+  white-space: nowrap;
+
+  code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+  }
+}
+
+.sim-chip {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 96px);
+  right: 14px;
+  z-index: 800;
+  border-radius: 999px;
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nb-label-2);
+
+  .sim-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ion-color-success);
+    animation: sim-blink 1.4s infinite;
+  }
+}
+
+@keyframes sim-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.recenter {
+  position: absolute;
+  right: 14px;
+  bottom: calc(var(--nb-tabbar-h) + 152px);
+  z-index: 800;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ion-color-primary);
+  padding: 0;
+}
+
+.weather-chip {
+  position: absolute;
+  // The search pill ends around safe-area + 70px — sit just below it.
+  top: calc(env(safe-area-inset-top) + 84px);
+  left: 12px;
+  z-index: 800;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-text-color);
+  text-transform: capitalize;
+}
+
+// --- GPS + routing status pills ---------------------------------------------
+
+.gps-pill,
+.routing-pill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--nb-tabbar-h) + 170px);
+  z-index: 810;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 18px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ion-text-color);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: inherit;
+
+  svg {
+    color: var(--ion-color-primary);
+  }
+}
+
+.gps-pill {
+  color: var(--ion-color-primary);
+}
+
+.routing-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid var(--nb-separator);
+  border-top-color: var(--ion-color-primary);
+  animation: nb-spin 0.8s linear infinite;
+}
+
+@keyframes nb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// --- mini chat preview --------------------------------------------------------
+
+.chat-mini {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--nb-tabbar-h) + 16px);
+  z-index: 800;
+  border-radius: var(--nb-radius-lg);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.chat-mini-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  object-fit: cover;
+}
+
+.chat-mini-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-mini-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.chat-mini-preview {
+  font-size: 13px;
+  color: var(--nb-label-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-mini-chevron {
+  color: var(--nb-label-3);
+  flex-shrink: 0;
+}

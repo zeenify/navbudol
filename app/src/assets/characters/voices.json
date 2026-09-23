@@ -1,0 +1,75 @@
+{
+  "source": "Copied from instructai/cognify CharacterVoiceClient.kt (read-only copy)",
+  "tts_api": "POST https://api.fish.audio/v1/tts with { text, reference_id, format: 'mp3' }",
+  "voices": [
+    {
+      "id": "c85fb11f91f84312a4bd16756f298ae2",
+      "name": "Gojo",
+      "fullName": "Gojo Satoru",
+      "series": "Jujutsu Kaisen",
+      "hint": "confident, playful, teasing",
+      "likes": 601,
+      "gainDb": 0.0,
+      "image": "gojo.jpg"
+    },
+    {
+      "id": "72c3988b410f43c9b0905521135ff010",
+      "name": "Marin",
+      "fullName": "Marin Kitagawa",
+      "series": "My Dress-Up Darling",
+      "hint": "energetic, bubbly, casual, hype",
+      "likes": 8,
+      "gainDb": 0.0,
+      "image": "marin.jpg"
+    },
+    {
+      "id": "0c03219a981c4570a1b23a15b4107f30",
+      "name": "Makima",
+      "fullName": "Makima",
+      "series": "Chainsaw Man",
+      "hint": "calm, controlled, composed, commanding",
+      "likes": 79,
+      "gainDb": 16.0,
+      "image": "makima.jpg"
+    },
+    {
+      "id": "b1d5b2071ce3450b8f497cca90b78061",
+      "name": "Toji",
+      "fullName": "Toji Fushiguro",
+      "series": "Jujutsu Kaisen",
+      "hint": "dry, blunt, no-nonsense, low energy",
+      "likes": 132,
+      "gainDb": 0.0,
+      "image": "toji.jpg"
+    },
+    {
+      "id": "ba9fccd271b24b6aaf7eb58e1f1c858a",
+      "name": "Miku Nakano",
+      "fullName": "Miku Nakano",
+      "series": "The Quintessential Quintuplets",
+      "hint": "warm, gentle, slightly shy, encouraging",
+      "likes": 16,
+      "gainDb": 0.0,
+      "image": "miku_nakano.jpg"
+    },
+    {
+      "id": "7e9fe06681074145b0227d3685b3b570",
+      "name": "Reze",
+      "fullName": "Reze",
+      "series": "Chainsaw Man",
+      "hint": "soft-spoken, sweet, wistful",
+      "likes": 41,
+      "gainDb": 0.0,
+      "image": "reze.jpg"
+    }
+  ],
+  "imageWithoutVoice": [
+    {
+      "name": "Shinobu",
+      "fullName": "Shinobu Kocho",
+      "series": "Demon Slayer",
+      "image": "shinobu.jpg",
+      "note": "Portrait exists in cognify but no Fish Audio voice ID was defined there. Could pick a voice from fish.audio marketplace, or leave her out."
+    }
+  ]
+}

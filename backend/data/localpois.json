@@ -1,0 +1,576 @@
+[
+ {
+  "name": "Rio Chico National High School",
+  "detail": "School · General Tinio",
+  "lat": 15.354628,
+  "lng": 121.066038,
+  "type": "school"
+ },
+ {
+  "name": "Genchel Water Station",
+  "detail": "Water · General Tinio",
+  "lat": 15.350188,
+  "lng": 121.058792,
+  "type": "water"
+ },
+ {
+  "name": "LORIE STORE",
+  "detail": "Convenience · General Tinio",
+  "lat": 15.349937,
+  "lng": 121.058522,
+  "type": "convenience"
+ },
+ {
+  "name": "Peñaranda River",
+  "detail": "Place · General Tinio",
+  "lat": 15.347441,
+  "lng": 121.060632,
+  "type": "place"
+ },
+ {
+  "name": "Baliwag Transit - Papaya Terminal",
+  "detail": "Bus Station · General Tinio",
+  "lat": 15.349744,
+  "lng": 121.058387,
+  "type": "bus_station"
+ },
+ {
+  "name": "LUCENA STORE",
+  "detail": "Convenience · General Tinio",
+  "lat": 15.349821,
+  "lng": 121.058339,
+  "type": "convenience"
+ },
+ {
+  "name": "Rio Chico Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.355126,
+  "lng": 121.06822,
+  "type": "school"
+ },
+ {
+  "name": "Alfamart Brgy. 2 Concepcion Gen. Tinio N.E",
+  "detail": "Convenience · General Tinio",
+  "lat": 15.34925,
+  "lng": 121.057898,
+  "type": "convenience"
+ },
+ {
+  "name": "Concepcion",
+  "detail": "Place · General Tinio",
+  "lat": 15.348398,
+  "lng": 121.05592,
+  "type": "place"
+ },
+ {
+  "name": "NELLIE",
+  "detail": "Convenience · General Tinio",
+  "lat": 15.347698,
+  "lng": 121.056117,
+  "type": "convenience"
+ },
+ {
+  "name": "Eric Lacanilao Photo Shop",
+  "detail": "Photo · General Tinio",
+  "lat": 15.347484,
+  "lng": 121.055781,
+  "type": "photo"
+ },
+ {
+  "name": "MYRNA STORE",
+  "detail": "Convenience · General Tinio",
+  "lat": 15.347165,
+  "lng": 121.055605,
+  "type": "convenience"
+ },
+ {
+  "name": "Rio Chico",
+  "detail": "Place · General Tinio",
+  "lat": 15.361822,
+  "lng": 121.066423,
+  "type": "place"
+ },
+ {
+  "name": "Botika Ng Concepcion",
+  "detail": "Chemist · General Tinio",
+  "lat": 15.346335,
+  "lng": 121.054451,
+  "type": "chemist"
+ },
+ {
+  "name": "Sto. Cristo Parish Church",
+  "detail": "Place Of Worship · General Tinio",
+  "lat": 15.355238,
+  "lng": 121.053292,
+  "type": "place_of_worship"
+ },
+ {
+  "name": "Rio Chico Barangay Hall",
+  "detail": "Townhall · General Tinio",
+  "lat": 15.36202,
+  "lng": 121.066506,
+  "type": "townhall"
+ },
+ {
+  "name": "General Tinio East Central School",
+  "detail": "School · General Tinio",
+  "lat": 15.347027,
+  "lng": 121.053111,
+  "type": "school"
+ },
+ {
+  "name": "Pias",
+  "detail": "Place · General Tinio",
+  "lat": 15.344798,
+  "lng": 121.073536,
+  "type": "place"
+ },
+ {
+  "name": "Leonor M. Bautista High School",
+  "detail": "School · General Tinio",
+  "lat": 15.340326,
+  "lng": 121.067963,
+  "type": "school"
+ },
+ {
+  "name": "Green Land Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.364692,
+  "lng": 121.065122,
+  "type": "school"
+ },
+ {
+  "name": "Sto. Cristo Parish",
+  "detail": "Place Of Worship · General Tinio",
+  "lat": 15.354309,
+  "lng": 121.050239,
+  "type": "place_of_worship"
+ },
+ {
+  "name": "Pias Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.343925,
+  "lng": 121.073951,
+  "type": "school"
+ },
+ {
+  "name": "General Tinio",
+  "detail": "Place · General Tinio",
+  "lat": 15.350126,
+  "lng": 121.049804,
+  "type": "place"
+ },
+ {
+  "name": "rolex cuevas pogi",
+  "detail": "Veterinary · General Tinio",
+  "lat": 15.352317,
+  "lng": 121.047509,
+  "type": "veterinary"
+ },
+ {
+  "name": "Ave Maria Cemetery",
+  "detail": "Cemetery · General Tinio",
+  "lat": 15.355532,
+  "lng": 121.047768,
+  "type": "cemetery"
+ },
+ {
+  "name": "A & F",
+  "detail": "Convenience · General Tinio",
+  "lat": 15.353847,
+  "lng": 121.047264,
+  "type": "convenience"
+ },
+ {
+  "name": "San Pedro Barangay Hall",
+  "detail": "Townhall · General Tinio",
+  "lat": 15.354543,
+  "lng": 121.047177,
+  "type": "townhall"
+ },
+ {
+  "name": "San Pedro",
+  "detail": "Place · General Tinio",
+  "lat": 15.35443,
+  "lng": 121.047071,
+  "type": "place"
+ },
+ {
+  "name": "Tik Tock Diner",
+  "detail": "Fast Food · General Tinio",
+  "lat": 15.349054,
+  "lng": 121.046373,
+  "type": "fast_food"
+ },
+ {
+  "name": "General Tinio Town Hall",
+  "detail": "Townhall · General Tinio",
+  "lat": 15.34994,
+  "lng": 121.045904,
+  "type": "townhall"
+ },
+ {
+  "name": "Gen Tinio Town Hall",
+  "detail": "Townhall · General Tinio",
+  "lat": 15.350084,
+  "lng": 121.045866,
+  "type": "townhall"
+ },
+ {
+  "name": "General Tinio Police Station",
+  "detail": "Police · General Tinio",
+  "lat": 15.349442,
+  "lng": 121.045919,
+  "type": "police"
+ },
+ {
+  "name": "General Tinio Government Complex",
+  "detail": "Civic Admin · General Tinio",
+  "lat": 15.349734,
+  "lng": 121.045845,
+  "type": "civic_admin"
+ },
+ {
+  "name": "Santo Niño Diocesan Church",
+  "detail": "Place Of Worship · General Tinio",
+  "lat": 15.348923,
+  "lng": 121.045931,
+  "type": "place_of_worship"
+ },
+ {
+  "name": "General Tinio Municipal Memorial Park",
+  "detail": "Cemetery · General Tinio",
+  "lat": 15.357706,
+  "lng": 121.046526,
+  "type": "cemetery"
+ },
+ {
+  "name": "General Tinio Public Market",
+  "detail": "Marketplace · General Tinio",
+  "lat": 15.348246,
+  "lng": 121.045817,
+  "type": "marketplace"
+ },
+ {
+  "name": "General Tinio Central School",
+  "detail": "School · General Tinio",
+  "lat": 15.351162,
+  "lng": 121.04544,
+  "type": "school"
+ },
+ {
+  "name": "7-Eleven",
+  "detail": "Convenience · General Tinio",
+  "lat": 15.3486,
+  "lng": 121.045516,
+  "type": "convenience"
+ },
+ {
+  "name": "Poblacion Central",
+  "detail": "Place · General Tinio",
+  "lat": 15.350824,
+  "lng": 121.044509,
+  "type": "place"
+ },
+ {
+  "name": "Medicare Community Hospital of General Tinio",
+  "detail": "Hospital · General Tinio",
+  "lat": 15.363084,
+  "lng": 121.045726,
+  "type": "hospital"
+ },
+ {
+  "name": "Gulod Street",
+  "detail": "Place · General Tinio",
+  "lat": 15.362508,
+  "lng": 121.044189,
+  "type": "place"
+ },
+ {
+  "name": "General Tinio National High School",
+  "detail": "School · General Tinio",
+  "lat": 15.351467,
+  "lng": 121.039532,
+  "type": "school"
+ },
+ {
+  "name": "General Tinio West Central School",
+  "detail": "School · General Tinio",
+  "lat": 15.348979,
+  "lng": 121.036703,
+  "type": "school"
+ },
+ {
+  "name": "Patindig-Araw Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.330754,
+  "lng": 121.086581,
+  "type": "school"
+ },
+ {
+  "name": "Callos",
+  "detail": "Place · Peñaranda",
+  "lat": 15.336961,
+  "lng": 121.034853,
+  "type": "place"
+ },
+ {
+  "name": "Callos Integrated School",
+  "detail": "School · Peñaranda",
+  "lat": 15.337813,
+  "lng": 121.034395,
+  "type": "school"
+ },
+ {
+  "name": "General Tinio-Fort Magsaysay Road",
+  "detail": "Place · General Tinio",
+  "lat": 15.380982,
+  "lng": 121.077159,
+  "type": "place"
+ },
+ {
+  "name": "Pagtalunan High School",
+  "detail": "School · General Tinio",
+  "lat": 15.354693,
+  "lng": 121.096911,
+  "type": "school"
+ },
+ {
+  "name": "Padolina Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.347342,
+  "lng": 121.027576,
+  "type": "school"
+ },
+ {
+  "name": "Santuyo",
+  "detail": "Place · General Tinio",
+  "lat": 15.382775,
+  "lng": 121.082546,
+  "type": "place"
+ },
+ {
+  "name": "Pahalang",
+  "detail": "Place · General Tinio",
+  "lat": 15.391439,
+  "lng": 121.057717,
+  "type": "place"
+ },
+ {
+  "name": "Gawad Kalinga Community Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.391746,
+  "lng": 121.059095,
+  "type": "school"
+ },
+ {
+  "name": "Peñaranda",
+  "detail": "Place · Peñaranda",
+  "lat": 15.372662,
+  "lng": 121.027418,
+  "type": "place"
+ },
+ {
+  "name": "Pmp Resort hand made farm",
+  "detail": "Attraction · General Tinio",
+  "lat": 15.376853,
+  "lng": 121.096705,
+  "type": "attraction"
+ },
+ {
+  "name": "Sibug",
+  "detail": "Place · General Tinio",
+  "lat": 15.354678,
+  "lng": 121.107472,
+  "type": "place"
+ },
+ {
+  "name": "Peñaranda Substation",
+  "detail": "Place · Peñaranda",
+  "lat": 15.354901,
+  "lng": 121.018754,
+  "type": "place"
+ },
+ {
+  "name": "Sinasajan",
+  "detail": "Place · Peñaranda",
+  "lat": 15.353873,
+  "lng": 121.01781,
+  "type": "place"
+ },
+ {
+  "name": "Liwasan Street",
+  "detail": "Place · Peñaranda",
+  "lat": 15.35574,
+  "lng": 121.017825,
+  "type": "place"
+ },
+ {
+  "name": "Sibug Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.3538,
+  "lng": 121.108935,
+  "type": "school"
+ },
+ {
+  "name": "Nazareth Elementary School",
+  "detail": "School · General Tinio",
+  "lat": 15.391938,
+  "lng": 121.085708,
+  "type": "school"
+ },
+ {
+  "name": "Kapitan Pedro Villanueva Elementary School",
+  "detail": "School · Peñaranda",
+  "lat": 15.34926,
+  "lng": 121.017124,
+  "type": "school"
+ },
+ {
+  "name": "Meralco Terra Solar Project",
+  "detail": "Place · Gapan",
+  "lat": 15.305188,
+  "lng": 121.055493,
+  "type": "place"
+ },
+ {
+  "name": "Nazareth",
+  "detail": "Place · General Tinio",
+  "lat": 15.39209,
+  "lng": 121.088481,
+  "type": "place"
+ },
+ {
+  "name": "Irenea Integrated School",
+  "detail": "School · General Tinio",
+  "lat": 15.397764,
+  "lng": 121.075909,
+  "type": "school"
+ },
+ {
+  "name": "Iglesia Ni Cristo",
+  "detail": "Place Of Worship · Peñaranda",
+  "lat": 15.36137,
+  "lng": 121.016592,
+  "type": "place_of_worship"
+ },
+ {
+  "name": "Nazareth Hotel",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.391782,
+  "lng": 121.089445,
+  "type": "hotel"
+ },
+ {
+  "name": "Irenea Estate",
+  "detail": "Residential · Gen. Mamerto Natividad",
+  "lat": 15.397595,
+  "lng": 121.07709,
+  "type": "residential"
+ },
+ {
+  "name": "Sattelite1",
+  "detail": "Place · Gapan",
+  "lat": 15.302231,
+  "lng": 121.06903,
+  "type": "place"
+ },
+ {
+  "name": "Peñaranda Municipal Hall",
+  "detail": "Public Building · Peñaranda",
+  "lat": 15.365122,
+  "lng": 121.014072,
+  "type": "public_building"
+ },
+ {
+  "name": "Penaranda Municipal Hall",
+  "detail": "Townhall · Peñaranda",
+  "lat": 15.365102,
+  "lng": 121.014064,
+  "type": "townhall"
+ },
+ {
+  "name": "JJPNM Poultry Farm",
+  "detail": "Farmyard · General Tinio",
+  "lat": 15.3067,
+  "lng": 121.039662,
+  "type": "farmyard"
+ },
+ {
+  "name": "Tumana Street",
+  "detail": "Place · Peñaranda",
+  "lat": 15.353428,
+  "lng": 121.01201,
+  "type": "place"
+ },
+ {
+  "name": "PNR Cabanatuan Branch Line",
+  "detail": "Place · Peñaranda",
+  "lat": 15.362363,
+  "lng": 121.012601,
+  "type": "place"
+ },
+ {
+  "name": "NIETO P/S...",
+  "detail": "Pet · Peñaranda",
+  "lat": 15.353861,
+  "lng": 121.010199,
+  "type": "pet"
+ },
+ {
+  "name": "San Josef Elementary School",
+  "detail": "School · Peñaranda",
+  "lat": 15.345907,
+  "lng": 121.00828,
+  "type": "school"
+ },
+ {
+  "name": "Peñaranda Bridge",
+  "detail": "Place · Peñaranda",
+  "lat": 15.353207,
+  "lng": 121.00766,
+  "type": "place"
+ },
+ {
+  "name": "San Josef",
+  "detail": "Place · Peñaranda",
+  "lat": 15.339789,
+  "lng": 121.008805,
+  "type": "place"
+ },
+ {
+  "name": "Lacuna Street",
+  "detail": "Place · Peñaranda",
+  "lat": 15.349983,
+  "lng": 121.00721,
+  "type": "place"
+ },
+ {
+  "name": "Rizal Street",
+  "detail": "Place · Peñaranda",
+  "lat": 15.349737,
+  "lng": 121.006181,
+  "type": "place"
+ },
+ {
+  "name": "Gapan",
+  "detail": "Place · Gapan",
+  "lat": 15.286307,
+  "lng": 121.024168,
+  "type": "place"
+ },
+ {
+  "name": "Sumacbao River",
+  "detail": "Place · Gen. Mamerto Natividad",
+  "lat": 15.273824,
+  "lng": 121.144435,
+  "type": "place"
+ },
+ {
+  "name": "PNR Cabanatuan Line",
+  "detail": "Place · San Miguel",
+  "lat": 15.159121,
+  "lng": 120.941416,
+  "type": "place"
+ }
+]

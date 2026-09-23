@@ -1,0 +1,52 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="back()">
+        <svg slot="icon-only" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="page-title">Pick Your Co-Pilot</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="pick-content">
+  <div class="grid">
+    <button
+      class="card nb-card"
+      *ngFor="let c of characters.getAll()"
+      [class.active]="isSelected(c)"
+      (click)="pick(c)">
+
+      <div class="portrait-wrap">
+        <img class="portrait" [src]="c.avatar" [alt]="c.name" />
+        <div class="badge" *ngIf="c.isDefault">Default</div>
+        <div class="check" *ngIf="isSelected(c)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3.4"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <div class="card-name">{{ c.name }}</div>
+      <div class="card-tagline">{{ c.tagline }}</div>
+
+      <button class="preview-btn" [class.busy]="previewingId === c.id" (click)="preview(c, $event)">
+        <svg *ngIf="previewingId !== c.id" viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+          <path d="M4 9v6h4l5 5V4L8 9H4z"/>
+          <path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <svg *ngIf="previewingId === c.id" class="spin" viewBox="0 0 24 24" width="15" height="15" fill="none"
+             stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+          <path d="M12 3a9 9 0 1 1-9 9"/>
+        </svg>
+        {{ previewingId === c.id ? 'Playing' : 'Preview' }}
+      </button>
+    </button>
+  </div>
+
+  <div class="selected-note">Currently: <strong>{{ selected.name }}</strong></div>
+</ion-content>

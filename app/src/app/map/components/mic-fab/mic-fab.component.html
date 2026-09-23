@@ -1,0 +1,44 @@
+<div class="mic-wrap">
+  <div class="partial nb-glass" *ngIf="(state$ | async) === 'listening' && (partial$ | async)">
+    {{ partial$ | async }}
+  </div>
+
+  <button
+    class="mic-fab"
+    [class.listening]="(state$ | async) === 'listening'"
+    [class.processing]="(state$ | async) === 'processing'"
+    [class.speaking]="(state$ | async) === 'speaking'"
+    (pointerdown)="onDown($event)"
+    aria-label="Hold to talk">
+
+    <!-- listening: pulsing mic -->
+    <svg *ngIf="(state$ | async) === 'listening'" class="pulse-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/>
+    </svg>
+
+    <!-- processing: spinner -->
+    <svg *ngIf="(state$ | async) === 'processing'" class="spinner" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+      <path d="M12 3a9 9 0 1 1-9 9"/>
+    </svg>
+
+    <!-- speaking: speaker -->
+    <svg *ngIf="(state$ | async) === 'speaking'" viewBox="0 0 24 24" width="25" height="25" fill="currentColor">
+      <path d="M4 9v6h4l5 5V4L8 9H4z"/>
+      <path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+
+    <!-- idle: mic -->
+    <svg *ngIf="(state$ | async) === 'idle'" viewBox="0 0 24 24" width="25" height="25" fill="currentColor">
+      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/>
+    </svg>
+  </button>
+
+  <div class="mic-label">
+    <ng-container [ngSwitch]="state$ | async">
+      <ng-container *ngSwitchCase="'listening'">Listening… release to send</ng-container>
+      <ng-container *ngSwitchCase="'processing'">Thinking…</ng-container>
+      <ng-container *ngSwitchCase="'speaking'">Speaking…</ng-container>
+      <ng-container *ngSwitchDefault>Hold to talk to {{ character.name }}</ng-container>
+    </ng-container>
+  </div>
+</div>

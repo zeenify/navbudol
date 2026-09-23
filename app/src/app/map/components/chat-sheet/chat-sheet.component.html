@@ -1,0 +1,52 @@
+<div class="sheet nb-glass-strong" [class.open]="open">
+  <div class="nb-grabber"></div>
+
+  <div class="sheet-head">
+    <img class="sheet-avatar" [src]="character.avatar" [alt]="character.name" />
+    <div class="sheet-head-text">
+      <div class="sheet-name">{{ character.name }}</div>
+      <div class="sheet-role">Your navigation copilot</div>
+    </div>
+    <button class="sheet-close" (click)="close()" aria-label="Close chat">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round">
+        <line x1="6" y1="6" x2="18" y2="18"/>
+        <line x1="18" y1="6" x2="6" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <app-chat-messages class="sheet-messages"></app-chat-messages>
+
+  <div class="composer">
+    <!-- hold-to-talk: Claude-style voice level bar replaces the input row -->
+    <div class="recording-row" *ngIf="(voiceState$ | async) === 'listening'">
+      <app-voice-wave></app-voice-wave>
+      <div class="rec-text">{{ (partial$ | async) || 'Listening…' }}</div>
+    </div>
+
+    <ng-container *ngIf="(voiceState$ | async) !== 'listening'">
+      <button
+        class="composer-mic"
+        (pointerdown)="onMicDown($event)"
+        aria-label="Hold to talk">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor">
+          <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/>
+        </svg>
+      </button>
+      <input
+        class="composer-input"
+        type="text"
+        placeholder="Message {{ character.name }}…"
+        [(ngModel)]="draft"
+        (keyup.enter)="send()"
+      />
+      <button class="composer-send" (click)="send()" [disabled]="!draft.trim()" aria-label="Send">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor">
+          <path d="M3.4 20.4 20.9 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/>
+        </svg>
+      </button>
+    </ng-container>
+  </div>
+</div>
+<div class="sheet-scrim" *ngIf="open" (click)="close()"></div>

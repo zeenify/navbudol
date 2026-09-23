@@ -1,0 +1,2408 @@
+[
+ {
+  "name": "7-Eleven",
+  "detail": "Convenience Store · General Tinio",
+  "lat": 15.348578,
+  "lng": 121.045555,
+  "type": "convenience_store",
+  "source": "overture/meta",
+  "address": "Poblacion Central General Tinio Nueva Ecija",
+  "confidence": 1.0
+ },
+ {
+  "name": "Simvy's Garden Resort",
+  "detail": "Resort · General Tinio",
+  "lat": 15.350721,
+  "lng": 121.036346,
+  "type": "resort",
+  "source": "overture/meta",
+  "address": "Bonifacio Street",
+  "confidence": 0.98
+ },
+ {
+  "name": "Palas Resort",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.377817,
+  "lng": 121.078995,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Gapan - Fort Magsaysay Rd",
+  "confidence": 0.98
+ },
+ {
+  "name": "Patindig Araw Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.34481,
+  "lng": 121.072594,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.98
+ },
+ {
+  "name": "General Tinio National High School",
+  "detail": "High School · General Tinio",
+  "lat": 15.351416,
+  "lng": 121.03952,
+  "type": "high_school",
+  "source": "overture/meta",
+  "confidence": 0.96
+ },
+ {
+  "name": "Antonio's Resort",
+  "detail": "Resort · General Tinio",
+  "lat": 15.362673,
+  "lng": 121.035904,
+  "type": "resort",
+  "source": "overture/meta",
+  "address": "Antonios Resort",
+  "confidence": 0.96
+ },
+ {
+  "name": "Medicare Community Hospital of General Tinio",
+  "detail": "Hospital · General Tinio",
+  "lat": 15.362891,
+  "lng": 121.045586,
+  "type": "hospital",
+  "source": "overture/meta",
+  "address": "Purok, Nicanor B Aves Rd corner Francisco Padolina St, Gulod",
+  "confidence": 0.96
+ },
+ {
+  "name": "Kingsway Fitness Gym",
+  "detail": "Active Life · General Tinio",
+  "lat": 15.34988,
+  "lng": 121.046165,
+  "type": "active_life",
+  "source": "overture/meta",
+  "address": "008 Bonifacio Street",
+  "confidence": 0.96
+ },
+ {
+  "name": "Shell",
+  "detail": "Gas Station · General Tinio",
+  "lat": 15.34986,
+  "lng": 121.043541,
+  "type": "gas_station",
+  "source": "overture/meta",
+  "address": "Poblacion Central",
+  "confidence": 0.95
+ },
+ {
+  "name": "Gen. Tinio East Central School",
+  "detail": "School · General Tinio",
+  "lat": 15.346821,
+  "lng": 121.05423,
+  "type": "school",
+  "source": "overture/meta",
+  "address": "Brgy. Concepcion",
+  "confidence": 0.95
+ },
+ {
+  "name": "Gethsemane Christian School",
+  "detail": "School · General Tinio",
+  "lat": 15.348482,
+  "lng": 121.03759,
+  "type": "school",
+  "source": "overture/meta",
+  "address": "Brgy. Pob. West Gen. Tinio, Nueva Ecija",
+  "confidence": 0.94
+ },
+ {
+  "name": "Minalungao National Park",
+  "detail": "National Park · General Tinio",
+  "lat": 15.349939,
+  "lng": 121.050034,
+  "type": "national_park",
+  "source": "overture/meta",
+  "address": "Barangay Pias, General Tinio, Nueva Ecija",
+  "confidence": 0.94
+ },
+ {
+  "name": "Brgy Poblacion East",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.347968,
+  "lng": 121.046692,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "address": "General Tinio Nueva Ecija",
+  "confidence": 0.94
+ },
+ {
+  "name": "BC Achievers Integrated School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.409411,
+  "lng": 121.089447,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "address": "Brgy",
+  "confidence": 0.94
+ },
+ {
+  "name": "Rio Chico Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.355374,
+  "lng": 121.068077,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "address": "2366 Rizal Street",
+  "confidence": 0.94
+ },
+ {
+  "name": "Church of God Apostolic Faith International Ministries",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.389743,
+  "lng": 121.094292,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "Purok Mangahan",
+  "confidence": 0.94
+ },
+ {
+  "name": "Tet's Agri and Pigeon Supply",
+  "detail": "Agriculture · General Tinio",
+  "lat": 15.348419,
+  "lng": 121.038216,
+  "type": "agriculture",
+  "source": "overture/meta",
+  "address": "Rizal Street Barangay",
+  "confidence": 0.93
+ },
+ {
+  "name": "Gubat Resort",
+  "detail": "Resort · General Tinio",
+  "lat": 15.346471,
+  "lng": 121.036743,
+  "type": "resort",
+  "source": "overture/meta",
+  "address": "Bonifacio street Peñaranda",
+  "confidence": 0.93
+ },
+ {
+  "name": "Papsi's Laundry Shop",
+  "detail": "Laundromat · General Tinio",
+  "lat": 15.348689,
+  "lng": 121.045982,
+  "type": "laundromat",
+  "source": "overture/meta",
+  "address": "Rizal St 101",
+  "confidence": 0.93
+ },
+ {
+  "name": "Bayukbok River Rental Cottages",
+  "detail": "Sports And Recreation Venue · General Tinio",
+  "lat": 15.304479,
+  "lng": 121.111603,
+  "type": "sports_and_recreation_venue",
+  "source": "overture/meta",
+  "address": "Sitio Minalungao, Pias Barangay Rd, General Tinio, Nueva Ecija",
+  "confidence": 0.92
+ },
+ {
+  "name": "New Sto. Cristo Parish Church",
+  "detail": "Catholic Church · General Tinio",
+  "lat": 15.355294,
+  "lng": 121.052299,
+  "type": "catholic_church",
+  "source": "overture/meta",
+  "confidence": 0.91
+ },
+ {
+  "name": "JBB Mini Mart",
+  "detail": "Grocery Store · General Tinio",
+  "lat": 15.412988,
+  "lng": 121.084167,
+  "type": "grocery_store",
+  "source": "overture/meta",
+  "address": "San Marcelino Street",
+  "confidence": 0.91
+ },
+ {
+  "name": "Cloud Keepers Vape Lounge",
+  "detail": "Electronics · General Tinio",
+  "lat": 15.344176,
+  "lng": 121.025604,
+  "type": "electronics",
+  "source": "overture/meta",
+  "address": "Gapan",
+  "confidence": 0.9
+ },
+ {
+  "name": "Sierra Casas Guesthouse",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.350319,
+  "lng": 121.035538,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Bonifacio Street",
+  "confidence": 0.9
+ },
+ {
+  "name": "Hiding Place Mission Farm",
+  "detail": "Resort · General Tinio",
+  "lat": 15.372062,
+  "lng": 121.06369,
+  "type": "resort",
+  "source": "overture/meta",
+  "address": "0435 Brgy. Concepcion",
+  "confidence": 0.9
+ },
+ {
+  "name": "Self Service Carwash",
+  "detail": "Bar And Grill Restaurant · General Tinio",
+  "lat": 15.349758,
+  "lng": 121.044258,
+  "type": "bar_and_grill_restaurant",
+  "source": "overture/meta",
+  "address": "Poblacion East  along side Miklo Water Station General Tinio Nueva Eciija",
+  "confidence": 0.9
+ },
+ {
+  "name": "1917 Restaurant",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.34891,
+  "lng": 121.044334,
+  "type": "restaurant",
+  "source": "overture/meta",
+  "address": "PCL, 093 Rizal St",
+  "confidence": 0.9
+ },
+ {
+  "name": "Klinika Papaya",
+  "detail": "Laboratory Testing · General Tinio",
+  "lat": 15.349586,
+  "lng": 121.044495,
+  "type": "laboratory_testing",
+  "source": "overture/meta",
+  "address": "299 Bonifacio Street, 21 Gapan - Fort Magsaysay Rd",
+  "confidence": 0.9
+ },
+ {
+  "name": "Mykaela Venice printworks",
+  "detail": "Party And Event Planning · General Tinio",
+  "lat": 15.348825,
+  "lng": 121.045601,
+  "type": "party_and_event_planning",
+  "source": "overture/meta",
+  "address": "Domingo Street",
+  "confidence": 0.9
+ },
+ {
+  "name": "First Baptist Church",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.346607,
+  "lng": 121.027809,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "confidence": 0.89
+ },
+ {
+  "name": "Erica Avir Resort",
+  "detail": "Resort · General Tinio",
+  "lat": 15.347879,
+  "lng": 121.035355,
+  "type": "resort",
+  "source": "overture/meta",
+  "address": "Rizal St 5",
+  "confidence": 0.89
+ },
+ {
+  "name": "Maranatha First Evangelical Church Gen. Tinio",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "PWS#088 Pob. West",
+  "confidence": 0.89
+ },
+ {
+  "name": "Nazaret United Methodist Church",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.392095,
+  "lng": 121.088058,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "Gapan - Fort Magsaysay Rd",
+  "confidence": 0.89
+ },
+ {
+  "name": "Barangay Macabaklay",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.376401,
+  "lng": 121.067566,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "address": "Macabaklay",
+  "confidence": 0.89
+ },
+ {
+  "name": "Nazareth United Methodist Church",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.380262,
+  "lng": 121.071243,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "Baranggay  Nazareth ",
+  "confidence": 0.89
+ },
+ {
+  "name": "Providence Funeral Homes",
+  "detail": "Funeral Services And Cemeteries · General Tinio",
+  "lat": 15.352538,
+  "lng": 121.053543,
+  "type": "funeral_services_and_cemeteries",
+  "source": "overture/meta",
+  "address": "Gulod, Brgy. Concepcion, General Tinio, Nueva Ecija",
+  "confidence": 0.88
+ },
+ {
+  "name": "Lord's Light",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.354474,
+  "lng": 121.068169,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "Purok Violeta, Rio Chico",
+  "confidence": 0.88
+ },
+ {
+  "name": "Poblacion Central",
+  "detail": "Arts And Entertainment · General Tinio",
+  "lat": 15.349707,
+  "lng": 121.0438,
+  "type": "arts_and_entertainment",
+  "source": "overture/meta",
+  "confidence": 0.87
+ },
+ {
+  "name": "Municipal Health Office",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.349753,
+  "lng": 121.046028,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "confidence": 0.87
+ },
+ {
+  "name": "PCM Nueva Ecija",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.344836,
+  "lng": 121.071442,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "#0362 Banaba Street, Barangay Pias,",
+  "confidence": 0.87
+ },
+ {
+  "name": "Aqua Carmona Purified Drinking Water",
+  "detail": "Bar · General Tinio",
+  "lat": 15.35264,
+  "lng": 121.041565,
+  "type": "bar",
+  "source": "overture/meta",
+  "address": "#246, Aves Street, Poblacion Central",
+  "confidence": 0.86
+ },
+ {
+  "name": "Monets Event Place",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.348372,
+  "lng": 121.034096,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Padolina ",
+  "confidence": 0.86
+ },
+ {
+  "name": "Bethany United Methodist Church - Gen Tinio NE",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.34733,
+  "lng": 121.053368,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "Brgy. San Pedro",
+  "confidence": 0.86
+ },
+ {
+  "name": "Neust Papaya Off - Campus",
+  "detail": "College University · General Tinio",
+  "lat": 15.356778,
+  "lng": 121.055199,
+  "type": "college_university",
+  "source": "overture/meta",
+  "address": "Brgy. Concepcion General Tinio Nueva Ecija",
+  "confidence": 0.86
+ },
+ {
+  "name": "Cloud House Printing Shop",
+  "detail": "E Cigarette Store · General Tinio",
+  "lat": 15.354123,
+  "lng": 121.067429,
+  "type": "e_cigarette_store",
+  "source": "overture/meta",
+  "address": "2nd floor, cloudhouse vape and printing shop, Alfamart, Brgy",
+  "confidence": 0.86
+ },
+ {
+  "name": "Aqua Green Water Refilling Station",
+  "detail": "Water Treatment Equipment And Services · General Tinio",
+  "lat": 15.344773,
+  "lng": 121.072548,
+  "type": "water_treatment_equipment_and_services",
+  "source": "overture/meta",
+  "address": "Pias Barangay Rd",
+  "confidence": 0.86
+ },
+ {
+  "name": "Pias Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.344049,
+  "lng": 121.073929,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.86
+ },
+ {
+  "name": "Gold Lion Camp Resort",
+  "detail": "Beach Resort · General Tinio",
+  "lat": 15.315644,
+  "lng": 121.121544,
+  "type": "beach_resort",
+  "source": "overture/meta",
+  "address": "Kalasag river, Gen. Tinio, Nueva Ecija",
+  "confidence": 0.86
+ },
+ {
+  "name": "Minalungao National Park",
+  "detail": "National Park · General Tinio",
+  "lat": 15.297882,
+  "lng": 121.121117,
+  "type": "national_park",
+  "source": "overture/meta",
+  "address": "Minalungao",
+  "confidence": 0.86
+ },
+ {
+  "name": "Western Union",
+  "detail": "Money Transfer Services · General Tinio",
+  "lat": 15.348193,
+  "lng": 121.048256,
+  "type": "money_transfer_services",
+  "source": "overture/Microsoft",
+  "address": "Bonifacio St., Poblacionlacion",
+  "confidence": 0.85
+ },
+ {
+  "name": "AffordaMeds Pharmacy",
+  "detail": "Pharmacy · General Tinio",
+  "lat": 15.349939,
+  "lng": 121.050034,
+  "type": "pharmacy",
+  "source": "overture/meta",
+  "address": "Brgy. Poblacion Central, General Tinio, Nueva Ecija",
+  "confidence": 0.84
+ },
+ {
+  "name": "Bethany Ecumenical School",
+  "detail": "High School · General Tinio",
+  "lat": 15.350586,
+  "lng": 121.04705,
+  "type": "high_school",
+  "source": "overture/meta",
+  "address": "General Tinio Road, San Pedro, General Tinio, 3104, Nueva Ecija",
+  "confidence": 0.84
+ },
+ {
+  "name": "General Tinio Iemelif Church",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.34953,
+  "lng": 121.043602,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "confidence": 0.83
+ },
+ {
+  "name": "Gethsemane United Methodist Church",
+  "detail": "Community Services Non Profits · General Tinio",
+  "lat": 15.348914,
+  "lng": 121.033882,
+  "type": "community_services_non_profits",
+  "source": "overture/meta",
+  "confidence": 0.83
+ },
+ {
+  "name": "General Tinio MPS Nueva Ecija",
+  "detail": "Police Department · General Tinio",
+  "lat": 15.349144,
+  "lng": 121.053871,
+  "type": "police_department",
+  "source": "overture/meta",
+  "address": "Poblacion Central, General Tinio, Nueva Ecija",
+  "confidence": 0.83
+ },
+ {
+  "name": "BLISS HighTea Milktea Shop",
+  "detail": "Filipino Restaurant · General Tinio",
+  "lat": 15.349113,
+  "lng": 121.04615,
+  "type": "filipino_restaurant",
+  "source": "overture/meta",
+  "address": "Brgy. Sampaguita Poblacion street General Tinio Nueva Ecija",
+  "confidence": 0.83
+ },
+ {
+  "name": "Pet Landia Animal Clinic",
+  "detail": "Veterinarian · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "veterinarian",
+  "source": "overture/meta",
+  "address": "General Tinio, Central Luzon, Philippines",
+  "confidence": 0.82
+ },
+ {
+  "name": "Gaya Gaya Villa Regina",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.352718,
+  "lng": 121.173302,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "bayukbok gen tinio nueva ecija",
+  "confidence": 0.81
+ },
+ {
+  "name": "Iemelif Learning Center",
+  "detail": "School · General Tinio",
+  "lat": 15.349196,
+  "lng": 121.043419,
+  "type": "school",
+  "source": "overture/meta",
+  "address": "Gapan",
+  "confidence": 0.8
+ },
+ {
+  "name": "Maricars events place",
+  "detail": "Music Venue · General Tinio",
+  "lat": 15.362132,
+  "lng": 121.066055,
+  "type": "music_venue",
+  "source": "overture/meta",
+  "address": "brgy. sampaguita",
+  "confidence": 0.8
+ },
+ {
+  "name": "RJ General Merchandise",
+  "detail": "Motorcycle Dealer · General Tinio",
+  "lat": 15.396029,
+  "lng": 121.077766,
+  "type": "motorcycle_dealer",
+  "source": "overture/meta",
+  "address": "Irenea Estates Subd, Dev. Brgy, Nazareth, Gen. Tinio Nueva Ecija",
+  "confidence": 0.8
+ },
+ {
+  "name": "Maranatha First Evangelical Christian Church",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.348667,
+  "lng": 121.039833,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "Gapan",
+  "confidence": 0.79
+ },
+ {
+  "name": "Sto. Cristo Catholic School Inc.",
+  "detail": "School · General Tinio",
+  "lat": 15.350719,
+  "lng": 121.050652,
+  "type": "school",
+  "source": "overture/meta",
+  "address": "Concepcion General Tinio, Nueva Ecija",
+  "confidence": 0.79
+ },
+ {
+  "name": "enrica village General Tinio Nueva Ecija",
+  "detail": "Accommodation · General Tinio",
+  "lat": 15.350653,
+  "lng": 121.051201,
+  "type": "accommodation",
+  "source": "overture/meta",
+  "confidence": 0.79
+ },
+ {
+  "name": "Layon Mabilog River",
+  "detail": "Professional Services · General Tinio",
+  "lat": 15.391898,
+  "lng": 121.086922,
+  "type": "professional_services",
+  "source": "overture/meta",
+  "address": "General Tinio, Central Luzon, Philippines",
+  "confidence": 0.79
+ },
+ {
+  "name": "Genesis United Methodist Church",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.349919,
+  "lng": 121.049469,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "313 Brgy. Sampaguita",
+  "confidence": 0.78
+ },
+ {
+  "name": "Yamaha 3S Shop - Royce",
+  "detail": "Motorcycle Dealer · General Tinio",
+  "lat": 15.347115,
+  "lng": 121.037994,
+  "type": "motorcycle_dealer",
+  "source": "overture/Foursquare",
+  "address": "Ground Floor,Bonifacio Street",
+  "confidence": 0.77
+ },
+ {
+  "name": "Petron",
+  "detail": "Place · General Tinio",
+  "lat": 15.352805,
+  "lng": 121.064613,
+  "type": "place",
+  "source": "overture/Foursquare",
+  "address": "Rio Chico General Tinio",
+  "confidence": 0.77
+ },
+ {
+  "name": "General Tinio West Central School",
+  "detail": "Public School · General Tinio",
+  "lat": 15.348376,
+  "lng": 121.036758,
+  "type": "public_school",
+  "source": "overture/meta",
+  "address": "National Road",
+  "confidence": 0.76
+ },
+ {
+  "name": "Uccp Plc",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.34627,
+  "lng": 121.030693,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.75
+ },
+ {
+  "name": "St. Anthony Center of Science and Technology",
+  "detail": "College University · General Tinio",
+  "lat": 15.349868,
+  "lng": 121.041977,
+  "type": "college_university",
+  "source": "overture/meta",
+  "address": "Brgy. Poblacio Central",
+  "confidence": 0.75
+ },
+ {
+  "name": "General Tinio Medicare Community Hospital",
+  "detail": "Hospital · General Tinio",
+  "lat": 15.348678,
+  "lng": 121.045357,
+  "type": "hospital",
+  "source": "overture/meta",
+  "confidence": 0.75
+ },
+ {
+  "name": "Gen.tinio Central School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.351053,
+  "lng": 121.045715,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.75
+ },
+ {
+  "name": "CIGNAL-Gen Tinio-JBBV Shop",
+  "detail": "Television Service Providers · General Tinio",
+  "lat": 15.412779,
+  "lng": 121.083824,
+  "type": "television_service_providers",
+  "source": "overture/meta",
+  "address": "688 San Marcelino Street, Brgy. Bago",
+  "confidence": 0.75
+ },
+ {
+  "name": "EJJ  Resort and Event Center",
+  "detail": "Resort · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "resort",
+  "source": "overture/meta",
+  "address": "https://www.google.com/maps/place/Ejj+Gas+Station/@15.3423692,121.0762301,17z/data=!3m1!4b1!4m5!3m4!1s0x339723554444d865:0x6874c95b9a269482!8m2!3d15.342364!4d121.0784188",
+  "confidence": 0.74
+ },
+ {
+  "name": "Peakstyle Salon by Allyssa, Papaya Branch",
+  "detail": "Beauty Salon · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "beauty_salon",
+  "source": "overture/meta",
+  "address": "#314 E. Rivera St. Brgy. Sampaguita",
+  "confidence": 0.74
+ },
+ {
+  "name": "Gawad Kalinga Community Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.39181,
+  "lng": 121.059105,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.74
+ },
+ {
+  "name": "Concepcion General Tinio Papaya",
+  "detail": "Accommodation · General Tinio",
+  "lat": 15.349157,
+  "lng": 121.057358,
+  "type": "accommodation",
+  "source": "overture/meta",
+  "confidence": 0.74
+ },
+ {
+  "name": "Papaya Public Market",
+  "detail": "Department Store · General Tinio",
+  "lat": 15.348745,
+  "lng": 121.045837,
+  "type": "department_store",
+  "source": "overture/meta",
+  "confidence": 0.74
+ },
+ {
+  "name": "Salon de Papaya",
+  "detail": "Beauty Salon · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "beauty_salon",
+  "source": "overture/meta",
+  "address": "General Tinio, Central Luzon, Philippines",
+  "confidence": 0.73
+ },
+ {
+  "name": "Genchel Water Refilling Station",
+  "detail": "Water Treatment Equipment And Services · General Tinio",
+  "lat": 15.350172,
+  "lng": 121.058708,
+  "type": "water_treatment_equipment_and_services",
+  "source": "overture/meta",
+  "address": "concepcion",
+  "confidence": 0.73
+ },
+ {
+  "name": "General Tiñio Public Market",
+  "detail": "Shopping · General Tinio",
+  "lat": 15.348277,
+  "lng": 121.045807,
+  "type": "shopping",
+  "source": "overture/meta",
+  "confidence": 0.73
+ },
+ {
+  "name": "Kelvin's Surf School",
+  "detail": "Surfing · General Tinio",
+  "lat": 15.316591,
+  "lng": 121.143936,
+  "type": "surfing",
+  "source": "overture/meta",
+  "address": "@Kabsat bar La Union, Urbiztondo San Juan La Union Philippines ",
+  "confidence": 0.73
+ },
+ {
+  "name": "Lino P. Bernardo National High School",
+  "detail": "High School · General Tinio",
+  "lat": 15.400125,
+  "lng": 121.090912,
+  "type": "high_school",
+  "source": "overture/meta",
+  "address": "Bago",
+  "confidence": 0.73
+ },
+ {
+  "name": "Brgy. Bago General Tinio Nieva",
+  "detail": "Public Service And Government · General Tinio",
+  "lat": 15.407472,
+  "lng": 121.09259,
+  "type": "public_service_and_government",
+  "source": "overture/meta",
+  "confidence": 0.73
+ },
+ {
+  "name": "Iglesia Ni Cristo - Lokal ng General Tinio",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.349319,
+  "lng": 121.041901,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "confidence": 0.72
+ },
+ {
+  "name": "Barangay ng BAGO",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.365963,
+  "lng": 121.06324,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "address": "Purok Central Barangay Bago",
+  "confidence": 0.72
+ },
+ {
+  "name": "Brgy.Padolina,Gen.Tinio,Nueva Ecija",
+  "detail": "Accommodation · General Tinio",
+  "lat": 15.346171,
+  "lng": 121.029114,
+  "type": "accommodation",
+  "source": "overture/meta",
+  "confidence": 0.71
+ },
+ {
+  "name": "Prk Fitness Gym X",
+  "detail": "Gym · General Tinio",
+  "lat": 15.348602,
+  "lng": 121.038864,
+  "type": "gym",
+  "source": "overture/meta",
+  "address": "Rizal street poblacion east 2",
+  "confidence": 0.71
+ },
+ {
+  "name": "Hilltop Baptist Church",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063377,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "San pedro. Purok sangka",
+  "confidence": 0.71
+ },
+ {
+  "name": "Nazareth Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.39156,
+  "lng": 121.085716,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.71
+ },
+ {
+  "name": "PMP Man-Made Paradise Farm Resort",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.380951,
+  "lng": 121.077484,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Barangay Nazareth",
+  "confidence": 0.71
+ },
+ {
+  "name": "God's Family UMC",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.347879,
+  "lng": 121.035355,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "Rizal St 5",
+  "confidence": 0.7
+ },
+ {
+  "name": "Awap's Ihawan At Sizzlingan",
+  "detail": "Fast Food Restaurant · General Tinio",
+  "lat": 15.347879,
+  "lng": 121.035355,
+  "type": "fast_food_restaurant",
+  "source": "overture/meta",
+  "address": "Rizal St 5",
+  "confidence": 0.7
+ },
+ {
+  "name": "Sierra Casas Guesthouse/Bed and Breakfast",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Bonifacio St. Brgy. Pob. West",
+  "confidence": 0.7
+ },
+ {
+  "name": "First Baptist Church of Rio Chico",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.364087,
+  "lng": 121.064384,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "confidence": 0.7
+ },
+ {
+  "name": "Rio Chico General Tinio Nueva Ecija",
+  "detail": "Accommodation · General Tinio",
+  "lat": 15.360126,
+  "lng": 121.06694,
+  "type": "accommodation",
+  "source": "overture/meta",
+  "confidence": 0.7
+ },
+ {
+  "name": "Angeles Beauty Salon",
+  "detail": "Hair Salon · General Tinio",
+  "lat": 15.357921,
+  "lng": 121.069466,
+  "type": "hair_salon",
+  "source": "overture/meta",
+  "address": "Pulong matong General tinio papaya Nueva ecija",
+  "confidence": 0.7
+ },
+ {
+  "name": "Bago Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.4098,
+  "lng": 121.090797,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "address": "Bago",
+  "confidence": 0.7
+ },
+ {
+  "name": "Palale Elem School",
+  "detail": "School · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "school",
+  "source": "overture/meta",
+  "confidence": 0.69
+ },
+ {
+  "name": "Santo Cristo Parish - Gen. Tinio",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.372062,
+  "lng": 121.06369,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "Barangay Concepcion",
+  "confidence": 0.69
+ },
+ {
+  "name": "Tik Tock Diner",
+  "detail": "Diner · General Tinio",
+  "lat": 15.348335,
+  "lng": 121.056808,
+  "type": "diner",
+  "source": "overture/meta",
+  "address": "Poblacion Central",
+  "confidence": 0.69
+ },
+ {
+  "name": "AIMPILIPINAS Villa Carmelita",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.378205,
+  "lng": 121.052643,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "Purok Bliss, Brgy. San Pedro",
+  "confidence": 0.69
+ },
+ {
+  "name": "Avion Nueva Farm",
+  "detail": "Farm · General Tinio",
+  "lat": 15.390895,
+  "lng": 121.052673,
+  "type": "farm",
+  "source": "overture/meta",
+  "address": "Barangay Sinasajan,",
+  "confidence": 0.68
+ },
+ {
+  "name": "CLiQQ",
+  "detail": "Convenience Store · General Tinio",
+  "lat": 15.347879,
+  "lng": 121.035355,
+  "type": "convenience_store",
+  "source": "overture/meta",
+  "address": "Rizal St 5",
+  "confidence": 0.67
+ },
+ {
+  "name": "da’kumPares",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.34884,
+  "lng": 121.034119,
+  "type": "restaurant",
+  "source": "overture/meta",
+  "address": "Bonifacio Street",
+  "confidence": 0.67
+ },
+ {
+  "name": "The Legaspi Pool Villa.",
+  "detail": "Holiday Rental Home · General Tinio",
+  "lat": 15.348372,
+  "lng": 121.038147,
+  "type": "holiday_rental_home",
+  "source": "overture/meta",
+  "address": "Purok 1, Callos",
+  "confidence": 0.66
+ },
+ {
+  "name": "Himlayan Cemetery",
+  "detail": "Landmark And Historical Building · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "landmark_and_historical_building",
+  "source": "overture/meta",
+  "confidence": 0.66
+ },
+ {
+  "name": "Papayanos Diagnostic Center",
+  "detail": "Health And Medical · General Tinio",
+  "lat": 15.349939,
+  "lng": 121.050034,
+  "type": "health_and_medical",
+  "source": "overture/meta",
+  "address": "Gulod, San Pedro, General Tinio, Nueva Ecija",
+  "confidence": 0.66
+ },
+ {
+  "name": "Addictea Milktea and Cafe",
+  "detail": "Coffee Shop · General Tinio",
+  "lat": 15.358416,
+  "lng": 121.069382,
+  "type": "coffee_shop",
+  "source": "overture/meta",
+  "address": "Gapan - Fort Magsaysay Rd",
+  "confidence": 0.66
+ },
+ {
+  "name": "General Tinio National High School-SGC Page",
+  "detail": "School · General Tinio",
+  "lat": 15.357921,
+  "lng": 121.069466,
+  "type": "school",
+  "source": "overture/meta",
+  "address": "Pulong Matong, General Tinio, Nueva Ecija",
+  "confidence": 0.66
+ },
+ {
+  "name": "UNO Salon & Body Spa",
+  "detail": "Beauty Salon · General Tinio",
+  "lat": 15.360734,
+  "lng": 121.067757,
+  "type": "beauty_salon",
+  "source": "overture/meta",
+  "address": "Barangay Pulong Matong",
+  "confidence": 0.65
+ },
+ {
+  "name": "Christian Lights Academy of Nueva Ecija",
+  "detail": "Place · General Tinio",
+  "lat": 15.349939,
+  "lng": 121.050034,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Brgy. Bago, General Tinio, Nueva Ecija",
+  "confidence": 0.64
+ },
+ {
+  "name": "Barangay Hall Brgy. Bago",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.408097,
+  "lng": 121.090508,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.64
+ },
+ {
+  "name": "Leonor M. Bautista High School (Pias Campus Annex)",
+  "detail": "School · General Tinio",
+  "lat": 15.340215,
+  "lng": 121.068497,
+  "type": "school",
+  "source": "overture/meta",
+  "confidence": 0.64
+ },
+ {
+  "name": "Victoria’s Events Place and Resort",
+  "detail": "Music Venue · General Tinio",
+  "lat": 15.348372,
+  "lng": 121.038147,
+  "type": "music_venue",
+  "source": "overture/meta",
+  "address": "Callos  ",
+  "confidence": 0.63
+ },
+ {
+  "name": "MilleniTea MilkTea Shop",
+  "detail": "Cafe · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "cafe",
+  "source": "overture/meta",
+  "address": "General Tinio, Central Luzon, Philippines",
+  "confidence": 0.63
+ },
+ {
+  "name": "Bubble Verse Laundry Shop",
+  "detail": "Laundromat · General Tinio",
+  "lat": 15.372062,
+  "lng": 121.06369,
+  "type": "laundromat",
+  "source": "overture/meta",
+  "address": "0209 Kahel Street Brgy. Concepcion",
+  "confidence": 0.63
+ },
+ {
+  "name": "UPCI Bonifacio Church",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.350071,
+  "lng": 121.049995,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "BONIFACIO STREET, (PAPAYA)",
+  "confidence": 0.63
+ },
+ {
+  "name": "Ave Maria Cemetery",
+  "detail": "Public Service And Government · General Tinio",
+  "lat": 15.355332,
+  "lng": 121.047241,
+  "type": "public_service_and_government",
+  "source": "overture/meta",
+  "confidence": 0.63
+ },
+ {
+  "name": "San Mariano Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.415168,
+  "lng": 121.083763,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.63
+ },
+ {
+  "name": "Brgy. Hall Rio Chico",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.359722,
+  "lng": 121.06881,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.63
+ },
+ {
+  "name": "Forest Nature Farms",
+  "detail": "Agricultural Service · General Tinio",
+  "lat": 15.359711,
+  "lng": 121.107819,
+  "type": "agricultural_service",
+  "source": "overture/meta",
+  "address": "Forest Nature Farms, Purok 2, Sitio Saudi, Brgy. Pias, General Tinio, Nueva Ecija.",
+  "confidence": 0.63
+ },
+ {
+  "name": "Sir Roger Tutorial Center - General Tinio",
+  "detail": "Tutoring Center · General Tinio",
+  "lat": 15.349209,
+  "lng": 121.039734,
+  "type": "tutoring_center",
+  "source": "overture/meta",
+  "address": "Rizal Street. Barangay Poblacion West",
+  "confidence": 0.62
+ },
+ {
+  "name": "Papayanos Diagnostic Laboratory",
+  "detail": "Laboratory Testing · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "laboratory_testing",
+  "source": "overture/meta",
+  "address": "Gen. Tinio St. ",
+  "confidence": 0.62
+ },
+ {
+  "name": "Minalungao hotel/accomodation",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.34648,
+  "lng": 121.054703,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.62
+ },
+ {
+  "name": "Odaiba INN",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.376401,
+  "lng": 121.067566,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Brgy H. Concepcion Gen Tinio Ext",
+  "confidence": 0.62
+ },
+ {
+  "name": "Tumana Steak House",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "restaurant",
+  "source": "overture/meta",
+  "address": "Pob. Central ",
+  "confidence": 0.61
+ },
+ {
+  "name": "Violeta farm and Resort",
+  "detail": "Swimming Pool · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063377,
+  "type": "swimming_pool",
+  "source": "overture/meta",
+  "confidence": 0.61
+ },
+ {
+  "name": "Green Land Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.364429,
+  "lng": 121.06488,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "address": "Rio Chico",
+  "confidence": 0.61
+ },
+ {
+  "name": "Flying V",
+  "detail": "Gas Station · General Tinio",
+  "lat": 15.349368,
+  "lng": 121.058006,
+  "type": "gas_station",
+  "source": "overture/meta",
+  "address": "8f6941226d1c702",
+  "confidence": 0.61
+ },
+ {
+  "name": "General Tinio Water District",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.35115,
+  "lng": 121.049606,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "address": " ",
+  "confidence": 0.61
+ },
+ {
+  "name": "BAI National BEEF Cattle Research and Development Center II Nueva Ecija",
+  "detail": "Agriculture · General Tinio",
+  "lat": 15.380262,
+  "lng": 121.071243,
+  "type": "agriculture",
+  "source": "overture/meta",
+  "address": "Sitio Masikat, Brgy Nazareth",
+  "confidence": 0.61
+ },
+ {
+  "name": "Miklo Water Refilling Station",
+  "detail": "Water Treatment Equipment And Services · General Tinio",
+  "lat": 15.351798,
+  "lng": 121.062469,
+  "type": "water_treatment_equipment_and_services",
+  "source": "overture/meta",
+  "address": "Poblacion East",
+  "confidence": 0.6
+ },
+ {
+  "name": "Casa Tejada Staycation House and Events Place",
+  "detail": "Place · General Tinio",
+  "lat": 15.347751,
+  "lng": 121.063896,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Purok 3 Gulod, San Pedro, General Tinio, Nueva Ecija",
+  "confidence": 0.6
+ },
+ {
+  "name": "Bethany Ecumenical School- OfficialPage",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.347751,
+  "lng": 121.063896,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "address": "San Pedro",
+  "confidence": 0.6
+ },
+ {
+  "name": "Huslin Cloud",
+  "detail": "E Cigarette Store · General Tinio",
+  "lat": 15.349677,
+  "lng": 121.043861,
+  "type": "e_cigarette_store",
+  "source": "overture/meta",
+  "address": "General tinio poblacion central(besides kasa ng honda infront loumart)",
+  "confidence": 0.6
+ },
+ {
+  "name": "D and L Pharmacy",
+  "detail": "Pharmacy · General Tinio",
+  "lat": 15.348217,
+  "lng": 121.046455,
+  "type": "pharmacy",
+  "source": "overture/meta",
+  "address": "Rizal St",
+  "confidence": 0.6
+ },
+ {
+  "name": "Bago Nazareth Memorial Park",
+  "detail": "Park · General Tinio",
+  "lat": 15.396864,
+  "lng": 121.089645,
+  "type": "park",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.6
+ },
+ {
+  "name": "Prime Fitness Gym",
+  "detail": "Gym · General Tinio",
+  "lat": 15.376401,
+  "lng": 121.067566,
+  "type": "gym",
+  "source": "overture/meta",
+  "address": "Concepcion, General Tinio, Central Luzon, Philippines",
+  "confidence": 0.6
+ },
+ {
+  "name": "The Sibs Aesthetic Spa - Gen. Tinio",
+  "detail": "Beauty Salon · General Tinio",
+  "lat": 15.354198,
+  "lng": 121.067368,
+  "type": "beauty_salon",
+  "source": "overture/meta",
+  "address": "Brgy. Poblacion West",
+  "confidence": 0.6
+ },
+ {
+  "name": "Lords Light Christian Fellowship SIBUG",
+  "detail": "Professional Services · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "professional_services",
+  "source": "overture/meta",
+  "address": "Sitio Sibug ",
+  "confidence": 0.59
+ },
+ {
+  "name": "Abesamis Tattoo and Piercing",
+  "detail": "Tattoo And Piercing · General Tinio",
+  "lat": 15.349199,
+  "lng": 121.048004,
+  "type": "tattoo_and_piercing",
+  "source": "overture/meta",
+  "address": "Poblacion East",
+  "confidence": 0.59
+ },
+ {
+  "name": "Sosy Laundry Hub - Gen. Tinio",
+  "detail": "Professional Services · General Tinio",
+  "lat": 15.376401,
+  "lng": 121.067566,
+  "type": "professional_services",
+  "source": "overture/meta",
+  "address": "Brgy. Concepcion",
+  "confidence": 0.59
+ },
+ {
+  "name": "Rio Chico IEMELIF Church",
+  "detail": "Evangelical Church · General Tinio",
+  "lat": 15.359378,
+  "lng": 121.068687,
+  "type": "evangelical_church",
+  "source": "overture/meta",
+  "address": "Rizal St",
+  "confidence": 0.59
+ },
+ {
+  "name": "Minalungao Picnic and Adventure Grounds",
+  "detail": "Water Park · General Tinio",
+  "lat": 15.299284,
+  "lng": 121.121277,
+  "type": "water_park",
+  "source": "overture/meta",
+  "confidence": 0.59
+ },
+ {
+  "name": "Battle Scars Bike Shop",
+  "detail": "Bicycle Shop · General Tinio",
+  "lat": 15.347884,
+  "lng": 121.035347,
+  "type": "bicycle_shop",
+  "source": "overture/meta",
+  "address": "Rizal St 5",
+  "confidence": 0.58
+ },
+ {
+  "name": "Aves Aromatherapy",
+  "detail": "Aromatherapy · General Tinio",
+  "lat": 15.365963,
+  "lng": 121.06324,
+  "type": "aromatherapy",
+  "source": "overture/meta",
+  "address": "SPO 482, Nicanor Aves Road, Purok Gulod 3, Barangay San Pedro",
+  "confidence": 0.58
+ },
+ {
+  "name": "Ave Maria Cemetery",
+  "detail": "Funeral Services And Cemeteries · General Tinio",
+  "lat": 15.350097,
+  "lng": 121.05867,
+  "type": "funeral_services_and_cemeteries",
+  "source": "overture/meta",
+  "confidence": 0.58
+ },
+ {
+  "name": "PNP General Tinio Municipal Police Station",
+  "detail": "Public Service And Government · General Tinio",
+  "lat": 15.348335,
+  "lng": 121.056808,
+  "type": "public_service_and_government",
+  "source": "overture/meta",
+  "address": "Municipal Compound, Poblacion Central ",
+  "confidence": 0.58
+ },
+ {
+  "name": "Minalungao Jonah's Transient",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.345579,
+  "lng": 121.050735,
+  "type": "hotel",
+  "source": "overture/meta",
+  "confidence": 0.58
+ },
+ {
+  "name": "REYMAR Optical",
+  "detail": "Optometrist · General Tinio",
+  "lat": 15.345579,
+  "lng": 121.050735,
+  "type": "optometrist",
+  "source": "overture/meta",
+  "address": "Rizal St. Poblacion Central",
+  "confidence": 0.58
+ },
+ {
+  "name": "Andrew's Eatery",
+  "detail": "Breakfast And Brunch Restaurant · General Tinio",
+  "lat": 15.349563,
+  "lng": 121.044342,
+  "type": "breakfast_and_brunch_restaurant",
+  "source": "overture/meta",
+  "address": "Poblacion Central Gen. Tinio (Papaya) Nueva Ecija",
+  "confidence": 0.58
+ },
+ {
+  "name": "Extra Sabon Station Barangay Nazareth Branch",
+  "detail": "Shopping · General Tinio",
+  "lat": 15.380984,
+  "lng": 121.077438,
+  "type": "shopping",
+  "source": "overture/meta",
+  "address": "Nazareth, General Tinio, Central Luzon, Philippines",
+  "confidence": 0.58
+ },
+ {
+  "name": "Sitio Sibug Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.353783,
+  "lng": 121.10878,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "address": "Sitio Sibug",
+  "confidence": 0.58
+ },
+ {
+  "name": "GENTECH (GT Auto Services)",
+  "detail": "Automotive Repair · General Tinio",
+  "lat": 15.350799,
+  "lng": 121.034462,
+  "type": "automotive_repair",
+  "source": "overture/meta",
+  "address": "D. Bolisay Street",
+  "confidence": 0.57
+ },
+ {
+  "name": "Glorious Memorial Park",
+  "detail": "Public Service And Government · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "public_service_and_government",
+  "source": "overture/meta",
+  "confidence": 0.57
+ },
+ {
+  "name": "St. Anthony Center of Science and Technology",
+  "detail": "Education · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "education",
+  "source": "overture/meta",
+  "address": "Bonifacio Street",
+  "confidence": 0.57
+ },
+ {
+  "name": "Esteban Farms",
+  "detail": "Farm · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "farm",
+  "source": "overture/meta",
+  "address": "Esteban Farms, Brgy. Rio Chico, General Tinio, Central Luzon, Philippines",
+  "confidence": 0.57
+ },
+ {
+  "name": "Divina Pastora Chapel",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.347461,
+  "lng": 121.055855,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "confidence": 0.57
+ },
+ {
+  "name": "Print Saver - Gen. Tinio Padolina",
+  "detail": "Printing Services · General Tinio",
+  "lat": 15.345579,
+  "lng": 121.050735,
+  "type": "printing_services",
+  "source": "overture/meta",
+  "address": "360 Rizal St. Thea's Garden  Brgy. Padolina",
+  "confidence": 0.57
+ },
+ {
+  "name": "Layon Kalasag River Bagong-daan",
+  "detail": "Place · General Tinio",
+  "lat": 15.391898,
+  "lng": 121.086922,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Sitio Kalasag, Brgy. Pias Gen. Tinio Nueva Ecija",
+  "confidence": 0.57
+ },
+ {
+  "name": "Palale Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.38518,
+  "lng": 121.166046,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.57
+ },
+ {
+  "name": "General Tinio Nueva Ecija Furniture",
+  "detail": "Furniture Store · General Tinio",
+  "lat": 15.35203,
+  "lng": 121.062599,
+  "type": "furniture_store",
+  "source": "overture/meta",
+  "address": "General tinio papaya",
+  "confidence": 0.56
+ },
+ {
+  "name": "General Tinio West Central School - GTWCS",
+  "detail": "School · General Tinio",
+  "lat": 15.365659,
+  "lng": 121.063431,
+  "type": "school",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.56
+ },
+ {
+  "name": "Minalungao National Park, General Tinio, Nueva Ecija",
+  "detail": "National Park · General Tinio",
+  "lat": 15.365659,
+  "lng": 121.063431,
+  "type": "national_park",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.56
+ },
+ {
+  "name": "Candelaria's",
+  "detail": "Fast Food Restaurant · General Tinio",
+  "lat": 15.364451,
+  "lng": 121.049774,
+  "type": "fast_food_restaurant",
+  "source": "overture/meta",
+  "address": "Candelaria's, Gulod I, Brgy. San Pedro",
+  "confidence": 0.56
+ },
+ {
+  "name": "Uncle Nick Inasal",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.349939,
+  "lng": 121.050034,
+  "type": "restaurant",
+  "source": "overture/meta",
+  "address": "Purok Violeta Brgy. Rio Chico General Tinio Nueva Ecija",
+  "confidence": 0.56
+ },
+ {
+  "name": "Minalungao Hostel, Family KTV and Restaurant",
+  "detail": "Hotel · General Tinio",
+  "lat": 15.349504,
+  "lng": 121.048203,
+  "type": "hotel",
+  "source": "overture/meta",
+  "address": "Rio Chico General Tinio Nueva Ecija 3104",
+  "confidence": 0.56
+ },
+ {
+  "name": "BRGY. Nazareth Team Joyen",
+  "detail": "Community Services Non Profits · General Tinio",
+  "lat": 15.380984,
+  "lng": 121.077438,
+  "type": "community_services_non_profits",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.56
+ },
+ {
+  "name": "One Quest Nueva Ecija",
+  "detail": "Youth Organizations · General Tinio",
+  "lat": 15.345206,
+  "lng": 121.075478,
+  "type": "youth_organizations",
+  "source": "overture/meta",
+  "address": "#0362 Banaba Street, Barangay Pias",
+  "confidence": 0.56
+ },
+ {
+  "name": "Gee Café",
+  "detail": "Coffee Shop · General Tinio",
+  "lat": 15.348634,
+  "lng": 121.033592,
+  "type": "coffee_shop",
+  "source": "overture/meta",
+  "address": "Bonifacio Street",
+  "confidence": 0.55
+ },
+ {
+  "name": "Sto. Cristo Parish Youth Ministry",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.365963,
+  "lng": 121.06324,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "Gulod",
+  "confidence": 0.55
+ },
+ {
+  "name": "Kingdom Hall of Jehovah's Witnesses",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.351562,
+  "lng": 121.060982,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "P. Bayabas",
+  "confidence": 0.55
+ },
+ {
+  "name": "Dheomar LPG Store",
+  "detail": "Chemical Plant · General Tinio",
+  "lat": 15.349939,
+  "lng": 121.050034,
+  "type": "chemical_plant",
+  "source": "overture/meta",
+  "address": "Polacion Central, General Tino, Nueva Ecija",
+  "confidence": 0.55
+ },
+ {
+  "name": "Children’s Clinic",
+  "detail": "Pediatrician · General Tinio",
+  "lat": 15.345554,
+  "lng": 121.050812,
+  "type": "pediatrician",
+  "source": "overture/meta",
+  "address": "Rizal St., Thea’s Garden, Brgy. Padolina, Nueva Ecija",
+  "confidence": 0.55
+ },
+ {
+  "name": "Papaya. Gen. Tinio Nueva Ecija",
+  "detail": "Accommodation · General Tinio",
+  "lat": 15.348932,
+  "lng": 121.045822,
+  "type": "accommodation",
+  "source": "overture/meta",
+  "confidence": 0.55
+ },
+ {
+  "name": "Five Bros Auto Hub",
+  "detail": "Auto Detailing · General Tinio",
+  "lat": 15.348829,
+  "lng": 121.046043,
+  "type": "auto_detailing",
+  "source": "overture/meta",
+  "address": "Poblacion West General Tinio Nueva ecija",
+  "confidence": 0.55
+ },
+ {
+  "name": "Generikageneraltinio Drugstore",
+  "detail": "Pharmacy · General Tinio",
+  "lat": 15.348448,
+  "lng": 121.046333,
+  "type": "pharmacy",
+  "source": "overture/meta",
+  "address": "RIZAL",
+  "confidence": 0.55
+ },
+ {
+  "name": "M and M Private Pool",
+  "detail": "Sports And Recreation Venue · General Tinio",
+  "lat": 15.357921,
+  "lng": 121.069466,
+  "type": "sports_and_recreation_venue",
+  "source": "overture/meta",
+  "address": "Pulong Matong",
+  "confidence": 0.55
+ },
+ {
+  "name": "Sabangan Elementary School",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.386209,
+  "lng": 121.097885,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.55
+ },
+ {
+  "name": "LDRRMO Gen. Tinio",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.34557,
+  "lng": 121.028511,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "confidence": 0.54
+ },
+ {
+  "name": "United Pentecostal Church - Palale, General Tinio, Nueva Ecija",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "confidence": 0.54
+ },
+ {
+  "name": "Mabuhay Papaya / General Tinio Nueva Ecija",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "confidence": 0.54
+ },
+ {
+  "name": "Lanie's Restaurant Minalungao",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "restaurant",
+  "source": "overture/meta",
+  "confidence": 0.54
+ },
+ {
+  "name": "JB Bandoma One Stop Shop",
+  "detail": "Wholesale Store · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "wholesale_store",
+  "source": "overture/meta",
+  "address": "San Marcelino, Barangay Bago, General Tinio, Central Luzon, Philippines",
+  "confidence": 0.54
+ },
+ {
+  "name": "The Vapor Lab Vape Lounge",
+  "detail": "E Cigarette Store · General Tinio",
+  "lat": 15.352691,
+  "lng": 121.064354,
+  "type": "e_cigarette_store",
+  "source": "overture/meta",
+  "address": "Rio Chico, General Tinio, Central Luzon, Philippines",
+  "confidence": 0.54
+ },
+ {
+  "name": "Snackkoo Restobar",
+  "detail": "Bar And Grill Restaurant · General Tinio",
+  "lat": 15.367109,
+  "lng": 121.057785,
+  "type": "bar_and_grill_restaurant",
+  "source": "overture/meta",
+  "address": "560 brgy.san pedro gen.tinio",
+  "confidence": 0.54
+ },
+ {
+  "name": "Maricar M Padolina Pharmacy",
+  "detail": "Health And Medical · General Tinio",
+  "lat": 15.345554,
+  "lng": 121.050812,
+  "type": "health_and_medical",
+  "source": "overture/meta",
+  "address": "Papaya mall, rizal street",
+  "confidence": 0.54
+ },
+ {
+  "name": "Pias Gen Tinio Nueva Ecija",
+  "detail": "Place · General Tinio",
+  "lat": 15.345192,
+  "lng": 121.069496,
+  "type": "place",
+  "source": "overture/meta",
+  "confidence": 0.54
+ },
+ {
+  "name": "Pias Day Care Center",
+  "detail": "Elementary School · General Tinio",
+  "lat": 15.343541,
+  "lng": 121.07756,
+  "type": "elementary_school",
+  "source": "overture/meta",
+  "confidence": 0.54
+ },
+ {
+  "name": "Minalungao Zipline",
+  "detail": "Travel Services · General Tinio",
+  "lat": 15.302312,
+  "lng": 121.128456,
+  "type": "travel_services",
+  "source": "overture/meta",
+  "address": "Minalungao",
+  "confidence": 0.54
+ },
+ {
+  "name": "L&J foodhouse",
+  "detail": "Food Truck · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "food_truck",
+  "source": "overture/meta",
+  "address": " Papaya General Tinio, Central Luzon, Philippines",
+  "confidence": 0.53
+ },
+ {
+  "name": "La Cheska House of Ramen",
+  "detail": "Japanese Restaurant · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "japanese_restaurant",
+  "source": "overture/meta",
+  "address": "General Tinio, Central Luzon, Philippines",
+  "confidence": 0.53
+ },
+ {
+  "name": "Arenas' Mini Store",
+  "detail": "Grocery Store · General Tinio",
+  "lat": 15.34863,
+  "lng": 121.045868,
+  "type": "grocery_store",
+  "source": "overture/meta",
+  "address": "Barangay 7, Poblacion West",
+  "confidence": 0.53
+ },
+ {
+  "name": "JMC Construction Materials Trading",
+  "detail": "Professional Services · General Tinio",
+  "lat": 15.358191,
+  "lng": 121.080307,
+  "type": "professional_services",
+  "source": "overture/meta",
+  "address": "Rio Chico, General Tinio, Central Luzon, Philippines",
+  "confidence": 0.53
+ },
+ {
+  "name": "Tasteshift",
+  "detail": "Bubble Tea · General Tinio",
+  "lat": 15.3499,
+  "lng": 121.038712,
+  "type": "bubble_tea",
+  "source": "overture/meta",
+  "confidence": 0.52
+ },
+ {
+  "name": "Marias Kitchen",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.348045,
+  "lng": 121.032845,
+  "type": "restaurant",
+  "source": "overture/meta",
+  "address": "Bonifacio St Brgy",
+  "confidence": 0.52
+ },
+ {
+  "name": "Garcia Farm Integrated School, Inc.-Assessment Center",
+  "detail": "Agriculture · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063324,
+  "type": "agriculture",
+  "source": "overture/meta",
+  "address": "Tabing Ilog Pias 4, General Tinio (Papaya), Nueva Ecija",
+  "confidence": 0.52
+ },
+ {
+  "name": "King's CLOUD VAPOR Lounge",
+  "detail": "Shopping · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "shopping",
+  "source": "overture/meta",
+  "address": "General Tinio, Central Luzon, Philippines",
+  "confidence": 0.52
+ },
+ {
+  "name": "Papaya General Tinio",
+  "detail": "Public Service And Government · General Tinio",
+  "lat": 15.348565,
+  "lng": 121.046135,
+  "type": "public_service_and_government",
+  "source": "overture/meta",
+  "address": "papaya",
+  "confidence": 0.52
+ },
+ {
+  "name": "Ronquillo Funeral Service",
+  "detail": "Funeral Services And Cemeteries · General Tinio",
+  "lat": 15.357921,
+  "lng": 121.069466,
+  "type": "funeral_services_and_cemeteries",
+  "source": "overture/meta",
+  "address": "Brgy. Pulong Matong",
+  "confidence": 0.52
+ },
+ {
+  "name": "Mj Brothers Construction Supplies & General Merchandise",
+  "detail": "Construction Services · General Tinio",
+  "lat": 15.380262,
+  "lng": 121.071243,
+  "type": "construction_services",
+  "source": "overture/meta",
+  "address": "Brgy. Nazareth, Martin village",
+  "confidence": 0.52
+ },
+ {
+  "name": "Minalungao, Canaria River side",
+  "detail": "Place · General Tinio",
+  "lat": 15.298019,
+  "lng": 121.121323,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Sitio Minalungao Brgy. pias General Tinio Nueva Ecija",
+  "confidence": 0.52
+ },
+ {
+  "name": "Minalungao National Park",
+  "detail": "Central Government Office · General Tinio",
+  "lat": 15.307392,
+  "lng": 121.14238,
+  "type": "central_government_office",
+  "source": "overture/meta",
+  "confidence": 0.51
+ },
+ {
+  "name": "AURI Farm & Villa",
+  "detail": "Holiday Rental Home · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "holiday_rental_home",
+  "source": "overture/meta",
+  "confidence": 0.49
+ },
+ {
+  "name": "Papaya Pethobbyist Petshop",
+  "detail": "Place · General Tinio",
+  "lat": 15.345554,
+  "lng": 121.050812,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Rizal Street",
+  "confidence": 0.49
+ },
+ {
+  "name": "Wheeltek Laur",
+  "detail": "Motorcycle Dealer · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "motorcycle_dealer",
+  "source": "overture/meta",
+  "confidence": 0.48
+ },
+ {
+  "name": "Mikki's Drugmart",
+  "detail": "Pharmacy · General Tinio",
+  "lat": 15.347763,
+  "lng": 121.056389,
+  "type": "pharmacy",
+  "source": "overture/meta",
+  "address": "Gapan",
+  "confidence": 0.48
+ },
+ {
+  "name": "San Agustin Chapel",
+  "detail": "Church Cathedral · General Tinio",
+  "lat": 15.354946,
+  "lng": 121.068817,
+  "type": "church_cathedral",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.48
+ },
+ {
+  "name": "PMP Man-Made Paradise Farm Resort",
+  "detail": "Farm · General Tinio",
+  "lat": 15.377801,
+  "lng": 121.097527,
+  "type": "farm",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.48
+ },
+ {
+  "name": "HugotCafe Nueva Ecija",
+  "detail": "Theme Restaurant · General Tinio",
+  "lat": 15.349462,
+  "lng": 121.044777,
+  "type": "theme_restaurant",
+  "source": "overture/meta",
+  "address": "Bonifacio Street",
+  "confidence": 0.47
+ },
+ {
+  "name": "Full Life For Jesus Ministries",
+  "detail": "Religious Organization · General Tinio",
+  "lat": 15.355235,
+  "lng": 121.069557,
+  "type": "religious_organization",
+  "source": "overture/meta",
+  "address": "Gapan - Fort Magsaysay Rd",
+  "confidence": 0.47
+ },
+ {
+  "name": "Darwin Aquino Salon",
+  "detail": "Beauty Salon · General Tinio",
+  "lat": 15.34969,
+  "lng": 121.044418,
+  "type": "beauty_salon",
+  "source": "overture/meta",
+  "confidence": 0.46
+ },
+ {
+  "name": "Zetryl Integrated Farm",
+  "detail": "Farm · General Tinio",
+  "lat": 15.380984,
+  "lng": 121.077438,
+  "type": "farm",
+  "source": "overture/meta",
+  "confidence": 0.45
+ },
+ {
+  "name": "Ivan Arni C. Preclaro",
+  "detail": "Skin Care · General Tinio",
+  "lat": 15.347404,
+  "lng": 121.049873,
+  "type": "skin_care",
+  "source": "overture/meta",
+  "address": "Purok, Daisy",
+  "confidence": 0.44
+ },
+ {
+  "name": "Christian Auto Electrical Shop",
+  "detail": "Automotive Repair · General Tinio",
+  "lat": 15.352628,
+  "lng": 121.064247,
+  "type": "automotive_repair",
+  "source": "overture/meta",
+  "address": "Gapan-Fort Magsaysay Rd",
+  "confidence": 0.43
+ },
+ {
+  "name": "Minalungao Nueva Ecija",
+  "detail": "Gas Station · General Tinio",
+  "lat": 15.347878,
+  "lng": 121.047363,
+  "type": "gas_station",
+  "source": "overture/meta",
+  "confidence": 0.41
+ },
+ {
+  "name": "Joy beauty lounge",
+  "detail": "Beauty Salon · General Tinio",
+  "lat": 15.357405,
+  "lng": 121.07077,
+  "type": "beauty_salon",
+  "source": "overture/meta",
+  "address": "Bonifacio St.pulong matong general Tinio",
+  "confidence": 0.4
+ },
+ {
+  "name": "NBOTE Gasoline Station",
+  "detail": "Gas Station · General Tinio",
+  "lat": 15.352588,
+  "lng": 121.064636,
+  "type": "gas_station",
+  "source": "overture/meta",
+  "confidence": 0.38
+ },
+ {
+  "name": "CPF-Peñaranda Farm",
+  "detail": "Farm · General Tinio",
+  "lat": 15.348372,
+  "lng": 121.038147,
+  "type": "farm",
+  "source": "overture/meta",
+  "address": "Brgy, Callos",
+  "confidence": 0.37
+ },
+ {
+  "name": "Cindys Bakery Authorized Dealer- General Tinio, Nueva Ecija",
+  "detail": "Bakery · General Tinio",
+  "lat": 15.349798,
+  "lng": 121.039856,
+  "type": "bakery",
+  "source": "overture/meta",
+  "address": "225 Bonifacio Street",
+  "confidence": 0.37
+ },
+ {
+  "name": "JAAL Integrated Farm",
+  "detail": "Agriculture · General Tinio",
+  "lat": 15.393445,
+  "lng": 121.05603,
+  "type": "agriculture",
+  "source": "overture/meta",
+  "address": "Sitio Pahalang, Brgy. Nazareth Rd",
+  "confidence": 0.37
+ },
+ {
+  "name": "Office of the Senior Citizens Affairs",
+  "detail": "Community Center · General Tinio",
+  "lat": 15.349457,
+  "lng": 121.046013,
+  "type": "community_center",
+  "source": "overture/meta",
+  "confidence": 0.37
+ },
+ {
+  "name": "Rivera Mateo Cattle Farm",
+  "detail": "Farm · General Tinio",
+  "lat": 15.365959,
+  "lng": 121.06324,
+  "type": "farm",
+  "source": "overture/meta",
+  "confidence": 0.36
+ },
+ {
+  "name": "mis CAbesa Japan- Korea Surplus",
+  "detail": "Place · General Tinio",
+  "lat": 15.347879,
+  "lng": 121.035355,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Rizal St 5",
+  "confidence": 0.35
+ },
+ {
+  "name": "Leovie Motorcycle Parts",
+  "detail": "Auto Parts And Supply Store · General Tinio",
+  "lat": 15.352085,
+  "lng": 121.063278,
+  "type": "auto_parts_and_supply_store",
+  "source": "overture/meta",
+  "address": "Gapan",
+  "confidence": 0.35
+ },
+ {
+  "name": "Mang Ariel's Peborit",
+  "detail": "Restaurant · General Tinio",
+  "lat": 15.345217,
+  "lng": 121.069328,
+  "type": "restaurant",
+  "source": "overture/meta",
+  "address": "Pias Road",
+  "confidence": 0.35
+ },
+ {
+  "name": "MB Photo Studio",
+  "detail": "Event Photography · General Tinio",
+  "lat": 15.348412,
+  "lng": 121.035126,
+  "type": "event_photography",
+  "source": "overture/meta",
+  "address": "H. Malgapo St. San Lorenzo Gapan City, 3105 Nueva Ecija",
+  "confidence": 0.34
+ },
+ {
+  "name": "Tata Oro Vlog",
+  "detail": "Farm · General Tinio",
+  "lat": 15.346419,
+  "lng": 121.03096,
+  "type": "farm",
+  "source": "overture/meta",
+  "address": "193 Rizal street ",
+  "confidence": 0.31
+ },
+ {
+  "name": "Charm's Beauty Studio",
+  "detail": "Cupcake Shop · General Tinio",
+  "lat": 15.349022,
+  "lng": 121.046448,
+  "type": "cupcake_shop",
+  "source": "overture/meta",
+  "confidence": 0.31
+ },
+ {
+  "name": "Diwata Creative Space",
+  "detail": "Arts And Entertainment · General Tinio",
+  "lat": 15.348781,
+  "lng": 121.039665,
+  "type": "arts_and_entertainment",
+  "source": "overture/meta",
+  "address": "Rizal St 072",
+  "confidence": 0.28
+ },
+ {
+  "name": "1805",
+  "detail": "Coffee Shop · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063324,
+  "type": "coffee_shop",
+  "source": "overture/meta",
+  "address": "Brgy. II, General Tinio Street",
+  "confidence": 0.28
+ },
+ {
+  "name": "Kems Travel&Tours And Payment Center",
+  "detail": "Travel Services · General Tinio",
+  "lat": 15.347879,
+  "lng": 121.035355,
+  "type": "travel_services",
+  "source": "overture/meta",
+  "address": "Rizal St 5",
+  "confidence": 0.25
+ },
+ {
+  "name": "Gt Computer Repair",
+  "detail": "It Service And Computer Repair · General Tinio",
+  "lat": 15.34801,
+  "lng": 121.046936,
+  "type": "it_service_and_computer_repair",
+  "source": "overture/meta",
+  "address": "Rizal Street",
+  "confidence": 0.25
+ },
+ {
+  "name": "Local Den",
+  "detail": "Clothing Store · General Tinio",
+  "lat": 15.406189,
+  "lng": 121.08828,
+  "type": "clothing_store",
+  "source": "overture/meta",
+  "address": "Purok Gulod Barangay Bago",
+  "confidence": 0.23
+ },
+ {
+  "name": "A.D. Builders",
+  "detail": "Construction Services · General Tinio",
+  "lat": 15.346053,
+  "lng": 121.024536,
+  "type": "construction_services",
+  "source": "overture/meta",
+  "address": "General Tinio, Nueva Ecija",
+  "confidence": 0.22
+ },
+ {
+  "name": "Yurico's Kolong Kolong",
+  "detail": "Motorcycle Dealer · General Tinio",
+  "lat": 15.350071,
+  "lng": 121.049995,
+  "type": "motorcycle_dealer",
+  "source": "overture/meta",
+  "address": "Brgy. Concepcion, ( Escolta ), General Tinio ( Papaya ), Nueva Ecija",
+  "confidence": 0.22
+ },
+ {
+  "name": "Amorable Nails",
+  "detail": "Nail Salon · General Tinio",
+  "lat": 15.394563,
+  "lng": 121.078514,
+  "type": "nail_salon",
+  "source": "overture/meta",
+  "confidence": 0.19
+ },
+ {
+  "name": "Casa Valentina",
+  "detail": "Park · General Tinio",
+  "lat": 15.328763,
+  "lng": 121.087357,
+  "type": "park",
+  "source": "overture/meta",
+  "address": "Saudi, Sitio",
+  "confidence": 0.18
+ },
+ {
+  "name": "Jazz-Pods",
+  "detail": "E Cigarette Store · General Tinio",
+  "lat": 15.346902,
+  "lng": 121.051353,
+  "type": "e_cigarette_store",
+  "source": "overture/meta",
+  "address": "Con-0661 Bonifacio St. Brgy. Concepcion",
+  "confidence": 0.16
+ },
+ {
+  "name": "Fritzie German Kusina ni Parengdeck",
+  "detail": "Shopping · General Tinio",
+  "lat": 15.348138,
+  "lng": 121.052414,
+  "type": "shopping",
+  "source": "overture/meta",
+  "address": "Guyabano St",
+  "confidence": 0.15
+ },
+ {
+  "name": "Family Band 74",
+  "detail": "Party And Event Planning · General Tinio",
+  "lat": 15.353606,
+  "lng": 121.047264,
+  "type": "party_and_event_planning",
+  "source": "overture/meta",
+  "address": "Purok Bautista, SPO 244 Bonifacio Street",
+  "confidence": 0.15
+ },
+ {
+  "name": "Jean Leanne",
+  "detail": "Clothing Store · General Tinio",
+  "lat": 15.365971,
+  "lng": 121.063385,
+  "type": "clothing_store",
+  "source": "overture/meta",
+  "address": "Purok Camia Barangay Padolina",
+  "confidence": 0.11
+ },
+ {
+  "name": "J Kolong",
+  "detail": "Place · General Tinio",
+  "lat": 15.372062,
+  "lng": 121.06369,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Brgy. Poblacion West, General Tinio ( Papaya ), Nueva Ecija",
+  "confidence": 0.11
+ },
+ {
+  "name": "Painted Days w/ Michael",
+  "detail": "Place · General Tinio",
+  "lat": 15.394971,
+  "lng": 121.089615,
+  "type": "place",
+  "source": "overture/meta",
+  "address": "Bago",
+  "confidence": 0.1
+ }
+]
