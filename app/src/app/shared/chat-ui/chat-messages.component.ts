@@ -4,6 +4,7 @@ import {
   ElementRef,
   ViewChild,
 } from '@angular/core';
+import { ChatMessage, PlaceResult } from '../../core/models';
 import { CharacterService } from '../../core/services/character.service';
 import { GeminiService } from '../../core/services/gemini.service';
 
@@ -42,7 +43,12 @@ export class ChatMessagesComponent implements AfterViewChecked {
     return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
   }
 
-  pick(place: import('../../core/models').PlaceResult): void {
+  singlePlace(msg: ChatMessage): PlaceResult | null {
+    return msg.places?.length === 1 ? msg.places[0] : null;
+  }
+
+  pick(place: PlaceResult): void {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     void this.gemini.choosePlace(place);
   }
 

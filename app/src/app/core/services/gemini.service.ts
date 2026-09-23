@@ -30,7 +30,7 @@ import { TtsService } from './tts.service';
  *
  * Agentic flow: whatever the model says in a turn renders IMMEDIATELY
  * (so the user sees life right away), then tools run with visible status
- * chips, and place results land as rich cards the user can act on.
+ * chips, and tool result cards are added after the final response.
  */
 @Injectable({ providedIn: 'root' })
 export class GeminiService {
@@ -50,6 +50,7 @@ export class GeminiService {
   private lastAddress: string | null = null;
   /** Set when the AI returned several matching places — awaiting a pick. */
   private pendingChoice: PlaceResult[] | null = null;
+  private pendingDisplay: Array<Omit<ChatMessage, 'id'>> = [];
 
   readonly functionDeclarations = [
     {
@@ -221,16 +222,19 @@ export class GeminiService {
           }
           this.thinkingLabel$.next(null);
           this.pushDisplay({ role: 'model', text: said, avatar });
+          this.flushPendingDisplay();
           return said;
         }
 
         const reply = "I'm not sure what to say — try again?";
         this.contents.push({ role: 'model', parts: [{ text: reply }] });
         this.pushDisplay({ role: 'model', text: reply, avatar });
+        this.flushPendingDisplay();
         return reply;
       }
       const fallback = 'I got a bit lost there — could you say that again?';
       this.pushDisplay({ role: 'model', text: fallback, avatar });
+      this.flushPendingDisplay();
       return fallback;
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
@@ -240,6 +244,7 @@ export class GeminiService {
           ? 'The Gemini key is missing or invalid — paste a fresh AI Studio key into backend/.env and restart the backend.'
           : 'Sorry, I had trouble reaching the AI. Try again in a moment.';
       this.pushDisplay({ role: 'model', text: friendly, error: true, avatar });
+      this.flushPendingDisplay();
       return friendly;
     } finally {
       this.thinkingLabel$.next(null);
@@ -267,9 +272,9 @@ export class GeminiService {
   /** Render what a place search turned up, and remember it for a pick. */
   private presentPlaces(results: PlaceResult[]): void {
     if (results.length === 0) return;
-    if (results.length > 1) this.pendingChoice = results;
+    this.pendingChoice = results.length > 1 ? results : null;
     const avatar = this.characters.getSelected().avatar;
-    this.pushDisplay({ role: 'model', text: '', kind: 'places', places: results, avatar });
+    this.pendingDisplay.push({ role: 'model', text: '', kind: 'places', places: results, avatar });
   }
 
   /** Route to a chosen place and show the ready-to-start trip card. */
@@ -393,7 +398,7 @@ export class GeminiService {
           this.mapEvents$.next({ type: 'clear-places' });
           this.nav.previewRoute(route);
           this.pendingChoice = null;
-          this.pushDisplay({
+          this.pendingDisplay.push({
             role: 'model',
             text: '',
             kind: 'route',
@@ -494,5 +499,15 @@ export class GeminiService {
 
   private pushDisplay(msg: Omit<ChatMessage, 'id'>): void {
     this.messages$.next([...this.messages$.value, { id: this.nextId++, ...msg }]);
+  }
+
+  private flushPendingDisplay(): void {
+    if (this.pendingDisplay.length === 0) return;
+    const messages = this.pendingDisplay;
+    this.pendingDisplay = [];
+    this.messages$.next([
+      ...this.messages$.value,
+      ...messages.map((msg) => ({ id: this.nextId++, ...msg })),
+    ]);
   }
 }
