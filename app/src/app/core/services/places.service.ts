@@ -5,6 +5,7 @@ import { LatLng, PlaceResult } from '../models';
 import { haversineM, isSamePlace } from '../geo.utils';
 import { BackendApiService } from './backend-api.service';
 import { LOCAL_LANDMARKS } from '../constants/landmarks';
+import { isWithinGeneralTinioServiceArea } from '../service-area';
 
 /** Spoken category → dataset words that satisfy it (local nearby search). */
 const CATEGORY_SYNONYMS: Array<{ test: RegExp; hay: string[] }> = [
@@ -34,6 +35,15 @@ const CATEGORY_SYNONYMS: Array<{ test: RegExp; hay: string[] }> = [
  */
 
 /** Spoken shortcuts → extra search terms that exist in the map data. */
+interface SharedLocationRecord {
+  id: string;
+  name: string;
+  detail?: string;
+  lat: number;
+  lng: number;
+  createdAt?: string;
+}
+
 const LOCAL_ALIASES: Array<{ match: RegExp; terms: string[] }> = [
   { match: /neust|science|technology/i, terms: ['neust', 'science', 'technology'] },
   { match: /municipal|town hall|city hall/i, terms: ['municipal'] },
@@ -53,8 +63,13 @@ export class PlacesService {
   private searchSeq = 0;
   private localIndex: PlaceResult[] | null = null;
   private localIndexLoading: Promise<void> | null = null;
+  private userLocations: PlaceResult[] = [];
+  private userLocationsLoadedAt = 0;
+  private userLocationsLoading: Promise<void> | null = null;
 
-  constructor(private api: BackendApiService) {}
+  constructor(private api: BackendApiService) {
+    void this.ensureUserLocations();
+  }
 
   // --- Instant local matching (landmarks + cached OSM index) ----------------
 
@@ -101,11 +116,56 @@ export class PlacesService {
     return this.localIndexLoading;
   }
 
+  ensureUserLocations(force = false): Promise<void> {
+    if (!force && this.userLocationsLoadedAt && Date.now() - this.userLocationsLoadedAt < 30000) {
+      return Promise.resolve();
+    }
+    if (this.userLocationsLoading) return this.userLocationsLoading;
+    this.userLocationsLoading = (async () => {
+      try {
+        const records = await this.api.get<SharedLocationRecord[]>('/api/user-locations', 8000);
+        this.userLocations = records.map((record) => this.sharedLocationToPlace(record));
+        this.userLocationsLoadedAt = Date.now();
+      } catch {
+        if (!this.userLocationsLoadedAt) this.userLocations = [];
+      }
+    })().finally(() => {
+      this.userLocationsLoading = null;
+    });
+    return this.userLocationsLoading;
+  }
+
+  async addSharedLocation(name: string, detail: string, position: LatLng): Promise<PlaceResult> {
+    const record = await this.api.post<SharedLocationRecord>('/api/user-locations', {
+      name,
+      detail: detail || undefined,
+      lat: position.lat,
+      lng: position.lng,
+    });
+    const place = this.sharedLocationToPlace(record);
+    this.userLocations = [place, ...this.userLocations.filter((item) => item.sharedLocationId !== place.sharedLocationId)];
+    this.userLocationsLoadedAt = Date.now();
+    return place;
+  }
+
+  private sharedLocationToPlace(record: SharedLocationRecord): PlaceResult {
+    return {
+      name: record.name,
+      detail: record.detail || 'Shared location',
+      lat: record.lat,
+      lng: record.lng,
+      type: 'Shared location',
+      sharedLocationId: record.id,
+      outsideServiceArea: !isWithinGeneralTinioServiceArea(record),
+    };
+  }
+
   /** Instant matches from curated landmarks + the local index. */
   searchLocal(query: string, near: LatLng | null): PlaceResult[] {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const pool = [...LOCAL_LANDMARKS, ...(this.localIndex ?? [])];
+    void this.ensureUserLocations();
+    const pool = [...LOCAL_LANDMARKS, ...(this.localIndex ?? []), ...this.userLocations];
     if (pool.length === 0) return [];
     const landmarkCount = LOCAL_LANDMARKS.length;
 
@@ -136,7 +196,11 @@ export class PlacesService {
       }
       if (score < 99) {
         scored.push({
-          p: { ...p, distanceM: near ? haversineM(near, p) : undefined },
+          p: {
+            ...p,
+            distanceM: near ? haversineM(near, p) : undefined,
+            outsideServiceArea: !isWithinGeneralTinioServiceArea(p),
+          },
           score,
           // curated entry wins outright — the landmark it represents is what
           // people mean ("minalungao" → the park, not a nearby transient)
@@ -159,7 +223,7 @@ export class PlacesService {
     const seq = ++this.searchSeq;
     const q = query.trim();
     if (!q) return [];
-    await this.ensureLocalIndex();
+    await Promise.all([this.ensureLocalIndex(), this.ensureUserLocations()]);
     const local = this.searchLocal(q, near);
 
     const [geoRes, photonRes] = await Promise.allSettled([
@@ -190,7 +254,9 @@ export class PlacesService {
     if (photonRes.status === 'fulfilled') {
       remote.push(...photonRes.value);
     }
-    const fresh = this.dedupe(remote).filter((result) => !local.some((item) => isSamePlace(item, result)));
+    const fresh = this.dedupe(remote)
+      .map((result) => ({ ...result, outsideServiceArea: !isWithinGeneralTinioServiceArea(result) }))
+      .filter((result) => !local.some((item) => isSamePlace(item, result)));
     return [...local, ...fresh].slice(0, limit);
   }
 
@@ -237,8 +303,8 @@ export class PlacesService {
   async nearbyLocal(query: string, near: LatLng, radiusM = 5000, limit = 6): Promise<PlaceResult[]> {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    await this.ensureLocalIndex(); // instant from the cache — but required
-    const pool = [...LOCAL_LANDMARKS, ...(this.localIndex ?? [])];
+    await Promise.all([this.ensureLocalIndex(), this.ensureUserLocations()]);
+    const pool = [...LOCAL_LANDMARKS, ...(this.localIndex ?? []), ...this.userLocations];
     if (pool.length === 0) return [];
 
     const words = q.split(/[^a-z0-9]+/).filter((w) => w.length > 2);
@@ -252,7 +318,12 @@ export class PlacesService {
       for (const syn of CATEGORY_SYNONYMS) {
         if (syn.test.test(q) && syn.hay.some((h) => hay.includes(h))) score += 5;
       }
-      if (score > 0) scored.push({ p: { ...p, distanceM: d }, rank: score * 1000 - d });
+      if (score > 0) {
+        scored.push({
+          p: { ...p, distanceM: d, outsideServiceArea: !isWithinGeneralTinioServiceArea(p) },
+          rank: score * 1000 - d,
+        });
+      }
     }
     return scored
       .sort((a, b) => b.rank - a.rank)

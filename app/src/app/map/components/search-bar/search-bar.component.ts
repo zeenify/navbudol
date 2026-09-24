@@ -19,6 +19,11 @@ export class SearchBarComponent {
   recents: string[] = this.loadRecents();
   showResults = false;
   searching = false;
+  showAddLocation = false;
+  savingLocation = false;
+  locationName = '';
+  locationDetail = '';
+  locationError = '';
   private debounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -35,7 +40,8 @@ export class SearchBarComponent {
       this.searching = false;
       return;
     }
-    // Instant: curated landmarks + local index (no network)
+    // Instant: curated landmarks + local/shared index (no network)
+    void this.places.ensureUserLocations();
     this.results = this.places.searchLocal(value, this.location.position);
     this.showResults = true;
     // Online results follow shortly and get merged in
@@ -46,6 +52,7 @@ export class SearchBarComponent {
   onFocus(): void {
     this.showResults = true;
     void this.places.ensureLocalIndex();
+    void this.places.ensureUserLocations(true);
   }
 
   async runSearch(query: string): Promise<void> {
@@ -69,6 +76,47 @@ export class SearchBarComponent {
     }
   }
 
+  openAddLocation(): void {
+    this.showAddLocation = true;
+    this.showResults = false;
+    this.locationError = '';
+    if (!this.location.hasFix) void this.location.startWatch();
+  }
+
+  closeAddLocation(): void {
+    if (this.savingLocation) return;
+    this.showAddLocation = false;
+    this.locationError = '';
+  }
+
+  async saveLocation(): Promise<void> {
+    const name = this.locationName.trim();
+    if (!name) {
+      this.locationError = 'Give this location a name first.';
+      return;
+    }
+    if (!this.location.hasFix || !this.location.position) {
+      this.locationError = 'Turn on your location so NavBudol can save the pin.';
+      return;
+    }
+    this.savingLocation = true;
+    this.locationError = '';
+    try {
+      const place = await this.places.addSharedLocation(name, this.locationDetail.trim(), this.location.position);
+      this.locationName = '';
+      this.locationDetail = '';
+      this.showAddLocation = false;
+      this.showResults = true;
+      this.results = [place, ...this.results];
+      this.cdr.markForCheck();
+    } catch (e) {
+      this.locationError = e instanceof Error ? e.message : 'Could not save this shared location.';
+    } finally {
+      this.savingLocation = false;
+      this.cdr.markForCheck();
+    }
+  }
+
   select(place: PlaceResult): void {
     this.saveRecent(place.name);
     this.showResults = false;
@@ -78,6 +126,7 @@ export class SearchBarComponent {
 
   dismiss(): void {
     this.showResults = false;
+    this.showAddLocation = false;
     this.results = [];
   }
 

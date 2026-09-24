@@ -38,6 +38,7 @@ app/android/app/src/main/res/xml/config.xml
 **/.env.*
 !**/.env.example
 backend/cache/
+backend/data/user_locations.json
 backend/data/fsq_ph_wide.json
 backend/data/*.parquet
 backend/data/*.tmp

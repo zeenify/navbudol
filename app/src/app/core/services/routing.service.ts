@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { environment } from '../../../environments/environment';
 import { LatLng, PlaceResult, RouteProfile, RouteResult, RouteStep } from '../models';
+import { isWithinGeneralTinioServiceArea } from '../service-area';
 import { BackendApiService } from './backend-api.service';
 
 /**
@@ -18,6 +19,9 @@ export class RoutingService {
     destination: PlaceResult,
     profile: RouteProfile = 'driving-car'
   ): Promise<RouteResult> {
+    if (!isWithinGeneralTinioServiceArea(destination)) {
+      throw new Error('That destination is outside the General Tinio service area.');
+    }
     // 1. ORS via backend — supports foot-walking and returns elevation.
     try {
       const r = await this.api.post<{

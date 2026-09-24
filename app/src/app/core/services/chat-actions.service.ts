@@ -2,6 +2,8 @@ import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular/lazy';
 import { PlaceResult, RouteProfile, RouteResult } from '../models';
+import { formatDistance } from '../geo.utils';
+import { distanceFromGeneralTinio, isWithinGeneralTinioServiceArea } from '../service-area';
 import { LocationService } from './location.service';
 import { NavigationService } from './navigation.service';
 import { RoutingService } from './routing.service';
@@ -32,8 +34,9 @@ export class ChatActionsService {
       return null;
     }
     const from = this.location.position!;
-    if (place.distanceM != null && place.distanceM > 25000) {
-      await this.toast('That place is too far from General Tinio for a route.');
+    if (!isWithinGeneralTinioServiceArea(place)) {
+      const distance = distanceFromGeneralTinio(place);
+      await this.toast(`That place is ${formatDistance(distance)} from General Tinio — outside the service area.`);
       return null;
     }
     try {

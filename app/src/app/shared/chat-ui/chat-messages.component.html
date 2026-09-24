@@ -17,6 +17,7 @@
                 <span class="place-preview-distance">{{ distanceLabel(place.distanceM) }}</span>
               }
             </div>
+            <div class="place-warning" *ngIf="place.outsideServiceArea">Outside General Tinio service area — routing unavailable</div>
             <div class="place-preview-main">
               <span class="place-pin">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -59,6 +60,7 @@
                   {{ p.detail && p.distanceM != null ? '·' : '' }}
                   {{ p.detail || '' }}
                 </span>
+                <span class="place-warning" *ngIf="p.outsideServiceArea">Outside service area</span>
               </span>
               <span class="place-go">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">

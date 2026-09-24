@@ -13,6 +13,7 @@ import {
   RouteResult,
 } from '../models';
 import { formatDistance, formatDuration, haversineM } from '../geo.utils';
+import { distanceFromGeneralTinio, isWithinGeneralTinioServiceArea } from '../service-area';
 import { buildSystemPrompt, PromptContext } from '../constants/prompts';
 import { BackendApiService } from './backend-api.service';
 import { CharacterService } from './character.service';
@@ -280,7 +281,7 @@ export class GeminiService {
   private async presentPlaces(results: PlaceResult[]): Promise<void> {
     if (results.length === 0) return;
     const avatar = this.characters.getSelected().avatar;
-    if (results.length === 1) {
+    if (results.length === 1 && isWithinGeneralTinioServiceArea(results[0])) {
       this.thinkingLabel$.next('Preparing your route…');
       const route = await this.chatActions.routeToPlace(results[0]);
       if (route) {
@@ -301,6 +302,11 @@ export class GeminiService {
 
   private async routeToChoice(place: PlaceResult, messageId?: number): Promise<string> {
     const avatar = this.characters.getSelected().avatar;
+    if (!isWithinGeneralTinioServiceArea(place)) {
+      const message = `That place is ${formatDistance(distanceFromGeneralTinio(place))} from General Tinio — outside the service area.`;
+      this.pushDisplay({ role: 'model', text: message, avatar });
+      return message;
+    }
     const route = await this.chatActions.routeToPlace(place);
     if (!route) return 'I could not find a route there.';
     this.pendingChoice = null;
@@ -381,7 +387,9 @@ export class GeminiService {
             note:
               results.length > 1
                 ? 'Several matching places were shown to the user as a list. Ask which one to navigate to.'
-                : 'One place was found and its route is already ready. The user should open it from the route card; do not ask whether to plot it.',
+                : results[0]?.outsideServiceArea
+                  ? 'The only match is outside the General Tinio service area. Do not route there; explain the service-area limit.'
+                  : 'One place was found and its route is already ready. The user should open it from the route card; do not ask whether to plot it.',
           };
         }
         case 'find_nearby_places': {
@@ -405,7 +413,9 @@ export class GeminiService {
             note:
               results.length > 1
                 ? 'Several matching places were shown to the user as a list. Ask which one to navigate to.'
-                : 'One place was found and its route is already ready. The user should open it from the route card; do not ask whether to plot it.',
+                : results[0]?.outsideServiceArea
+                  ? 'The only match is outside the General Tinio service area. Do not route there; explain the service-area limit.'
+                  : 'One place was found and its route is already ready. The user should open it from the route card; do not ask whether to plot it.',
           };
         }
         case 'get_directions': {
@@ -414,14 +424,20 @@ export class GeminiService {
           const hits = await this.places.search(placeName, pos, 6);
           // Never route to a far-away fuzzy match: only accept places that
           // are actually near the user (this is a town navigator).
+          const serviceHits = hits.filter((hit) => isWithinGeneralTinioServiceArea(hit));
+          if (serviceHits.length === 0) {
+            return {
+              error: `"${placeName}" is outside the General Tinio service area, so I cannot route there.`,
+            };
+          }
           const MAX_ROUTE_M = 25000;
-          const nearbyHits = hits
+          const nearbyHits = serviceHits
             .map((h) => ({ h, d: h.distanceM ?? haversineM(pos, h) }))
             .filter((x) => x.d <= MAX_ROUTE_M)
             .sort((a, b) => a.d - b.d);
           if (nearbyHits.length === 0) {
             return {
-              error: `No place called "${placeName}" near the user. Suggest find_nearby_places instead of guessing.`,
+              error: `That place is too far from your current location. Try a place inside or near General Tinio.`,
             };
           }
           const dest = nearbyHits[0].h;
@@ -502,6 +518,7 @@ export class GeminiService {
       name: p.name,
       location: `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`,
       distance: p.distanceM ? formatDistance(p.distanceM) : undefined,
+      outside_service_area: p.outsideServiceArea || undefined,
     };
   }
 

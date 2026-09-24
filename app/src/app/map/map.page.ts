@@ -22,7 +22,8 @@ import { BackendApiService, HealthResponse } from '../core/services/backend-api.
 import { CharacterService } from '../core/services/character.service';
 import { VoiceAssistantService } from '../core/services/voice-assistant.service';
 import { ChatActionsService } from '../core/services/chat-actions.service';
-import { haversineM, snapToSegment } from '../core/geo.utils';
+import { distanceFromGeneralTinio, isWithinGeneralTinioServiceArea } from '../core/service-area';
+import { formatDistance, haversineM, snapToSegment } from '../core/geo.utils';
 
 interface WeatherInfo {
   temp: number;
@@ -376,7 +377,13 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   private async routeTo(place: PlaceResult): Promise<void> {
     if (!this.location.hasFix) {
-      this.toast('Turn on your location to get a route there.');
+      await this.toast('Turn on your location to get a route there.');
+      return;
+    }
+    if (!isWithinGeneralTinioServiceArea(place)) {
+      await this.toast(
+        `That place is ${formatDistance(distanceFromGeneralTinio(place))} from General Tinio — outside the service area.`
+      );
       return;
     }
     const from = this.location.position!;

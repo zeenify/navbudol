@@ -19,6 +19,8 @@ export interface PlaceResult {
   lng: number;
   type?: string;
   distanceM?: number;
+  outsideServiceArea?: boolean;
+  sharedLocationId?: string;
 }
 
 export interface RouteStep {

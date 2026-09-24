@@ -9,6 +9,40 @@
       (ionInput)="onInput($event)"
       (ionFocus)="onFocus()">
     </ion-searchbar>
+    <button class="add-location-button" type="button" (click)="openAddLocation()" aria-label="Add a shared location">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+  </div>
+
+  <div class="add-location-card nb-glass" *ngIf="showAddLocation">
+    <div class="add-location-title">Add a shared location</div>
+    <div class="add-location-copy">Save a name at your current GPS position. Everyone using this NavBudol server can find it.</div>
+    <input
+      class="add-location-input"
+      type="text"
+      maxlength="80"
+      [(ngModel)]="locationName"
+      placeholder="e.g. Edrick house"
+      autocomplete="off"
+    />
+    <input
+      class="add-location-input"
+      type="text"
+      maxlength="120"
+      [(ngModel)]="locationDetail"
+      placeholder="Optional note, like near the chapel"
+      autocomplete="off"
+    />
+    <div class="add-location-error" *ngIf="locationError" role="alert">{{ locationError }}</div>
+    <div class="add-location-actions">
+      <button class="add-location-cancel" type="button" (click)="closeAddLocation()" [disabled]="savingLocation">Cancel</button>
+      <button class="add-location-save" type="button" (click)="saveLocation()" [disabled]="savingLocation || !locationName.trim()">
+        {{ savingLocation ? 'Saving…' : 'Save shared location' }}
+      </button>
+    </div>
   </div>
 
   <div class="results nb-glass" *ngIf="showResults && (results.length > 0 || searching || showRecents)">
@@ -21,6 +55,7 @@
       <div class="result-text">
         <div class="result-name">{{ place.name }}</div>
         <div class="result-detail" *ngIf="place.detail">{{ place.detail }}</div>
+        <div class="result-warning" *ngIf="place.outsideServiceArea">Outside General Tinio service area</div>
       </div>
     </div>
 
