@@ -426,6 +426,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
         weight: (report.presenceCount ?? 0) > 0 ? 2.5 : 1.5,
         fillColor: this.reports.kindColor(report.kind),
         fillOpacity: 0.95,
+        // Without this, the tap also bubbles to the map and starts a route
+        // to a dropped pin at the same spot.
+        bubblingMouseEvents: false,
       })
         .bindTooltip(`${report.kind} · tap for details`, { direction: 'top', offset: [0, -8] })
         .on('click', () => void this.openReportActions(report))

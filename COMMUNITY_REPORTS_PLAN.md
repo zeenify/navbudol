@@ -135,8 +135,20 @@ Three escalating actions:
 
 The reroute hook already exists: `backend/routers/geo.py` posts to
 `ORS_BASE/directions/{profile}/geojson`. ORS accepts `options.avoid_polygons` (a GeoJSON
-polygon) in that same body — buffer the report's coordinates and the route genuinely
-goes around it. **Verify this against the current ORS API before relying on it.**
+MultiPolygon, coordinate order `[lng, lat]`) in that same body — buffer each report's
+coordinates into a ~130 m square and the route genuinely goes around it. **Verified live
+against ORS on both `driving-car` and `foot-walking`**, with a retry-without-the-option
+fallback on HTTP 400.
+
+Two rules learned in browser testing, enforced in `ReportsService.avoidPoints()`:
+
+- **Never route around a pin at your own position or at the destination.** Avoid boxes
+  at the origin threw a 3.4 km trip out to 12.6 km — you cannot avoid where you already
+  are, so those reports are *mentioned* instead (250 m skip at the origin, 150 m at the
+  destination).
+- **"On the way" means within ~400 m of the straight origin→destination line**, not a
+  bounding box — and ORS only detours when the box actually touches the road; a pin
+  223 m off the road was accepted but ignored, which is the correct behavior.
 
 New function declarations for `gemini.service.ts` (keep it to three):
 
@@ -225,6 +237,8 @@ deliberately deferred, not missed.
 | Reports are stale at read time in no-signal areas | Accept it; show "last confirmed" and let the AI say how old it is. |
 | Moderation is a human job, permanently, and it's you | Accepted cost of the feature. Revisit if it ever grows past one town. |
 | Open vocabulary invites junk kinds | Let the AI read them; consolidate only if real usage shows duplicates. |
+| `avoidedReports` counts the avoidances *requested*; whether ORS actually detoured isn't double-checked | Telling the difference costs a second ORS call per route. With pins on the corridor road the detour is real; noted honestly rather than faked. |
+| One flaky UI click observed during automated testing (a pill button needed a second attempt) | Not reproducible; all bindings verified working via direct dispatch and subsequent runs. Real-device testing will confirm. |
 
 ---
 
