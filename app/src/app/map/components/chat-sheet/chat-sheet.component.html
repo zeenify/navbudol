@@ -1,4 +1,4 @@
-<div class="sheet nb-glass-strong" [class.open]="open">
+<div class="sheet nb-glass-strong" [class.open]="open" [attr.aria-hidden]="!open" [attr.inert]="!open ? '' : null">
   <div class="nb-grabber"></div>
 
   <div class="sheet-head">
@@ -16,20 +16,49 @@
     </button>
   </div>
 
-  <app-chat-messages class="sheet-messages"></app-chat-messages>
+  <app-chat-messages class="sheet-messages" (routeMapRequested)="close()"></app-chat-messages>
+
+  @if (isLocked) {
+    <div class="chat-lock" role="status">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+      </svg>
+      <span>{{ lockLabel }}</span>
+    </div>
+  }
 
   <div class="composer">
-    <!-- hold-to-talk: Claude-style voice level bar replaces the input row -->
     <div class="recording-row" *ngIf="(voiceState$ | async) === 'listening'">
-      <app-voice-wave></app-voice-wave>
-      <div class="rec-text">{{ (partial$ | async) || 'Listening…' }}</div>
+      <button class="record-cancel" (click)="cancelMic()" aria-label="Cancel voice input">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+        </svg>
+      </button>
+      <div class="recording-center">
+        <app-voice-wave></app-voice-wave>
+        <div class="rec-text">{{ (partial$ | async) || 'Listening…' }}</div>
+      </div>
+      <button class="record-stop" (click)="stopMic()" aria-label="Stop voice input">
+        <span></span>
+      </button>
+      <button class="record-send" (click)="sendMic()" aria-label="Send voice input">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"></line>
+          <polyline points="6 11 12 5 18 11"></polyline>
+        </svg>
+      </button>
     </div>
 
     <ng-container *ngIf="(voiceState$ | async) !== 'listening'">
       <button
         class="composer-mic"
-        (pointerdown)="onMicDown($event)"
-        aria-label="Hold to talk">
+         [disabled]="isLocked"
+         [attr.aria-pressed]="(voiceState$ | async) === 'listening'"
+         (click)="onMicTap()"
+         [attr.aria-label]="(voiceState$ | async) === 'listening' ? 'Stop voice input' : 'Start voice input'">
         <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor">
           <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/>
         </svg>
@@ -37,11 +66,12 @@
       <input
         class="composer-input"
         type="text"
+        [disabled]="isLocked"
         placeholder="Message {{ character.name }}…"
         [(ngModel)]="draft"
         (keyup.enter)="send()"
       />
-      <button class="composer-send" (click)="send()" [disabled]="!draft.trim()" aria-label="Send">
+      <button class="composer-send" (click)="send()" [disabled]="isLocked || !draft.trim()" aria-label="Send">
         <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor">
           <path d="M3.4 20.4 20.9 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/>
         </svg>

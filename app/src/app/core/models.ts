@@ -63,6 +63,16 @@ export interface NavState {
   nextManeuverModifier: string;
 }
 
+export interface RouteCardData {
+  destination: PlaceResult;
+  distanceM: number;
+  durationS: number;
+  source?: string;
+  profile?: string;
+  geometry?: LatLng[];
+  ascentM?: number;
+}
+
 export interface ChatMessage {
   id: number;
   role: 'user' | 'model';
@@ -73,8 +83,7 @@ export interface ChatMessage {
   kind?: 'text' | 'places' | 'route' | 'status';
   /** kind 'places': what the AI found */
   places?: PlaceResult[];
-  /** kind 'route': a plotted trip waiting for Start */
-  route?: { destination: PlaceResult; distanceM: number; durationS: number; source?: string; profile?: string };
+  route?: RouteCardData;
 }
 
 export interface GeminiFunctionCall {
@@ -130,6 +139,8 @@ export interface Character {
   /** one-line vibe for the picker card */
   tagline: string;
   greeting: string;
+  navigationStart: string;
+  navigationArrival: string;
   isDefault?: boolean;
 }
 

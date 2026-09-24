@@ -56,6 +56,18 @@ export class MapPage implements AfterViewInit, OnDestroy {
   chatOpen = false;
   backendOk: boolean | null = null;
 
+  get isTraveling(): boolean {
+    return this.nav.phase === 'navigating' || this.nav.phase === 'rerouting';
+  }
+
+  get aiThinking(): boolean {
+    return this.gemini.thinking$.value;
+  }
+
+  get chatLocked(): boolean {
+    return this.isTraveling || this.aiThinking;
+  }
+
   private map: L.Map | null = null;
   private userMarker: L.Marker | null = null;
   private destMarker: L.Marker | null = null;
@@ -178,6 +190,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   private onNavState(state: NavState): void {
+    if (state.phase === 'navigating' || state.phase === 'rerouting') {
+      this.chatOpen = false;
+      if (this.voice.state === 'listening') this.voice.deactivate();
+    }
     try {
       if (!this.map) return;
 
@@ -312,17 +328,22 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   openChat(): void {
+    if (this.chatLocked) return;
     this.chatOpen = true;
   }
 
-  /** Hold-to-talk from the mic FAB: open the chat sheet and start recording. */
-  onMicPress(): void {
+  onMicToggle(): void {
+    if (this.chatLocked) return;
+    if (this.voice.state === 'listening') {
+      void this.voice.stopTapToTalk();
+      return;
+    }
     this.chatOpen = true;
-    void this.voice.beginPushToTalk();
+    void this.voice.startTapToTalk();
   }
 
-  onMicRelease(): void {
-    void this.voice.endPushToTalk();
+  onChatClosed(): void {
+    this.chatOpen = false;
   }
 
   /** Ask the OS for a GPS fix — shown when we have none. */
@@ -333,10 +354,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
   async onStartNav(): Promise<void> {
     // Shared with the chat's Start button: sim drives the dot itself,
     // real navigation needs a fix.
+    this.chatOpen = false;
     await this.chatActions.startPreviewedRoute();
   }
 
   onCancelNav(): void {
+    this.voice.deactivate();
     this.sim.stop();
     this.nav.stopNavigation();
     this.follow = true;

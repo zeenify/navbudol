@@ -72,9 +72,24 @@
 }
 
 .sheet-messages {
+  display: block;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   padding: 14px 16px 8px;
+}
+
+.chat-lock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border-top: 0.5px solid var(--nb-separator);
+  background: rgba(142, 142, 147, 0.08);
+  color: var(--nb-label-2);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 // The composer is a SOLID surface strip — readable on both themes.
@@ -103,11 +118,25 @@
 .composer-mic {
   background: rgba(0, 122, 255, 0.13);
   color: var(--ion-color-primary);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 
   &:active {
     transform: scale(0.92);
-    background: var(--ion-color-danger);
-    color: #fff;
+    background: rgba(0, 122, 255, 0.24);
+    color: var(--ion-color-primary);
+    box-shadow: 0 0 0 5px rgba(0, 122, 255, 0.1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ion-color-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 }
 
@@ -151,31 +180,112 @@
   }
 }
 
-// --- hold-to-talk: voice level bar (Claude-style) -------------------------------
-
 .recording-row {
+  position: relative;
   flex: 1;
-  height: 48px;
-  border-radius: 999px;
-  background: #1c1c1e;
-  color: #fff;
+  min-width: 0;
+  height: 64px;
+  border: 1px solid rgba(0, 122, 255, 0.14);
+  border-radius: 32px;
+  background: var(--nb-card);
+  color: var(--ion-text-color);
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 0 18px;
+  gap: 8px;
+  padding: 0 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.recording-center {
+  flex: 1;
   min-width: 0;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.recording-center app-voice-wave {
+  transform: scale(0.78);
+  transform-origin: center;
 }
 
 .rec-text {
-  flex: 1;
-  min-width: 0;
-  font-size: 14.5px;
+  position: absolute;
+  left: 12px;
+  bottom: calc(100% + 8px);
+  z-index: 1;
+  max-width: calc(100% - 24px);
+  font-size: 15px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ion-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.record-cancel,
+.record-stop,
+.record-send {
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  font-family: inherit;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.record-cancel,
+.record-stop {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(120, 120, 128, 0.12);
+  color: var(--nb-label-2);
+}
+
+.record-stop {
+  color: var(--ion-text-color);
+}
+
+.record-stop span {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.record-send {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.28);
+}
+
+.record-cancel:active,
+.record-stop:active {
+  background: rgba(120, 120, 128, 0.22);
+}
+
+.record-send:active {
+  filter: brightness(0.92);
+  transform: scale(0.96);
+}
+
+.record-cancel:focus-visible,
+.record-stop:focus-visible,
+.record-send:focus-visible {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
 }
 
 .sheet-scrim {

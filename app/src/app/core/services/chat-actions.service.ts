@@ -1,7 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular/lazy';
-import { PlaceResult, RouteProfile } from '../models';
+import { PlaceResult, RouteProfile, RouteResult } from '../models';
 import { LocationService } from './location.service';
 import { NavigationService } from './navigation.service';
 import { RoutingService } from './routing.service';
@@ -26,7 +26,7 @@ export class ChatActionsService {
   ) {}
 
   /** Route from the user to `place`; returns the plotted route or null. */
-  async routeToPlace(place: PlaceResult): Promise<{ distanceM: number; durationS: number; source?: string; profile: RouteProfile } | null> {
+  async routeToPlace(place: PlaceResult): Promise<RouteResult | null> {
     if (!this.location.hasFix) {
       await this.toast('Turn on your location to get a route there.');
       return null;
@@ -40,7 +40,7 @@ export class ChatActionsService {
       const profile: RouteProfile = this.settings.profile;
       const route = await this.routing.getRoute(from, place, profile);
       this.zone.run(() => this.nav.previewRoute(route));
-      return { distanceM: route.distanceM, durationS: route.durationS, source: route.source, profile };
+      return route;
     } catch (e) {
       await this.toast(e instanceof Error ? e.message : 'Could not find a route there.');
       return null;

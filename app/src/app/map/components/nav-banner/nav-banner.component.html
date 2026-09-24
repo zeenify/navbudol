@@ -1,13 +1,4 @@
 <div class="nav-wrap">
-  <div class="banner nb-glass">
-    <div class="banner-arrow">{{ arrow }}</div>
-    <div class="banner-text">
-      <div class="banner-instruction">{{ state.nextInstruction }}</div>
-    </div>
-    <div class="banner-distance" *ngIf="state.phase === 'navigating'">{{ distanceToTurn }}</div>
-    <div class="banner-distance rerouting" *ngIf="state.phase === 'rerouting'">Rerouting…</div>
-  </div>
-
   <div class="summary nb-glass">
     <div class="summary-stats">
       <span class="remaining">{{ remainingLabel }}</span>

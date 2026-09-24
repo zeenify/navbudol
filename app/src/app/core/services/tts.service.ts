@@ -24,7 +24,7 @@ export class TtsService {
   private audioCtx: AudioContext | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
   /** Synthesized-but-not-yet-played clip (see prepare()). */
-  private prepared: { text: string; voiceId: string; res: TtsResponse } | null = null;
+  private prepared = new Map<string, TtsResponse>();
 
   constructor(private api: BackendApiService) {}
 
@@ -40,7 +40,7 @@ export class TtsService {
         text: clean,
         reference_id: character.fishVoiceId,
       });
-      this.prepared = { text: clean, voiceId: character.fishVoiceId, res };
+      this.prepared.set(this.preparedKey(clean, character.fishVoiceId), res);
       return true;
     } catch {
       return false;
@@ -109,15 +109,9 @@ export class TtsService {
       return;
     }
     // Use the clip prepared by prepare() when it matches (instant playback).
-    let res: TtsResponse | null = null;
-    if (
-      this.prepared &&
-      this.prepared.text === job.text &&
-      this.prepared.voiceId === job.character.fishVoiceId
-    ) {
-      res = this.prepared.res;
-      this.prepared = null;
-    }
+    const key = this.preparedKey(job.text, job.character.fishVoiceId);
+    let res = this.prepared.get(key) ?? null;
+    if (res) this.prepared.delete(key);
     if (!res) {
       res = await this.api.post<TtsResponse>('/api/tts', {
         text: job.text,
@@ -128,6 +122,10 @@ export class TtsService {
   }
 
   // --- Web Audio playback with per-character gain ---------------------------
+
+  private preparedKey(text: string, voiceId: string): string {
+    return `${voiceId}::${text}`;
+  }
 
   private async playBase64(audioBase64: string, gainDb: number): Promise<void> {
     const ctx = this.ensureCtx();

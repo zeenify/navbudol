@@ -1,11 +1,10 @@
-import { Component, EventEmitter, HostListener, Output } from '@angular/core';
-import { CharacterService } from '../../../core/services/character.service';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { VoiceAssistantService } from '../../../core/services/voice-assistant.service';
 import { SpeechService } from '../../../core/services/speech.service';
 
 /**
- * Floating mic button — HOLD to talk. Press starts recording immediately
- * (the map opens the chat so you can see it); release sends the audio.
+ * Floating mic button — tap to talk. Recording stays active until stopped,
+ * cancelled, or sent.
  */
 @Component({
   selector: 'app-mic-fab',
@@ -14,34 +13,19 @@ import { SpeechService } from '../../../core/services/speech.service';
   standalone: false,
 })
 export class MicFabComponent {
-  @Output() pressStart = new EventEmitter<void>();
-  @Output() pressEnd = new EventEmitter<void>();
+  @Input() disabled = false;
+  @Output() voiceToggle = new EventEmitter<void>();
 
   readonly state$ = this.voice.state$;
   readonly partial$ = this.speech.partial$;
-  readonly character = this.characters.getSelected();
-
-  private pressed = false;
 
   constructor(
     private voice: VoiceAssistantService,
-    private speech: SpeechService,
-    private characters: CharacterService
+    private speech: SpeechService
   ) {}
 
-  onDown(event: Event): void {
-    event.preventDefault();
-    if (this.pressed) return;
-    this.pressed = true;
-    this.pressStart.emit();
-  }
-
-  // Release anywhere (the FAB may be hidden mid-hold when the chat opens).
-  @HostListener('document:pointerup')
-  @HostListener('document:pointercancel')
-  onUp(): void {
-    if (!this.pressed) return;
-    this.pressed = false;
-    this.pressEnd.emit();
+  onTap(): void {
+    if (this.disabled) return;
+    this.voiceToggle.emit();
   }
 }

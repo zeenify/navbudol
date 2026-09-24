@@ -8,9 +8,8 @@ import { SpeechRecognition } from '@capacitor-community/speech-recognition';
  * browser. Partial results stream into `partial$`.
  *
  * Two modes:
- *  - Push-to-talk (the mic buttons): recording runs while the user holds,
- *    and `stopPushToTalk()` returns the transcript. No silence auto-stop,
- *    no premature sends.
+ *  - Tap-to-talk (the mic buttons): recording runs until the user stops,
+ *    cancels, or sends. No silence auto-stop and no premature sends.
  *  - Legacy auto mode: 2 s of silence finalizes onto `final$`.
  */
 @Injectable({ providedIn: 'root' })
@@ -28,29 +27,46 @@ export class SpeechService {
 
   constructor(private zone: NgZone) {}
 
-  /** Hold-to-talk: begin recording; nothing auto-finalizes. */
   async startPushToTalk(): Promise<void> {
     this.ptt = true;
     this.lastFinal = '';
-    await this.start();
+    try {
+      await this.start();
+    } catch (error) {
+      this.ptt = false;
+      throw error;
+    }
   }
 
-  /** Hold-to-talk: stop and return what was said ('' if silence). */
   async stopPushToTalk(): Promise<string> {
-    if (!this.isListening$.value) return this.lastFinal || this.lastPartial.trim();
-    if (Capacitor.isNativePlatform()) {
-      SpeechRecognition.stop().catch(() => undefined);
-      this.finalize(this.lastPartial);
+    if (!this.isListening$.value) {
+      this.ptt = false;
       return this.lastFinal || this.lastPartial.trim();
     }
-    // Web: a final result may land between stop() and onend — give it a beat.
-    const rec = this.webRec as WebSpeechRecognition | null;
-    rec?.stop();
-    for (let waited = 0; waited < 700 && !this.lastFinal && this.isListening$.value; waited += 60) {
-      await new Promise((r) => setTimeout(r, 60));
+    try {
+      if (Capacitor.isNativePlatform()) {
+        SpeechRecognition.stop().catch(() => undefined);
+        this.finalize(this.lastPartial);
+        return this.lastFinal || this.lastPartial.trim();
+      }
+      const rec = this.webRec as WebSpeechRecognition | null;
+      rec?.stop();
+      for (let waited = 0; waited < 700 && !this.lastFinal && this.isListening$.value; waited += 60) {
+        await new Promise((r) => setTimeout(r, 60));
+      }
+      this.finalize(this.lastFinal || this.lastPartial);
+      return (this.lastFinal || this.lastPartial).trim();
+    } finally {
+      this.ptt = false;
     }
-    this.finalize(this.lastFinal || this.lastPartial);
-    return (this.lastFinal || this.lastPartial).trim();
+  }
+
+  async startTapToTalk(): Promise<void> {
+    return this.startPushToTalk();
+  }
+
+  async stopTapToTalk(): Promise<string> {
+    return this.stopPushToTalk();
   }
 
   async start(): Promise<void> {
@@ -146,7 +162,6 @@ export class SpeechService {
     }
   }
 
-  /** Second tap on the mic (or navigation interrupt) stops and finalizes. */
   stop(): void {
     if (!this.isListening$.value) return;
     if (Capacitor.isNativePlatform()) {
@@ -156,6 +171,24 @@ export class SpeechService {
       const rec = this.webRec as WebSpeechRecognition | null;
       rec?.stop();
       // onend fires finalize
+    }
+  }
+
+  cancel(): void {
+    this.ptt = false;
+    this.lastPartial = '';
+    this.lastFinal = '';
+    this.finalized = true;
+    if (this.silenceTimer) {
+      clearTimeout(this.silenceTimer);
+      this.silenceTimer = null;
+    }
+    if (!this.isListening$.value) return;
+    this.isListening$.next(false);
+    if (Capacitor.isNativePlatform()) {
+      SpeechRecognition.stop().catch(() => undefined);
+    } else {
+      (this.webRec as WebSpeechRecognition | null)?.stop();
     }
   }
 
@@ -175,8 +208,6 @@ export class SpeechService {
     const clean = (text ?? '').trim();
     if (!clean) return;
     if (this.ptt) {
-      // Push-to-talk hands the transcript to whoever released the button —
-      // don't fire the auto-send pipeline.
       this.lastFinal = clean;
     } else {
       this.final$.next(clean);

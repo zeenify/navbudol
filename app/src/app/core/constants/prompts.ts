@@ -42,7 +42,6 @@ export function buildSystemPrompt(character: Character, ctx: PromptContext): str
       ...situation,
       `Destination: ${ctx.nav.route.destination.name}`,
       `Remaining: ${formatDistance(ctx.nav.remainingDistanceM)} (${formatDuration(ctx.nav.remainingDurationS)})`,
-      ctx.nav.nextInstruction ? `Next turn: ${ctx.nav.nextInstruction} in ${formatDistance(ctx.nav.distanceToNextManeuverM)}` : '',
     ].filter(Boolean);
   }
   situation.push('Language: English.');

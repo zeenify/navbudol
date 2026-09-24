@@ -159,7 +159,8 @@ export class PlacesService {
     const seq = ++this.searchSeq;
     const q = query.trim();
     if (!q) return [];
-    void this.ensureLocalIndex();
+    await this.ensureLocalIndex();
+    const local = this.searchLocal(q, near);
 
     const [geoRes, photonRes] = await Promise.allSettled([
       // Geoapify AUTOCOMPLETE via backend — designed for keystrokes, PH-only
@@ -189,7 +190,8 @@ export class PlacesService {
     if (photonRes.status === 'fulfilled') {
       remote.push(...photonRes.value);
     }
-    return this.dedupe(remote).slice(0, limit);
+    const fresh = this.dedupe(remote).filter((result) => !local.some((item) => isSamePlace(item, result)));
+    return [...local, ...fresh].slice(0, limit);
   }
 
   private async photonSearch(query: string, near: LatLng | null, limit: number): Promise<PlaceResult[]> {

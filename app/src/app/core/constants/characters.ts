@@ -19,6 +19,8 @@ export const CHARACTERS: Character[] = [
     gainDb: 0,
     tagline: 'Chill co-pilot — our own character',
     greeting: "Yo! I'm NavBuddy. Where are we going today?",
+    navigationStart: 'Alright, {destination} it is. Let’s keep this smooth and get there safely.',
+    navigationArrival: 'We made it to {destination}. Nice work getting there safely.',
     isDefault: true,
   },
   {
@@ -31,6 +33,8 @@ export const CHARACTERS: Character[] = [
     gainDb: 0,
     tagline: 'Confident, playful, teasing',
     greeting: 'Yo~ The strongest navigator has arrived. Where to?',
+    navigationStart: 'Alright, {destination}. Follow me; I’ll make this easy.',
+    navigationArrival: 'See? {destination}. That’s how it’s done.',
   },
   {
     id: 'makima',
@@ -42,6 +46,8 @@ export const CHARACTERS: Character[] = [
     gainDb: 16, // her raw output is quiet — boost on playback (from Cognify)
     tagline: 'Calm, composed, commanding',
     greeting: 'Good. You have a destination. Tell me what it is.',
+    navigationStart: 'Very good. I have plotted the route to {destination}.',
+    navigationArrival: 'You have arrived at {destination}. As expected.',
   },
   {
     id: 'marin',
@@ -53,6 +59,8 @@ export const CHARACTERS: Character[] = [
     gainDb: 0,
     tagline: 'Energetic, bubbly, total hype',
     greeting: "Hiii! Okay okay, where are we going today?! I'm so excited!",
+    navigationStart: 'Yay! We’re headed to {destination}! Let’s go!',
+    navigationArrival: 'We made it to {destination}! That was so much fun!',
   },
   {
     id: 'toji',
@@ -64,6 +72,8 @@ export const CHARACTERS: Character[] = [
     gainDb: 0,
     tagline: 'Dry, blunt, zero-effort energy',
     greeting: 'Where to. Make it quick.',
+    navigationStart: 'Finally. {destination}. Let’s move.',
+    navigationArrival: 'We’re here. {destination}. Don’t make me repeat that.',
   },
   {
     id: 'miku',
@@ -75,6 +85,8 @@ export const CHARACTERS: Character[] = [
     gainDb: 0,
     tagline: 'Warm, gentle, a little shy',
     greeting: "Um... where do you want to go? I'll look it up for you!",
+    navigationStart: 'Um, okay... I’ll guide you to {destination}.',
+    navigationArrival: 'We made it to {destination}... thank you for coming with me.',
   },
   {
     id: 'reze',
@@ -86,5 +98,7 @@ export const CHARACTERS: Character[] = [
     gainDb: 0,
     tagline: 'Soft-spoken, sweet, a little wistful',
     greeting: "Anywhere you want to go... I'll walk with you.",
+    navigationStart: 'Okay... let’s go to {destination}. I’ll stay right here.',
+    navigationArrival: 'We’re here... {destination}. I’m glad we made it.',
   },
 ];

@@ -2,6 +2,8 @@ import {
   AfterViewChecked,
   Component,
   ElementRef,
+  EventEmitter,
+  Output,
   ViewChild,
 } from '@angular/core';
 import { ChatMessage, PlaceResult } from '../../core/models';
@@ -15,6 +17,8 @@ import { GeminiService } from '../../core/services/gemini.service';
   standalone: false,
 })
 export class ChatMessagesComponent implements AfterViewChecked {
+  @Output() placeChosen = new EventEmitter<void>();
+  @Output() routeMapRequested = new EventEmitter<void>();
   @ViewChild('scroller') scroller!: ElementRef<HTMLDivElement>;
 
   readonly messages$ = this.gemini.messages$;
@@ -47,17 +51,15 @@ export class ChatMessagesComponent implements AfterViewChecked {
     return msg.places?.length === 1 ? msg.places[0] : null;
   }
 
-  pick(place: PlaceResult): void {
+  async pick(place: PlaceResult, messageId?: number): Promise<void> {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    void this.gemini.choosePlace(place);
+    const selected = await this.gemini.choosePlace(place, messageId);
+    if (selected) this.placeChosen.emit();
   }
 
-  start(): void {
-    void this.gemini.startPreviewedRoute();
-  }
-
-  showMap(): void {
-    void this.gemini.showRouteOnMap();
+  async showMap(): Promise<void> {
+    await this.gemini.showRouteOnMap();
+    this.routeMapRequested.emit();
   }
 
   private scrollToBottom(): void {

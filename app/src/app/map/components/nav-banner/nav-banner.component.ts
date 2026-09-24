@@ -17,10 +17,6 @@ export class NavBannerComponent {
     return this.nav.navState$.value;
   }
 
-  get distanceToTurn(): string {
-    return shortDistance(this.state.distanceToNextManeuverM);
-  }
-
   get remainingLabel(): string {
     return shortDistance(this.state.remainingDistanceM);
   }
@@ -33,17 +29,4 @@ export class NavBannerComponent {
     return `${mins} min · Arrive ≈ ${hh}:${mm}`;
   }
 
-  get arrow(): string {
-    const { nextManeuverType: type, nextManeuverModifier: mod } = this.state;
-    if (type === 'arrive') return '◎';
-    if (type === 'roundabout' || type === 'rotary') return '⟳';
-    if (type === 'merge' || type === 'fork' || type === 'on ramp' || type === 'off ramp')
-      return mod.includes('left') ? '⤴' : '⤵';
-    if (mod.includes('slight')) return mod.includes('left') ? '↗' : '↘';
-    if (mod.includes('sharp')) return mod.includes('left') ? '↖' : '↘';
-    if (mod === 'left') return '↰';
-    if (mod === 'right') return '↱';
-    if (mod === 'uturn') return '⤶';
-    return '↑';
-  }
 }

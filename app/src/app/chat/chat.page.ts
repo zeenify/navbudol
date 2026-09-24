@@ -1,6 +1,7 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CharacterService } from '../core/services/character.service';
 import { GeminiService } from '../core/services/gemini.service';
+import { NavigationService } from '../core/services/navigation.service';
 import { SpeechService } from '../core/services/speech.service';
 import { TtsService } from '../core/services/tts.service';
 import { VoiceAssistantService } from '../core/services/voice-assistant.service';
@@ -12,7 +13,7 @@ import { VoiceAssistantService } from '../core/services/voice-assistant.service'
   styleUrls: ['./chat.page.scss'],
   standalone: false,
 })
-export class ChatPage {
+export class ChatPage implements OnDestroy {
   draft = '';
   readonly voiceState$ = this.voice.state$;
   readonly partial$ = this.speech.partial$;
@@ -21,11 +22,20 @@ export class ChatPage {
     return this.characters.getSelected();
   }
 
-  private holding = false;
+  get chatLocked(): boolean {
+    return this.nav.phase === 'navigating' || this.nav.phase === 'rerouting' || this.gemini.thinking$.value;
+  }
+
+  get lockLabel(): string {
+    return this.nav.phase === 'navigating' || this.nav.phase === 'rerouting'
+      ? 'Cancel navigation to chat'
+      : 'AI is thinking…';
+  }
 
   constructor(
     public characters: CharacterService,
     private gemini: GeminiService,
+    private nav: NavigationService,
     private tts: TtsService,
     private voice: VoiceAssistantService,
     private speech: SpeechService
@@ -33,25 +43,34 @@ export class ChatPage {
 
   async send(): Promise<void> {
     const text = this.draft.trim();
-    if (!text) return;
+    if (!text || this.chatLocked) return;
     this.draft = '';
     const reply = await this.gemini.chat(text);
     if (reply) void this.tts.speak(reply, this.character);
   }
 
-  onMicDown(event: Event): void {
-    event.preventDefault();
-    if (this.holding) return;
-    this.holding = true;
-    void this.voice.beginPushToTalk();
+  onMicTap(): void {
+    if (this.chatLocked) return;
+    if (this.voice.state === 'listening') {
+      void this.voice.stopTapToTalk();
+      return;
+    }
+    void this.voice.startTapToTalk();
   }
 
-  // Release anywhere ends the recording.
-  @HostListener('document:pointerup')
-  @HostListener('document:pointercancel')
-  onMicUp(): void {
-    if (!this.holding) return;
-    this.holding = false;
-    void this.voice.endPushToTalk();
+  stopMic(): void {
+    void this.voice.stopTapToTalk();
+  }
+
+  cancelMic(): void {
+    this.voice.cancelTapToTalk();
+  }
+
+  sendMic(): void {
+    void this.voice.stopTapToTalk();
+  }
+
+  ngOnDestroy(): void {
+    if (this.voice.state === 'listening') this.voice.cancelTapToTalk();
   }
 }

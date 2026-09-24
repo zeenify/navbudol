@@ -1,20 +1,25 @@
 .search-wrap {
   position: absolute;
-  top: calc(env(safe-area-inset-top) + 10px);
-  left: 12px;
-  right: 12px;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  right: auto;
+  width: calc(100% - 32px);
+  max-width: 460px;
+  transform: translateX(-50%);
   z-index: 850;
 }
 
 .search-pill {
-  border-radius: 999px;
+  border-radius: 18px;
   overflow: hidden;
 
   ion-searchbar {
     --background: transparent;
     --box-shadow: none;
-    --border-radius: 999px;
-    padding: 4px 8px;
+    --border-radius: 18px;
+    height: 48px;
+    min-height: 48px;
+    padding: 2px 6px;
   }
 }
 

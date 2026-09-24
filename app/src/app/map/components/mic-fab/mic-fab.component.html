@@ -8,8 +8,10 @@
     [class.listening]="(state$ | async) === 'listening'"
     [class.processing]="(state$ | async) === 'processing'"
     [class.speaking]="(state$ | async) === 'speaking'"
-    (pointerdown)="onDown($event)"
-    aria-label="Hold to talk">
+    [disabled]="disabled"
+    [attr.aria-pressed]="(state$ | async) === 'listening'"
+    (click)="onTap()"
+    [attr.aria-label]="(state$ | async) === 'listening' ? 'Stop voice input' : 'Start voice input'">
 
     <!-- listening: pulsing mic -->
     <svg *ngIf="(state$ | async) === 'listening'" class="pulse-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
@@ -33,12 +35,13 @@
     </svg>
   </button>
 
-  <div class="mic-label">
-    <ng-container [ngSwitch]="state$ | async">
-      <ng-container *ngSwitchCase="'listening'">Listening… release to send</ng-container>
-      <ng-container *ngSwitchCase="'processing'">Thinking…</ng-container>
-      <ng-container *ngSwitchCase="'speaking'">Speaking…</ng-container>
-      <ng-container *ngSwitchDefault>Hold to talk to {{ character.name }}</ng-container>
-    </ng-container>
-  </div>
+  @if ((state$ | async) !== 'idle') {
+    <div class="mic-label">
+      <ng-container [ngSwitch]="state$ | async">
+        <ng-container *ngSwitchCase="'listening'">Listening… tap to stop</ng-container>
+        <ng-container *ngSwitchCase="'processing'">Thinking…</ng-container>
+        <ng-container *ngSwitchCase="'speaking'">Speaking…</ng-container>
+      </ng-container>
+    </div>
+  }
 </div>

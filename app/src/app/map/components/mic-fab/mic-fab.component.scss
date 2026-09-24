@@ -1,93 +1,140 @@
-.mic-wrap {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--nb-tabbar-h) + 94px);
-  z-index: 860;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  pointer-events: none;
-
-  > * {
-    pointer-events: auto;
-  }
+:host {
+  display: block;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
 }
 
-.mic-fab {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  border: none;
-  background: var(--ion-color-primary);
-  color: #fff;
+.mic-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
-  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.mic-fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid var(--nb-glass-border);
+  background: var(--nb-glass-strong);
+  color: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--nb-shadow-soft);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-backdrop-filter: var(--nb-blur);
+  backdrop-filter: var(--nb-blur);
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 
   &:active {
     transform: scale(0.94);
   }
 
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ion-color-primary);
+    outline-offset: 2px;
+  }
+
   &.listening {
-    background: var(--ion-color-danger);
-    box-shadow: 0 8px 24px rgba(255, 59, 48, 0.45);
+    background: rgba(0, 122, 255, 0.16);
+    border-color: rgba(0, 122, 255, 0.28);
+    color: var(--ion-color-primary);
+    box-shadow: 0 8px 22px rgba(0, 122, 255, 0.22);
     animation: mic-pulse 1.4s ease-out infinite;
   }
 
   &.processing {
-    background: rgba(142, 142, 147, 0.9);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    background: rgba(142, 142, 147, 0.92);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
   }
 
   &.speaking {
     background: var(--ion-color-tertiary);
-    box-shadow: 0 8px 24px rgba(175, 82, 222, 0.45);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(175, 82, 222, 0.32);
   }
 }
 
 @keyframes mic-pulse {
   0% {
-    box-shadow: 0 8px 24px rgba(255, 59, 48, 0.45), 0 0 0 0 rgba(255, 59, 48, 0.5);
+    box-shadow: 0 8px 22px rgba(0, 122, 255, 0.22), 0 0 0 0 rgba(0, 122, 255, 0.28);
   }
   70% {
-    box-shadow: 0 8px 24px rgba(255, 59, 48, 0.45), 0 0 0 18px rgba(255, 59, 48, 0);
+    box-shadow: 0 8px 22px rgba(0, 122, 255, 0.22), 0 0 0 16px rgba(0, 122, 255, 0);
   }
   100% {
-    box-shadow: 0 8px 24px rgba(255, 59, 48, 0.45), 0 0 0 0 rgba(255, 59, 48, 0);
+    box-shadow: 0 8px 22px rgba(0, 122, 255, 0.22), 0 0 0 0 rgba(0, 122, 255, 0);
   }
 }
 
 .spinner {
   animation: spin 0.9s linear infinite;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .mic-fab.listening,
+  .spinner {
+    animation: none;
+  }
+}
+
 .mic-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ion-text-color);
-  background: var(--nb-glass);
-  -webkit-backdrop-filter: var(--nb-blur);
-  backdrop-filter: var(--nb-blur);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 5px 10px;
   border: 0.5px solid var(--nb-glass-border);
   border-radius: 999px;
-  padding: 5px 14px;
+  background: var(--nb-glass-strong);
+  box-shadow: var(--nb-shadow-soft);
+  color: var(--ion-text-color);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .partial {
-  max-width: 86vw;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 43px);
+  z-index: 2;
+  max-width: 220px;
+  transform: translateX(-50%);
+  border: 0.5px solid var(--nb-glass-border);
   border-radius: 14px;
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 7px 11px;
+  background: var(--nb-glass-strong);
+  box-shadow: var(--nb-shadow-soft);
   color: var(--ion-text-color);
+  font-size: 13px;
+  font-weight: 600;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }

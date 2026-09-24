@@ -13,12 +13,12 @@
   </app-nav-banner>
 
   <app-search-bar
-    *ngIf="(navState$ | async)?.phase === 'idle'"
+    *ngIf="(navState$ | async)?.phase === 'idle' && !chatOpen"
     (placeSelected)="onPlaceSelected($event)">
   </app-search-bar>
 
   <!-- weather chip sits below the search pill -->
-  <div class="weather-chip nb-glass-soft" *ngIf="(weather$ | async) && (navState$ | async)?.phase === 'idle'">
+  <div class="weather-chip nb-glass-soft" *ngIf="!chatOpen && (weather$ | async) && (navState$ | async)?.phase === 'idle'">
     {{ (weather$ | async)?.description }} · {{ (weather$ | async)?.temp }}°
   </div>
 
@@ -28,7 +28,7 @@
   </div>
 
   <!-- right: recenter -->
-  <button class="recenter nb-glass" *ngIf="(navState$ | async)?.phase === 'idle'" (click)="recenter()"
+  <button class="recenter nb-glass" *ngIf="(navState$ | async)?.phase === 'idle' && !chatOpen" (click)="recenter()"
           aria-label="Recenter map">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
          stroke-linecap="round" stroke-linejoin="round">
@@ -42,7 +42,7 @@
   </button>
 
   <!-- no GPS fix yet: never fake a location, invite the user to enable it -->
-  <button class="gps-pill nb-glass" *ngIf="!(hasFix$ | async) && (navState$ | async)?.phase === 'idle'"
+  <button class="gps-pill nb-glass" *ngIf="!chatOpen && !(hasFix$ | async) && (navState$ | async)?.phase === 'idle'"
           (click)="enableLocation()">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
          stroke-linecap="round" stroke-linejoin="round">
@@ -59,28 +59,27 @@
 
   <!-- bottom: route preview -->
   <app-route-preview
-    *ngIf="(navState$ | async)?.phase === 'preview'"
+    *ngIf="(navState$ | async)?.phase === 'preview' && !chatOpen"
     (onStart)="onStartNav()"
     (onCancel)="onCancelNav()">
   </app-route-preview>
 
-  <!-- bottom: mini chat preview (idle, sheet closed) -->
-  <div class="chat-mini nb-glass" *ngIf="(navState$ | async)?.phase === 'idle' && !chatOpen" (click)="openChat()">
-    <img class="chat-mini-avatar" [src]="character.avatar" [alt]="character.name" />
-    <div class="chat-mini-text">
-      <div class="chat-mini-name">{{ character.name }}</div>
-      <div class="chat-mini-preview">{{ character.greeting }}</div>
-    </div>
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"
-         stroke-linecap="round" stroke-linejoin="round" class="chat-mini-chevron">
-      <polyline points="6 9 12 15 18 9"></polyline>
-    </svg>
+  <div class="assistant-dock" *ngIf="!chatOpen && !isTraveling && !aiThinking && (navState$ | async)?.phase === 'idle'">
+    <button class="chat-mini nb-glass" type="button"
+            [disabled]="chatLocked" [attr.aria-label]="'Open chat with ' + character.name" (click)="openChat()">
+      <img class="chat-mini-avatar" [src]="character.avatar" [alt]="character.name" />
+      <span class="chat-mini-text">
+        <span class="chat-mini-name">{{ character.name }}</span>
+        <span class="chat-mini-preview">{{ character.greeting }}</span>
+      </span>
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1"
+           stroke-linecap="round" stroke-linejoin="round" class="chat-mini-chevron">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </button>
+
+    <app-mic-fab [disabled]="chatLocked" (voiceToggle)="onMicToggle()"></app-mic-fab>
   </div>
 
-  <!-- chat sheet -->
-  <app-chat-sheet [open]="chatOpen" (closed)="chatOpen = false"></app-chat-sheet>
-
-  <!-- mic FAB: HOLD to talk — opens the chat and records until release -->
-  <app-mic-fab *ngIf="!chatOpen && (navState$ | async)?.phase !== 'preview'"
-               (pressStart)="onMicPress()" (pressEnd)="onMicRelease()"></app-mic-fab>
+  <app-chat-sheet [open]="chatOpen" [locked]="isTraveling" (closed)="onChatClosed()"></app-chat-sheet>
 </ion-content>

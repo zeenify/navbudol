@@ -1,8 +1,8 @@
 import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { GpsPosition, LatLng, NavState, RouteResult } from '../models';
-import { distanceToPolylineM, formatDistance, haversineM, shortDistance } from '../geo.utils';
+import { GpsPosition, LatLng, NavState, RouteResult, RouteStep } from '../models';
+import { distanceToPolylineM, haversineM, shortDistance } from '../geo.utils';
 import { LocationService } from './location.service';
 import { RoutingService } from './routing.service';
 
@@ -16,12 +16,12 @@ export class NavigationService {
   readonly navState$ = new BehaviorSubject<NavState>(this.idleState());
   /** Voice alert texts — the voice layer speaks these without any AI call. */
   readonly alerts$ = new Subject<string>();
+  readonly started$ = new Subject<{ destination: string }>();
+  readonly arrived$ = new Subject<{ destination: string }>();
 
   private route: RouteResult | null = null;
   private currentStepIndex = 0;
   private offRouteCount = 0;
-  private alert200mFired = false;
-  private alert50mFired = false;
   private gpsSub: Subscription | null = null;
   private rerouting = false;
 
@@ -39,30 +39,37 @@ export class NavigationService {
     this.route = route;
     this.currentStepIndex = 0;
     this.offRouteCount = 0;
-    this.alert200mFired = false;
-    this.alert50mFired = false;
+    const nextIndex = this.nextManeuverIndex(0);
+    const nextStep = nextIndex === null ? null : route.steps[nextIndex];
+    const start = route.geometry[0];
+    const nextDistance = nextStep && start ? haversineM(start, nextStep.location) : 0;
     this.emit({
       phase: 'preview',
       route,
       currentStepIndex: 0,
       remainingDistanceM: route.distanceM,
       remainingDurationS: route.durationS,
-      distanceToNextManeuverM: 0,
-      nextInstruction: route.steps[0]?.instruction ?? '',
-      nextManeuverType: route.steps[0]?.maneuverType ?? '',
-      nextManeuverModifier: route.steps[0]?.maneuverModifier ?? '',
+      distanceToNextManeuverM: nextDistance,
+      nextInstruction: nextStep?.instruction ?? '',
+      nextManeuverType: nextStep?.maneuverType ?? '',
+      nextManeuverModifier: nextStep?.maneuverModifier ?? '',
     });
   }
 
   startNavigation(): void {
-    if (!this.route) return;
-    if (this.phase === 'navigating') return;
-    this.alerts$.next('Navigation started');
+    const route = this.route;
+    if (!route || this.phase === 'navigating') return;
     this.gpsSub?.unsubscribe();
     this.gpsSub = this.location.position$.subscribe((pos) =>
       this.zone.run(() => this.onPositionUpdate(pos))
     );
-    this.emit({ ...this.navState$.value, phase: 'navigating' });
+    if (!this.route) return;
+    const start = route.geometry[0];
+    const nextIndex = this.nextManeuverIndex(this.currentStepIndex + 1);
+    const nextStep = nextIndex === null ? null : route.steps[nextIndex];
+    const nextDistance = nextStep && start ? haversineM(start, nextStep.location) : 0;
+    this.emit(this.snapshot(nextDistance));
+    this.started$.next({ destination: route.destination.name });
   }
 
   stopNavigation(): void {
@@ -94,15 +101,20 @@ export class NavigationService {
     }
     this.offRouteCount = 0;
 
-    // 2. Distance to the NEXT maneuver point
-    const nextStep = route.steps[this.currentStepIndex + 1] ?? route.steps[0];
-    if (!nextStep) return;
+    const nextIndex = this.nextManeuverIndex(this.currentStepIndex + 1);
+    if (nextIndex === null) {
+      if (haversineM(pos, route.destination) < environment.arrivalThresholdM) {
+        this.arrived$.next({ destination: route.destination.name });
+        this.stopNavigation();
+      }
+      return;
+    }
+    const nextStep = route.steps[nextIndex];
 
-    if (this.currentStepIndex + 1 >= route.steps.length) {
-      // On the last step — check arrival instead.
+    if (nextIndex === route.steps.length - 1 && nextStep.maneuverType.toLowerCase().includes('arrive')) {
       const dest = route.destination;
       if (haversineM(pos, dest) < environment.arrivalThresholdM) {
-        this.alerts$.next('You have arrived at your destination!');
+        this.arrived$.next({ destination: route.destination.name });
         this.stopNavigation();
         return;
       }
@@ -110,24 +122,15 @@ export class NavigationService {
 
     const distToManeuver = haversineM(pos, nextStep.location);
 
-    // 3. Proximity voice alerts
-    if (distToManeuver < environment.alertDistance1M && !this.alert200mFired) {
-      this.alert200mFired = true;
-      this.alerts$.next(`In ${formatDistance(distToManeuver)}, ${this.stripYou(nextStep.instruction)}`);
-    }
-    if (distToManeuver < environment.alertDistance2M && !this.alert50mFired) {
-      this.alert50mFired = true;
-      this.alerts$.next(`${this.stripYou(nextStep.instruction)} now`);
-    }
-
-    // 4. Advance step
+    let displayDistance = distToManeuver;
     if (distToManeuver < environment.stepAdvanceM) {
-      this.currentStepIndex++;
-      this.alert200mFired = false;
-      this.alert50mFired = false;
+      this.currentStepIndex = Math.max(this.currentStepIndex, nextIndex);
+      const followingIndex = this.nextManeuverIndex(this.currentStepIndex + 1);
+      const followingStep = followingIndex === null ? null : route.steps[followingIndex];
+      displayDistance = followingStep ? haversineM(pos, followingStep.location) : 0;
     }
 
-    this.emit(this.snapshot(distToManeuver));
+    this.emit(this.snapshot(displayDistance));
   }
 
   private async reroute(pos: LatLng): Promise<void> {
@@ -151,9 +154,33 @@ export class NavigationService {
 
   // --- helpers -------------------------------------------------------------
 
+  private nextManeuverIndex(startIndex: number): number | null {
+    const route = this.route;
+    if (!route) return null;
+    for (let i = Math.max(0, startIndex); i < route.steps.length; i++) {
+      if (this.isMeaningfulManeuver(route.steps[i])) return i;
+    }
+    return null;
+  }
+
+  private isMeaningfulManeuver(step: RouteStep): boolean {
+    const type = `${step.maneuverType} ${step.maneuverModifier}`.toLowerCase();
+    return (
+      type.includes('left') ||
+      type.includes('right') ||
+      type.includes('merge') ||
+      type.includes('fork') ||
+      type.includes('ramp') ||
+      type.includes('roundabout') ||
+      type.includes('rotary') ||
+      type.includes('arrive')
+    );
+  }
+
   private snapshot(distToManeuver: number): NavState {
     const route = this.route!;
-    const nextStep = route.steps[this.currentStepIndex + 1];
+    const nextIndex = this.nextManeuverIndex(this.currentStepIndex + 1);
+    const nextStep = nextIndex === null ? route.steps[route.steps.length - 1] : route.steps[nextIndex];
     const done = this.currentStepIndex >= 0 ? route.steps[this.currentStepIndex] : null;
     const traveled = done ? done.cumulativeDistanceM - done.distanceM : 0;
     return {
@@ -188,10 +215,6 @@ export class NavigationService {
       nextManeuverType: '',
       nextManeuverModifier: '',
     };
-  }
-
-  private stripYou(instruction: string): string {
-    return instruction.replace(/you have arrived.*/i, 'arrive');
   }
 
   /** For the AI's get_trip_status function. */

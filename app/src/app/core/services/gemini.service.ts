@@ -10,6 +10,7 @@ import {
   GeminiPart,
   MapEvent,
   PlaceResult,
+  RouteResult,
 } from '../models';
 import { formatDistance, formatDuration, haversineM } from '../geo.utils';
 import { buildSystemPrompt, PromptContext } from '../constants/prompts';
@@ -157,6 +158,7 @@ export class GeminiService {
   async chat(userText: string): Promise<string> {
     const text = userText.trim();
     if (!text) return '';
+    if (this.thinking$.value) return '';
 
     // Shortcut: a place list is on the table and the user picked one
     // ("the nearest", "the second one", "2") — no AI roundtrip needed.
@@ -164,8 +166,12 @@ export class GeminiService {
       const picked = this.matchChoicePick(text);
       if (picked) {
         this.pushDisplay({ role: 'user', text });
-        const reply = await this.routeToChoice(picked);
-        return reply;
+        this.thinking$.next(true);
+        try {
+          return await this.routeToChoice(picked);
+        } finally {
+          this.thinking$.next(false);
+        }
       }
     }
 
@@ -174,6 +180,7 @@ export class GeminiService {
     const avatar = this.characters.getSelected().avatar;
     // One transient "thinking" bubble (avatar + dots) that follows the work:
     // plain dots while the model writes, status text while a tool runs.
+    this.thinking$.next(true);
     this.thinkingLabel$.next('');
 
     try {
@@ -270,35 +277,59 @@ export class GeminiService {
   }
 
   /** Render what a place search turned up, and remember it for a pick. */
-  private presentPlaces(results: PlaceResult[]): void {
+  private async presentPlaces(results: PlaceResult[]): Promise<void> {
     if (results.length === 0) return;
-    this.pendingChoice = results.length > 1 ? results : null;
     const avatar = this.characters.getSelected().avatar;
+    if (results.length === 1) {
+      this.thinkingLabel$.next('Preparing your route…');
+      const route = await this.chatActions.routeToPlace(results[0]);
+      if (route) {
+        this.pendingChoice = null;
+        this.pendingDisplay.push({
+          role: 'model',
+          text: '',
+          kind: 'route',
+          avatar,
+          route: this.routeCardData(results[0], route),
+        });
+        return;
+      }
+    }
+    this.pendingChoice = results.length > 1 ? results : null;
     this.pendingDisplay.push({ role: 'model', text: '', kind: 'places', places: results, avatar });
   }
 
-  /** Route to a chosen place and show the ready-to-start trip card. */
-  private async routeToChoice(place: PlaceResult, jumpToMap = true): Promise<string> {
+  private async routeToChoice(place: PlaceResult, messageId?: number): Promise<string> {
     const avatar = this.characters.getSelected().avatar;
-    this.pushDisplay({ role: 'model', text: `Taking you to ${place.name}.`, avatar });
-    const info = await this.chatActions.routeToPlace(place);
-    if (!info) return 'I could not find a route there.';
+    const route = await this.chatActions.routeToPlace(place);
+    if (!route) return 'I could not find a route there.';
     this.pendingChoice = null;
-    this.pushDisplay({
-      role: 'model',
-      text: '',
-      kind: 'route',
-      avatar,
-      route: { destination: place, distanceM: info.distanceM, durationS: info.durationS, source: info.source, profile: info.profile },
-    });
-    if (jumpToMap) await this.chatActions.showOnMap();
-    return `Route to ${place.name} is ready. Tap start when you're ready to go.`;
+    const routeData = this.routeCardData(place, route);
+    if (messageId !== undefined) {
+      this.messages$.next(
+        this.messages$.value.map((message) =>
+          message.id === messageId
+            ? { ...message, kind: 'route' as const, text: '', places: undefined, route: routeData }
+            : message
+        )
+      );
+    } else {
+      this.pushDisplay({ role: 'model', text: '', kind: 'route', avatar, route: routeData });
+    }
+    return `Route to ${place.name} is ready.`;
   }
 
   /** The user tapped a place in a result card. */
-  async choosePlace(place: PlaceResult): Promise<void> {
+  async choosePlace(place: PlaceResult, messageId?: number): Promise<boolean> {
+    if (this.thinking$.value) return false;
     this.pushDisplay({ role: 'user', text: place.name });
-    await this.routeToChoice(place);
+    this.thinking$.next(true);
+    try {
+      const result = await this.routeToChoice(place, messageId);
+      return !result.startsWith('I could not');
+    } finally {
+      this.thinking$.next(false);
+    }
   }
 
   /** Chat route card: start navigation (jumps to the map). */
@@ -344,13 +375,13 @@ export class GeminiService {
           const query = String(fc.args['query'] ?? '');
           const results = await this.places.search(query, pos, 5);
           this.mapEvents$.next({ type: 'places', places: results });
-          this.presentPlaces(results);
+          await this.presentPlaces(results);
           return {
             results: results.map((p) => this.placeSummary(p)),
             note:
               results.length > 1
                 ? 'Several matching places were shown to the user as a list. Ask which one to navigate to.'
-                : undefined,
+                : 'One place was found and its route is already ready. The user should open it from the route card; do not ask whether to plot it.',
           };
         }
         case 'find_nearby_places': {
@@ -368,13 +399,13 @@ export class GeminiService {
             }
           }
           this.mapEvents$.next({ type: 'places', places: results });
-          this.presentPlaces(results);
+          await this.presentPlaces(results);
           return {
             results: results.map((p) => this.placeSummary(p)),
             note:
               results.length > 1
                 ? 'Several matching places were shown to the user as a list. Ask which one to navigate to.'
-                : undefined,
+                : 'One place was found and its route is already ready. The user should open it from the route card; do not ask whether to plot it.',
           };
         }
         case 'get_directions': {
@@ -403,13 +434,7 @@ export class GeminiService {
             text: '',
             kind: 'route',
             avatar: this.characters.getSelected().avatar,
-            route: {
-              destination: dest,
-              distanceM: route.distanceM,
-              durationS: route.durationS,
-              source: route.source,
-              profile: route.profile,
-            },
+            route: this.routeCardData(dest, route),
           });
           return {
             route_found: true,
@@ -458,6 +483,18 @@ export class GeminiService {
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) };
     }
+  }
+
+  private routeCardData(destination: PlaceResult, route: RouteResult) {
+    return {
+      destination,
+      distanceM: route.distanceM,
+      durationS: route.durationS,
+      source: route.source,
+      profile: route.profile,
+      geometry: route.geometry,
+      ascentM: route.ascentM,
+    };
   }
 
   private placeSummary(p: PlaceResult): Record<string, unknown> {

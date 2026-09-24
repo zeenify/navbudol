@@ -28,7 +28,7 @@ import {
       span {
         width: 2.5px;
         border-radius: 2px;
-        background: rgba(235, 235, 245, 0.72);
+         background: var(--ion-text-color);
         transition: height 0.09s linear;
       }
     `,

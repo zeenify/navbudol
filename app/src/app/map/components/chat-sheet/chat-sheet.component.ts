@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { CharacterService } from '../../../core/services/character.service';
 import { GeminiService } from '../../../core/services/gemini.service';
 import { SpeechService } from '../../../core/services/speech.service';
@@ -12,15 +12,14 @@ import { VoiceAssistantService } from '../../../core/services/voice-assistant.se
   styleUrls: ['./chat-sheet.component.scss'],
   standalone: false,
 })
-export class ChatSheetComponent {
+export class ChatSheetComponent implements OnDestroy {
   @Input() open = false;
+  @Input() locked = false;
   @Output() closed = new EventEmitter<void>();
 
   draft = '';
   readonly voiceState$ = this.voice.state$;
   readonly partial$ = this.speech.partial$;
-
-  private holding = false;
 
   constructor(
     public characters: CharacterService,
@@ -34,33 +33,49 @@ export class ChatSheetComponent {
     return this.characters.getSelected();
   }
 
+  get isLocked(): boolean {
+    return this.locked || this.gemini.thinking$.value;
+  }
+
+  get lockLabel(): string {
+    return this.locked ? 'Cancel navigation to chat' : 'AI is thinking…';
+  }
+
   async send(): Promise<void> {
     const text = this.draft.trim();
-    if (!text) return;
+    if (!text || this.isLocked) return;
     this.draft = '';
     const reply = await this.gemini.chat(text);
     if (reply) void this.tts.speak(reply, this.character);
   }
 
-  onMicDown(event: Event): void {
-    event.preventDefault();
-    if (this.holding) return;
-    this.holding = true;
-    void this.voice.beginPushToTalk();
+  onMicTap(): void {
+    if (this.isLocked) return;
+    if (this.voice.state === 'listening') {
+      void this.voice.stopTapToTalk();
+      return;
+    }
+    void this.voice.startTapToTalk();
   }
 
-  // Release anywhere ends the recording.
-  @HostListener('document:pointerup')
-  @HostListener('document:pointercancel')
-  onMicUp(): void {
-    if (!this.holding) return;
-    this.holding = false;
-    void this.voice.endPushToTalk();
+  stopMic(): void {
+    void this.voice.stopTapToTalk();
+  }
+
+  cancelMic(): void {
+    this.voice.cancelTapToTalk();
+  }
+
+  sendMic(): void {
+    void this.voice.stopTapToTalk();
   }
 
   close(): void {
-    // Releasing the mic / closing while recording shouldn't leave it live.
     if (this.voice.state === 'listening') this.voice.deactivate();
     this.closed.emit();
+  }
+
+  ngOnDestroy(): void {
+    if (this.voice.state === 'listening') this.voice.cancelTapToTalk();
   }
 }
