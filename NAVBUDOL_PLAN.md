@@ -35,6 +35,7 @@
 - [13. Risks & Mitigations](#13-risks--mitigations)
 - [14. Demo Day Script](#14-demo-day-script)
 - [15. What to Say When the Professor Asks Questions](#15-what-to-say-when-the-professor-asks-questions)
+- [16. Community Layer — Places & Reports](#16-community-layer--places--reports)
 
 ---
 
@@ -113,6 +114,7 @@ scoped to a real municipality — General Tinio (Papaya), Nueva Ecija.
 | **Backend** | Python FastAPI, local — Gemini proxy + TTS proxy with MP3 cache |
 | **Routing** | OSRM + OpenRouteService as fallback |
 | **Place search** | Photon (geocoding) + Overpass (POI "nearest X") |
+| **Community layer** | Places + expiring reports on places and roads, presence-weighted confirms, AI reasons over them. Shared locations are built; reports are design-only — see [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md) |
 | **Map** | Leaflet + OpenStreetMap tiles |
 | **Total cost** | $0 |
 
@@ -2104,11 +2106,54 @@ A: "The extra hop is phone-to-laptop — a few milliseconds over USB. TTS
    API keys off the device."
 
 Q: "What makes this different from Google Maps?"
-A: "Three things: (1) You can have a real conversation with it — 'I'm
-   hungry, where can I eat?' and it understands your context. (2) The
-   character system — different AI personalities with different voices.
-   (3) It's built entirely on free, open-source infrastructure."
+A: "Google Maps is a global index of places. Ours is a local index of
+   knowledge Google structurally can't hold — a farm, a house, a waiting
+   shed — plus facts that expire: this road floods, there's a checkpoint
+   at the bridge, the tricycle to the market is ₱15. Google's place policy
+   rejects non-public places, and their moderation is centralized, so a
+   barangay's informal layer will never be in their index. Then the AI
+   reads those reports and makes the call — mention it, suggest another
+   route, or actually route around it. Google shows you a pin and leaves
+   the decision to you."
+
+Q: "Isn't this just Waze? Community reports and confirmations are old."
+A: "Waze proved the loop works — community reports with thumbs-up confirms
+   and automatic expiry — and that's exactly why we're confident in it
+   instead of claiming it as new. What Waze doesn't do is reason over the
+   reports: it puts an icon on the map and leaves you to decide while
+   driving. Ours weights confirmations by whether the person was
+   physically there, and the AI combines the reports with your request,
+   the weather, and your route to make a recommendation. Waze also only
+   covers roads; ours attaches knowledge to places — cheap, has aircon,
+   sells imported ramen — which no filter UI can express. Filters are
+   finite; conversation isn't."
 ```
+
+---
+
+## 16. Community Layer — Places & Reports
+
+**Design only — not built.** Full plan: [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md).
+
+The differentiator this project actually owns. The map, the routing, and the model are
+all rented from free tiers — Google rents the same model — so the only defensible asset
+is local knowledge a global index cannot hold, and the AI is what makes it usable.
+
+- **A place is a noun. A report is a sentence with a timestamp.** One record shape,
+  two flavors, one add flow. Shelf life is a field: a flood report lasts hours, a
+  "₱15 tricycle fare" lasts months.
+- **Confirmations are weighted by physical presence** ("my GPS was there"), not by
+  likes. Popularity is not truth.
+- **The AI retrieves, then decides:** mention it, suggest an alternative, or reroute
+  around it (ORS `avoid_polygons`). It may only *reroute* on a presence-confirmed
+  report — a single unverified note must never change someone's route.
+- **Hard limit:** attributes of a *place* are open season; accusations about *people*
+  are not. Defamation risk is real in a town this size, and an AI repeating a claim
+  makes the app the speaker.
+
+Honest framing for the defense: community reporting is not new (Waze ~2010, OSM Notes
+2013, Foursquare Tips). What is new is the AI *reasoning over* perishable local reports
+instead of dropping a pin and leaving the decision to the driver.
 
 ---
 
@@ -2124,6 +2169,7 @@ Backend:    FastAPI (local) — key vault, /api/chat, /api/tts + MP3 cache
 Voice In:   Native speech recognition (Android/iOS)
 Voice Out:  Fish Audio TTS — 7 anime voices (IDs ready); NavBuddy on system TTS for now
 Characters: "Act like {character} from {series}" — the LLM knows them
+Community:  Places + expiring reports, presence-weighted confirms (design — COMMUNITY_REPORTS_PLAN.md)
 Demo:       Simulated walk mode for indoor presentation
 Cost:       ₱0
 

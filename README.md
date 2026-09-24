@@ -5,12 +5,14 @@ Waze-style live navigation, an AI co-pilot that controls the map, and a cast of
 anime characters with real Fish Audio voices. Apple-clean design throughout.
 
 > Full blueprint: [NAVBUDOL_PLAN.md](./NAVBUDOL_PLAN.md)
+> Community layer (design, not built yet): [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md)
 
 ## Layout
 
 ```
 navbudol/
 ├── NAVBUDOL_PLAN.md      the full plan (architecture, phases, API cheatsheets)
+├── COMMUNITY_REPORTS_PLAN.md   the community layer — places, reports, trust, AI reasoning
 ├── assets/characters/    original copies — portraits + voices.json (Fish Audio voice IDs)
 ├── backend/              FastAPI proxies — ALL keys live here (gitignored .env):
 │                         /api/chat (Gemini 3.5 Flash Lite)  /api/tts (Fish Audio + MP3 cache)
@@ -28,6 +30,11 @@ navbudol/
 - **AI**: Gemini 3.5 Flash Lite with function calling — it searches places, plots routes, starts/stops navigation, reads trip status, and reports the weather
 - **Voice**: Fish Audio voices (7 anime cast members, real voice IDs) + system-TTS fallback; MP3 cache on the backend
 - **Isochrones**: the 10′ button draws a 10-minute walking range around you
+- **Community locations**: anyone can drop a pin, name it, and it shows up in
+  everyone's search (shared index in the backend, 20 km General Tinio fence).
+  The next layer — expiring *reports* on places and roads ("this road floods",
+  "the tricycle ride here is ₱15") that the AI reasons over and can route
+  around — is designed but **not built**: [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md)
 
 ## Run it
 
