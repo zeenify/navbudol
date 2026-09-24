@@ -1,13 +1,16 @@
 # NavBudol — Community Reports Plan
 
-> **Status: design only — not built.**
-> The shared-location foundation exists in the working tree
-> (`backend/routers/locations.py`, `app/src/app/core/service-area.ts`,
-> `addSharedLocation()` in `places.service.ts`). The reports, trust, and
-> AI-reasoning layers described below are the next build.
+> **Status: implemented at case-study scope (2026-09-25).** All six build-order
+> steps are live: the report store with kinds/expiry/presence-weighted confirms,
+> the search-bar composer, map pins with confirm/dispute/retire, AI retrieval +
+> prompt awareness, rerouting around presence-confirmed reports via ORS
+> `avoid_polygons` (verified on driving **and** foot-walking), and the
+> rain-triggered one-tap flood confirm.
 >
-> **Scope: a case study / capstone feature, not a production platform.**
-> Read "Out of scope" and "Deferred problems" before adding anything to it.
+> Still true by design: no accounts, no reputation/ban infrastructure, no
+> comment threads, JSON-file store, one municipality. The "Out of scope" and
+> "Deferred problems" sections remain the standing decision record — read them
+> before "fixing" any of it.
 
 ---
 

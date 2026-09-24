@@ -4,7 +4,7 @@
 
 - This repository is two independent apps: `app/` is the Angular/Ionic/Capacitor client and `backend/` is a FastAPI service. There is no root package, workspace, task runner, CI workflow, or shared test command; run commands from the owning directory.
 - Treat `README.md` and `NAVBUDOL_PLAN.md` as intent/history, not current architecture. Verify versions, routes, data contracts, and rosters in `app/package.json`, `app/angular.json`, and source. The docs already drift (for example, the README says Ionic 8 while the manifest is Ionic 9, and its roster does not match `app/src/app/core/constants/characters.ts`).
-- `COMMUNITY_REPORTS_PLAN.md` is a **design document**, not a description of built behavior. Only the shared-location half exists (`backend/routers/locations.py`, `app/src/app/core/service-area.ts`, `PlacesService.addSharedLocation`); reports, expiry, presence-weighted confirms, and report-aware rerouting are unimplemented. Do not infer those features from the plan when reading the code.
+- `COMMUNITY_REPORTS_PLAN.md` is the design record for the community layer. The shared-location half (`backend/routers/locations.py`, `app/src/app/core/service-area.ts`, `PlacesService.addSharedLocation`) and the reports half (reports with kinds/expiry, presence-weighted confirms in `ReportsService`, AI retrieval/mention in `gemini.service.ts`, reroute via ORS `avoid_polygons`, the rain-triggered flood confirm) are both implemented at case-study scope. Deliberately absent: accounts, reputation/ban systems, comment threads, a real database (`backend/data/user_reports.json` is a gitignored JSON store), and multi-town support — do not add those without revisiting the plan's "Out of scope" section.
 
 ## Toolchain and verification
 

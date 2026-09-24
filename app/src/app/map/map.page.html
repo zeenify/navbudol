@@ -22,6 +22,18 @@
     {{ (weather$ | async)?.description }} · {{ (weather$ | async)?.temp }}°
   </div>
 
+  <!-- rain + a flood report nearby: one-tap confirm -->
+  @if (floodPrompt; as fp) {
+    <div class="flood-prompt nb-glass-soft">
+      <div class="flood-prompt-main">
+        <div class="flood-prompt-title">🌧 Neighbor reported flooding nearby</div>
+        <div class="flood-prompt-sub">"{{ fp.text }}" — still flooded?</div>
+      </div>
+      <button class="flood-prompt-yes" type="button" (click)="confirmFloodPrompt()">Still flooded</button>
+      <button class="flood-prompt-dismiss" type="button" (click)="dismissFloodPrompt()" aria-label="Dismiss">×</button>
+    </div>
+  }
+
   <!-- simulation chip -->
   <div class="sim-chip nb-glass-soft" *ngIf="simulating$ | async">
     <span class="sim-dot"></span> Simulated
