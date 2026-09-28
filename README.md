@@ -51,10 +51,10 @@ venv/Scripts/pip install -r requirements.txt   # once
 # paste your keys into backend/.env:
 #   GEMINI_API_KEY=...   ← AI Studio (confirm the exact model id there too)
 #   FISH_API_KEY=...
-venv/Scripts/python -m uvicorn main:app --port 8000
+venv/Scripts/python -m uvicorn main:app --port 8010
 ```
 
-Check: `curl http://localhost:8000/api/health` → `{"ok":true, ...}`
+Check: `curl http://localhost:8010/api/health` → `{"ok":true, ...}`
 (`gemini_key_set` / `fish_key_set` stay `false` until real keys are in `.env`.)
 
 ### 2. App in the browser (second terminal)
@@ -82,10 +82,10 @@ npx cap open android         # → Build APK in Android Studio
 Phone connected by USB? Route the app to the laptop's backend with **no WiFi needed**:
 
 ```bash
-adb reverse tcp:8000 tcp:8000
+adb reverse tcp:8010 tcp:8010
 ```
 
-The app talks to `http://localhost:8000` on both browser and device thanks to that
+The app talks to `http://localhost:8010` on both browser and device thanks to that
 reverse (or `10.0.2.2` on an emulator). Debug APK lands in
 `app/android/app/build/outputs/apk/debug/app-debug.apk`.
 
@@ -98,7 +98,7 @@ Reze, Horikita** — all with working Fish Audio voice IDs from
 
 ## Demo-day checklist
 
-1. `uvicorn main:app --port 8000` (backend)
-2. `adb reverse tcp:8000 tcp:8000` (USB to phone)
+1. `uvicorn main:app --port 8010` (backend)
+2. `adb reverse tcp:8010 tcp:8010` (USB to phone)
 3. Settings → Developer → **Simulated Walk ON** (indoor demo)
 4. Pick Gojo 🍿 — say *"Gojo, take me to the municipal hall"*

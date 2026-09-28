@@ -1,7 +1,8 @@
 export const environment = {
   production: true,
 
-  backendBaseUrl: 'http://localhost:8000',
+  // 8000 is taken by a PHP dev server on the dev machine — backend lives on 8010.
+  backendBaseUrl: 'http://localhost:8010',
 
   osrmBaseUrl: 'https://router.project-osrm.org',
   photonBaseUrl: 'https://photon.komoot.io',

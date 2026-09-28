@@ -3,9 +3,10 @@ export const environment = {
 
   // === Backend (the ONLY private API surface) ===
   // Keys live in backend/.env — GEMINI_API_KEY + FISH_API_KEY. Never here.
-  // Android device: same URL thanks to `adb reverse tcp:8000 tcp:8000`
-  // Android emulator: 'http://10.0.2.2:8000'
-  backendBaseUrl: 'http://localhost:8000',
+  // Android device: same URL thanks to `adb reverse tcp:8010 tcp:8010`
+  // Android emulator: 'http://10.0.2.2:8010'
+  // (Port 8010 — 8000 is taken by a PHP dev server on this machine.)
+  backendBaseUrl: 'http://localhost:8010',
 
   // === Free geo stack (no keys) ===
   osrmBaseUrl: 'https://router.project-osrm.org',

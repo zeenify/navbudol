@@ -13,7 +13,7 @@
   ```powershell
   python -m venv venv
   .\venv\Scripts\python.exe -m pip install -r requirements.txt
-  .\venv\Scripts\python.exe -m uvicorn main:app --port 8000
+  .\venv\Scripts\python.exe -m uvicorn main:app --port 8010
   ```
   Run it from `backend/`: `main.py` uses top-level imports (`routers` and `services`).
 - Frontend setup and checks (from `app/`): `npm install` (or lockfile-based `npm ci`), `npx ng serve --port 8300`, `npm run lint`, `npm test -- --watch=false`, and `npx tsc --noEmit -p tsconfig.app.json`. There is no `typecheck`, formatter, or backend-test script; use the explicit commands instead.
@@ -27,7 +27,7 @@
 - The Gemini function-calling loop lives on the device in `app/src/app/core/services/gemini.service.ts`; `backend/services/gemini_client.py` is a stateless proxy. Do not move tool execution into the backend.
 - Gemini `contents` and raw `parts` are passed through intentionally. Preserve unknown fields such as `thoughtSignature` and IDs when round-tripping model responses.
 - Provider data uses different coordinate orders. The backend converts ORS geometry to `[lat, lng]` for the app; OSRM/GeoJSON input is `[lng, lat]`. Keep those conversions localized and tested when touching routing or geo code.
-- The backend URL is hard-coded as `http://localhost:8000` in both `environment.ts` and `environment.prod.ts`. Browser requests use `fetch`; native requests use `CapacitorHttp`. For a USB device run `adb reverse tcp:8000 tcp:8000`; update both environment files if the backend address changes.
+- The backend URL is hard-coded as `http://localhost:8010` in both `environment.ts` and `environment.prod.ts` (8010 because a PHP dev server occupies 8000 on this machine). Browser requests use `fetch`; native requests use `CapacitorHttp`. For a USB device run `adb reverse tcp:8010 tcp:8010`; update both environment files if the backend address changes.
 
 ## Data, keys, and native files
 
