@@ -96,7 +96,7 @@ For a USB-connected device, run `adb reverse tcp:8010 tcp:8010` so the app's `ht
 
 ## Deployment
 
-A [Render Blueprint](render.yaml) at the repository root deploys the backend as a free Render Python web service: **Root Directory** `backend`, build command `pip install -r requirements.txt`, start command `uvicorn main:app --host 0.0.0.0 --port $PORT`, and health check path `/api/health`. The secret environment variables (Gemini, Fish, ORS, OWM, Geoapify) are declared with `sync: false` — set their values in the Render dashboard when the blueprint syncs. Remember the backend is an unauthenticated demo proxy; keep it on Render's free tier for coursework demos rather than a public product.
+A [Render Blueprint](render.yaml) at the repository root deploys the backend as a free Render Python web service: **Root Directory** `backend`, build command `pip install -r requirements.txt`, start command `uvicorn main:app --host 0.0.0.0 --port $PORT`, and health check path `/api/health`. The secret environment variables (Gemini, Fish, ORS, OWM, Geoapify) are declared with `sync: false` — set their values in the Render dashboard when the blueprint syncs. The deployed backend for this build lives at `https://navbudol-backend.onrender.com` (health probe: `/api/health`), and the production client (`environment.prod.ts`) points at it. Remember the backend is an unauthenticated demo proxy; keep it on Render's free tier for coursework demos rather than a public product.
 
 ## Project structure
 

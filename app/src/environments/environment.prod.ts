@@ -1,8 +1,9 @@
 export const environment = {
   production: true,
 
-  // 8000 is taken by a PHP dev server on the dev machine — backend lives on 8010.
-  backendBaseUrl: 'http://localhost:8010',
+  // Production client talks to the deployed Render backend (HTTPS required
+  // by Android; dev stays on http://localhost:8010 via environment.ts).
+  backendBaseUrl: 'https://navbudol-backend.onrender.com',
 
   osrmBaseUrl: 'https://router.project-osrm.org',
   photonBaseUrl: 'https://photon.komoot.io',
