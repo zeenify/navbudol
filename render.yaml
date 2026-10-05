@@ -1,0 +1,29 @@
+# Render Blueprint — deploys backend/ as a free Python web service.
+# Deploy: Render → New → Blueprint → pick this repo → fill in the sync:false
+# secrets in the dashboard (they live in backend/.env locally, never in git).
+services:
+  - type: web
+    name: navbudol-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: FISH_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: FISH_MODEL
+        sync: false
+      - key: ORS_API_KEY
+        sync: false
+      - key: OWM_API_KEY
+        sync: false
+      - key: GEOAPIFY_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
