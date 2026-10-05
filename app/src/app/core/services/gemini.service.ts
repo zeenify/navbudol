@@ -1,11 +1,10 @@
-import { Injectable, NgZone, inject } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ChatApiResponse,
   ChatMessage,
   Character,
-  CommunityReport,
   GeminiContent,
   GeminiFunctionCall,
   GeminiPart,
@@ -22,7 +21,7 @@ import { ChatActionsService } from './chat-actions.service';
 import { LocationService } from './location.service';
 import { NavigationService } from './navigation.service';
 import { PlacesService } from './places.service';
-import { ReportsService, reportAgeLabel } from './reports.service';import { RoutingService } from './routing.service';
+import { RoutingService } from './routing.service';
 import { SettingsService } from './settings.service';
 import { TtsService } from './tts.service';
 
@@ -54,8 +53,6 @@ export class GeminiService {
   /** Set when the AI returned several matching places — awaiting a pick. */
   private pendingChoice: PlaceResult[] | null = null;
   private pendingDisplay: Array<Omit<ChatMessage, 'id'>> = [];
-  /** Field-injected: keeps the constructor-injection lint baseline unchanged. */
-  private reports = inject(ReportsService);
 
   readonly functionDeclarations = [
     {
@@ -118,43 +115,6 @@ export class GeminiService {
         'Get the current weather at the user location (temperature, sky conditions). ' +
         'Use when the user asks about weather, rain, or whether to bring an umbrella.',
       parameters: { type: 'object', properties: {} },
-    },
-    {
-      name: 'get_community_reports',
-      description:
-        'Get recent community reports (floods, checkpoints, hazards, fares) near the user and ' +
-        'along the current route. Use when the user asks about road conditions, safety, ' +
-        'checkpoints, prices, or wants local knowledge.',
-      parameters: { type: 'object', properties: {} },
-    },
-    {
-      name: 'add_report',
-      description:
-        "Save a community report at the user's current location so everyone on this server can " +
-        'see it (e.g. "this road floods", "the tricycle fare here is 15 pesos"). Use when the ' +
-        'user shares something about a place or road worth remembering for others.',
-      parameters: {
-        type: 'object',
-        properties: {
-          kind: {
-            type: 'string',
-            description: 'Short label: flood, checkpoint, hazard, fare, access, or your own one-word kind',
-          },
-          text: { type: 'string', description: "The report in the user's own words, one sentence" },
-        },
-        required: ['kind', 'text'],
-      },
-    },
-    {
-      name: 'confirm_report',
-      description:
-        "Mark a community report as still true. Needs the report's id from get_community_reports, " +
-        'and the user should be near the spot to vouch for it.',
-      parameters: {
-        type: 'object',
-        properties: { report_id: { type: 'string', description: 'The report id from get_community_reports' } },
-        required: ['report_id'],
-      },
     },
   ];
 
@@ -312,12 +272,6 @@ export class GeminiService {
         return `Finding the route to ${String(fc.args['place_name'] ?? '')}…`;
       case 'get_weather':
         return 'Checking the weather…';
-      case 'get_community_reports':
-        return 'Checking community reports…';
-      case 'add_report':
-        return 'Saving your report…';
-      case 'confirm_report':
-        return 'Confirming the report…';
       default:
         return 'Working on it…';
     }
@@ -539,54 +493,6 @@ export class GeminiService {
             location: w.city,
           };
         }
-        case 'get_community_reports': {
-          const route = this.nav.navState$.value.route;
-          const byId = new Map<string, CommunityReport & { distanceM: number; where: string }>();
-          for (const r of this.reports.reportsAlongRoute(route?.geometry ?? [], 400)) {
-            byId.set(r.id, { ...r, where: 'on your route' });
-          }
-          for (const r of this.reports.reportsNear(this.location.position, 2000)) {
-            if (!byId.has(r.id)) byId.set(r.id, { ...r, where: `${formatDistance(r.distanceM)} from you` });
-          }
-          const found = [...byId.values()].slice(0, 8);
-          return {
-            reports: found.map((r) => ({
-              id: r.id,
-              kind: r.kind,
-              report: r.text,
-              where: r.where,
-              confirmed: r.confirmCount ?? 0,
-              on_site: r.presenceCount ?? 0,
-              disputed: r.disputeCount ?? 0,
-              age: reportAgeLabel(r.createdAt),
-            })),
-            note: found.length
-              ? 'These are neighbor claims, not verified facts. Mention them with their trust level and age; never state an unconfirmed report as fact.'
-              : 'No community reports nearby — you can say the area is quiet right now.',
-          };
-        }
-        case 'add_report': {
-          const pos = this.location.position;
-          if (!pos) return { error: 'Location is off — the user must enable GPS first.' };
-          const kind = String(fc.args['kind'] ?? 'info').trim() || 'info';
-          const text = String(fc.args['text'] ?? '').trim();
-          if (!text) return { error: 'Give the report a short description.' };
-          const report = await this.reports.addReport(kind, text.slice(0, 240), pos);
-          return {
-            saved: true,
-            kind: report.kind,
-            note: 'Saved and visible to everyone on this server; it expires on its own.',
-          };
-        }
-        case 'confirm_report': {
-          const id = String(fc.args['report_id'] ?? '');
-          const report = await this.reports.confirmReport(id);
-          return {
-            confirmed: true,
-            on_site: this.reports.wasOnSite(report) ? 'yes' : 'no',
-            report: report.text,
-          };
-        }
         default:
           return { error: `Unknown function: ${fc.name}` };
       }
@@ -604,7 +510,6 @@ export class GeminiService {
       profile: route.profile,
       geometry: route.geometry,
       ascentM: route.ascentM,
-      avoidedReports: route.avoidedReports,
     };
   }
 
@@ -624,29 +529,8 @@ export class GeminiService {
       position: this.location.position,
       address: this.lastAddress,
       nav: this.nav.navState$.value,
-      reportLines: this.communityReportLines(),
     };
     return buildSystemPrompt(this.characters.getSelected(), ctx);
-  }
-
-  /** Route corridor first when one exists, else the neighborhood. Max 5 lines. */
-  private communityReportLines(): string[] {
-    const route = this.nav.navState$.value.route;
-    const picks =
-      route && route.geometry.length > 1
-        ? this.reports.reportsAlongRoute(route.geometry, 400).map((r) => ({ ...r, where: 'on your route' }))
-        : this.reports
-            .reportsNear(this.location.position, 1500)
-            .map((r) => ({ ...r, where: `${formatDistance(r.distanceM)} away` }));
-    return picks.slice(0, 5).map((r) => {
-      const trust =
-        (r.presenceCount ?? 0) > 0
-          ? `confirmed on site ×${r.presenceCount}`
-          : (r.confirmCount ?? 0) > 0
-            ? `confirmed ×${r.confirmCount}`
-            : 'unconfirmed';
-      return `${r.kind} (${trust}, ${reportAgeLabel(r.createdAt)}, ${r.where}): "${r.text}"`;
-    });
   }
 
   private trimmedContents(): GeminiContent[] {

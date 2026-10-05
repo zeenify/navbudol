@@ -9,7 +9,6 @@ ship inside the APK:
 """
 
 import json
-import math
 import os
 import time
 
@@ -57,37 +56,6 @@ class DirectionsRequest(BaseModel):
     frm: dict  # {"lat": ..., "lng": ...}
     to: dict  # {"lat": ..., "lng": ...}
     profile: str = "driving-car"  # or foot-walking
-    # Presence-confirmed community report points to route around ([lat, lng]).
-    avoidReports: list[list[float]] | None = None
-
-
-# Half-side of the square avoided around each report point (~130 m box).
-AVOID_HALF_SIDE_DEG = 0.0012
-MAX_AVOID_POINTS = 25
-
-
-def _avoid_rings(points: list[list[float]] | None) -> list[list[list[list[float]]]]:
-    """GeoJSON polygon rings around report points. Coordinate order here is
-    [lng, lat] — GeoJSON, unlike the [lat, lng] the rest of this app speaks."""
-    rings: list[list[list[list[float]]]] = []
-    for point in (points or [])[:MAX_AVOID_POINTS]:
-        try:
-            lat, lng = float(point[0]), float(point[1])
-        except (TypeError, ValueError, IndexError):
-            continue
-        if not math.isfinite(lat) or not math.isfinite(lng):
-            continue
-        half = AVOID_HALF_SIDE_DEG
-        rings.append([
-            [
-                [lng - half, lat - half],
-                [lng - half, lat + half],
-                [lng + half, lat + half],
-                [lng + half, lat - half],
-                [lng - half, lat - half],
-            ]
-        ])
-    return rings
 
 
 class IsochroneRequest(BaseModel):
@@ -296,37 +264,20 @@ def reverse(lat: float, lon: float):
 @router.post("/directions")
 def directions(req: DirectionsRequest):
     key = _ors_key()
-    body = {
-        "coordinates": [[req.frm["lng"], req.frm["lat"]], [req.to["lng"], req.to["lat"]]],
-        "elevation": True,
-        "instructions": True,
-        "preference": "recommended",
-    }
-    rings = _avoid_rings(req.avoidReports)
-    if rings:
-        body["options"] = {"avoid_polygons": {"type": "MultiPolygon", "coordinates": rings}}
-
-    def _post_ors() -> httpx.Response:
-        return httpx.post(
+    try:
+        resp = httpx.post(
             f"{ORS_BASE}/directions/{req.profile}/geojson",
             headers={"Authorization": key, "Content-Type": "application/json"},
-            json=body,
+            json={
+                "coordinates": [[req.frm["lng"], req.frm["lat"]], [req.to["lng"], req.to["lat"]]],
+                "elevation": True,
+                "instructions": True,
+                "preference": "recommended",
+            },
             timeout=30,
         )
-
-    try:
-        resp = _post_ors()
     except httpx.HTTPError as e:
         raise HTTPException(status_code=502, detail=f"ORS failed: {e}")
-    if resp.status_code == 400 and rings:
-        # Some profiles/plans reject avoid_polygons — route without it rather
-        # than fail the trip; the app still surfaces the reports itself.
-        rings = []
-        body.pop("options", None)
-        try:
-            resp = _post_ors()
-        except httpx.HTTPError as e:
-            raise HTTPException(status_code=502, detail=f"ORS failed: {e}")
     if resp.status_code != 200:
         raise HTTPException(status_code=502, detail=f"ORS HTTP {resp.status_code}: {resp.text[:200]}")
 
@@ -365,7 +316,6 @@ def directions(req: DirectionsRequest):
         "distanceM": props.get("summary", {}).get("distance", 0),
         "durationS": props.get("summary", {}).get("duration", 0),
         "ascentM": props.get("ascent", 0),
-        "avoidedReports": len(rings),
     }
 
 

@@ -3,16 +3,15 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
-  inject,
   NgZone,
   OnDestroy,
   ViewChild,
 } from '@angular/core';
 import { BehaviorSubject, map, Subscription } from 'rxjs';
 import * as L from 'leaflet';
-import { ActionSheetController, ToastController } from '@ionic/angular/lazy';
+import { ToastController } from '@ionic/angular/lazy';
 import { environment } from '../../environments/environment';
-import { CommunityReport, GpsPosition, MapEvent, NavState, PlaceResult, RouteProfile } from '../core/models';
+import { GpsPosition, MapEvent, NavState, PlaceResult, RouteProfile } from '../core/models';
 import { LocationService } from '../core/services/location.service';
 import { NavigationService } from '../core/services/navigation.service';
 import { RoutingService } from '../core/services/routing.service';
@@ -23,7 +22,6 @@ import { BackendApiService, HealthResponse } from '../core/services/backend-api.
 import { CharacterService } from '../core/services/character.service';
 import { VoiceAssistantService } from '../core/services/voice-assistant.service';
 import { ChatActionsService } from '../core/services/chat-actions.service';
-import { ReportsService } from '../core/services/reports.service';
 import { distanceFromGeneralTinio, isWithinGeneralTinioServiceArea } from '../core/service-area';
 import { formatDistance, haversineM, snapToSegment } from '../core/geo.utils';
 
@@ -58,13 +56,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
   readonly routing$ = new BehaviorSubject(false);
   chatOpen = false;
   backendOk: boolean | null = null;
-  /** Rain + a flood report nearby → one-tap "still flooded?" (null = hidden). */
-  floodPrompt: (CommunityReport & { distanceM: number }) | null = null;
-  private dismissedFloodIds = new Set<string>();
-  /** Field-injected so existing constructor-injection files gain this without
-   *  adding new prefer-inject lint errors to the baseline. */
-  private reports = inject(ReportsService);
-  private actionSheetCtrl = inject(ActionSheetController);
 
   get isTraveling(): boolean {
     return this.nav.phase === 'navigating' || this.nav.phase === 'rerouting';
@@ -83,7 +74,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private destMarker: L.Marker | null = null;
   private routeLine: L.Polyline | null = null;
   private placesLayer: L.LayerGroup | null = null;
-  private reportsLayer: L.LayerGroup | null = null;
   private tileLayer: L.TileLayer | null = null;
   private follow = true;
   private gotFirstFix = false;
@@ -118,8 +108,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       this.nav.navState$.subscribe((state) => this.zone.run(() => this.onNavState(state))),
       this.gemini.mapEvents$.subscribe((ev) => this.zone.run(() => this.onMapEvent(ev))),
       this.settings.dark$.subscribe(() => this.zone.run(() => this.applyTiles())),
-      this.settings.satellite$.subscribe(() => this.zone.run(() => this.applyTiles())),
-      this.reports.reports$.subscribe(() => this.renderReports())
+      this.settings.satellite$.subscribe(() => this.zone.run(() => this.applyTiles()))
     );
   }
 
@@ -128,7 +117,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
     void this.location.startWatch();
     void this.checkBackend();
     void this.loadWeather();
-    void this.reports.ensureReports(true);
   }
 
   ngOnDestroy(): void {
@@ -159,7 +147,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
     // No user marker until a real fix arrives (see onPosition).
 
     this.placesLayer = L.layerGroup().addTo(this.map);
-    this.reportsLayer = L.layerGroup().addTo(this.map);
 
     this.map.on('dragstart', () => this.zone.run(() => (this.follow = false)));
     this.map.on('click', (e: L.LeafletMouseEvent) =>
@@ -201,7 +188,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
     // While moving, swallow the part of the route already traveled.
     if (this.navState$.value.phase === 'navigating') this.trimRouteBehind(pos);
-    this.updateFloodPrompt();
   }
 
   private onNavState(state: NavState): void {
@@ -413,120 +399,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  // --- community reports --------------------------------------------------------
-
-  /** Redraw every live report as a colored pin; confirmed ones get a bolder ring. */
-  private renderReports(): void {
-    if (!this.map || !this.reportsLayer) return;
-    this.reportsLayer.clearLayers();
-    for (const report of this.reports.reports$.value) {
-      L.circleMarker([report.lat, report.lng], {
-        radius: 7,
-        color: '#ffffff',
-        weight: (report.presenceCount ?? 0) > 0 ? 2.5 : 1.5,
-        fillColor: this.reports.kindColor(report.kind),
-        fillOpacity: 0.95,
-      })
-        .bindTooltip(`${report.kind} · tap for details`, { direction: 'top', offset: [0, -8] })
-        .on('click', () => void this.openReportActions(report))
-        .addTo(this.reportsLayer!);
-    }
-    this.updateFloodPrompt();
-  }
-
-  private async openReportActions(report: CommunityReport): Promise<void> {
-    const sheet = await this.actionSheetCtrl.create({
-      header: report.text,
-      subHeader: `${report.kind} · ${this.reports.trustLabel(report)}`,
-      buttons: [
-        {
-          text: '✅ Still true — confirm',
-          handler: () => {
-            void this.confirmReport(report);
-          },
-        },
-        {
-          text: '👎 Not true — dispute',
-          handler: () => {
-            void this.disputeReport(report);
-          },
-        },
-        {
-          text: 'Retire this report',
-          role: 'destructive',
-          handler: () => {
-            void this.retireReport(report);
-          },
-        },
-        { text: 'Cancel', role: 'cancel' },
-      ],
-    });
-    await sheet.present();
-  }
-
-  private async confirmReport(report: CommunityReport): Promise<void> {
-    try {
-      const updated = await this.reports.confirmReport(report.id);
-      await this.toast(
-        this.reports.wasOnSite(updated) ? 'Confirmed on site — thank you!' : 'Confirmed — thank you!'
-      );
-    } catch (e) {
-      await this.toast(e instanceof Error ? e.message : 'Could not confirm that report.');
-    }
-  }
-
-  private async disputeReport(report: CommunityReport): Promise<void> {
-    try {
-      await this.reports.disputeReport(report.id);
-      await this.toast('Marked as not true — noted.');
-    } catch (e) {
-      await this.toast(e instanceof Error ? e.message : 'Could not dispute that report.');
-    }
-  }
-
-  private async retireReport(report: CommunityReport): Promise<void> {
-    try {
-      await this.reports.retireReport(report.id);
-      await this.toast('Report retired.');
-    } catch (e) {
-      await this.toast(e instanceof Error ? e.message : 'Could not retire that report.');
-    }
-  }
-
-  /** Step 6: raining + a flood report within 400 m → ask once, one tap. */
-  private updateFloodPrompt(): void {
-    const weather = this.weather$.value;
-    const pos = this.location.position;
-    const idle = this.navState$.value.phase === 'idle';
-    const raining = !!weather && /rain|drizzle|thunder|shower/i.test(weather.description);
-    const near =
-      idle && raining && pos
-        ? this.reports
-            .reportsNear(pos, 400)
-            .filter((r) => r.kind.toLowerCase().includes('flood') && !this.dismissedFloodIds.has(r.id))
-        : [];
-    const next = near[0] ?? null;
-    if (next?.id !== this.floodPrompt?.id) {
-      this.floodPrompt = next;
-      this.cdr.markForCheck();
-    }
-  }
-
-  async confirmFloodPrompt(): Promise<void> {
-    const report = this.floodPrompt;
-    if (!report) return;
-    this.dismissedFloodIds.add(report.id);
-    this.floodPrompt = null;
-    this.cdr.markForCheck();
-    await this.confirmReport(report);
-  }
-
-  dismissFloodPrompt(): void {
-    if (this.floodPrompt) this.dismissedFloodIds.add(this.floodPrompt.id);
-    this.floodPrompt = null;
-    this.cdr.markForCheck();
-  }
-
   private async checkBackend(): Promise<void> {
     try {
       const health = await this.api.get<HealthResponse>('/api/health', 5000);
@@ -546,10 +418,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
         8000
       );
       this.weather$.next({ temp: w.temp, description: w.description });
-      this.updateFloodPrompt();
     } catch {
       this.weather$.next(null);
-      this.updateFloodPrompt();
     }
   }
 

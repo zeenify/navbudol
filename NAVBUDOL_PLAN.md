@@ -114,7 +114,7 @@ scoped to a real municipality — General Tinio (Papaya), Nueva Ecija.
 | **Backend** | Python FastAPI, local — Gemini proxy + TTS proxy with MP3 cache |
 | **Routing** | OSRM + OpenRouteService as fallback |
 | **Place search** | Photon (geocoding) + Overpass (POI "nearest X") |
-| **Community layer** | Places + expiring reports on places and roads, presence-weighted confirms, AI reasons over them. Implemented at case-study scope — see [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md) |
+| **Community layer** | Places + expiring reports on places and roads, presence-weighted confirms, AI reasons over them. Shared locations are built; reports are design-only — see [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md) |
 | **Map** | Leaflet + OpenStreetMap tiles |
 | **Total cost** | $0 |
 
@@ -2133,7 +2133,7 @@ A: "Waze proved the loop works — community reports with thumbs-up confirms
 
 ## 16. Community Layer — Places & Reports
 
-**Implemented at case-study scope.** Full plan and decision record: [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md).
+**Design only — not built.** Full plan: [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md).
 
 The differentiator this project actually owns. The map, the routing, and the model are
 all rented from free tiers — Google rents the same model — so the only defensible asset
@@ -2169,7 +2169,7 @@ Backend:    FastAPI (local) — key vault, /api/chat, /api/tts + MP3 cache
 Voice In:   Native speech recognition (Android/iOS)
 Voice Out:  Fish Audio TTS — 7 anime voices (IDs ready); NavBuddy on system TTS for now
 Characters: "Act like {character} from {series}" — the LLM knows them
-Community:  Places + expiring reports, presence-weighted confirms (COMMUNITY_REPORTS_PLAN.md)
+Community:  Places + expiring reports, presence-weighted confirms (design — COMMUNITY_REPORTS_PLAN.md)
 Demo:       Simulated walk mode for indoor presentation
 Cost:       ₱0
 

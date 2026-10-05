@@ -32,12 +32,9 @@ navbudol/
 - **Isochrones**: the 10′ button draws a 10-minute walking range around you
 - **Community locations**: anyone can drop a pin, name it, and it shows up in
   everyone's search (shared index in the backend, 20 km General Tinio fence).
-- **Community reports**: anyone can report what's happening at a spot — floods,
-  checkpoints, hazards, fares — with an expiry per kind. Others confirm (stamped
-  with how close they were) or dispute; the AI reads the reports near you or on
-  your route and mentions them, and routes around the presence-confirmed ones.
-  Tap a report pin to confirm, dispute, or retire it. Design notes:
-  [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md)
+  The next layer — expiring *reports* on places and roads ("this road floods",
+  "the tricycle ride here is ₱15") that the AI reasons over and can route
+  around — is designed but **not built**: [COMMUNITY_REPORTS_PLAN.md](./COMMUNITY_REPORTS_PLAN.md)
 
 ## Run it
 

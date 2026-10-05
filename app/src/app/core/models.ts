@@ -23,36 +23,6 @@ export interface PlaceResult {
   sharedLocationId?: string;
 }
 
-/** A confirmation or dispute stamp on a community report. */
-export interface ReportStamp {
-  by: string;
-  at: string;
-  /** meters between the confirmer and the report pin when they confirmed */
-  nearM?: number | null;
-}
-
-/**
- * Community report — the perishable half of the shared map. A place is a
- * noun; a report is a sentence with a timestamp ("this road floods").
- * confirmCount/presenceCount/disputeCount arrive server-computed on every
- * response; presenceCount is the trust signal that may change a route.
- */
-export interface CommunityReport extends LatLng {
-  id: string;
-  kind: string;
-  text: string;
-  placeId?: string | null;
-  author: string;
-  createdAt: string;
-  expiresAt: string;
-  retiredAt?: string | null;
-  confirms: ReportStamp[];
-  disputes: ReportStamp[];
-  confirmCount?: number;
-  presenceCount?: number;
-  disputeCount?: number;
-}
-
 export interface RouteStep {
   instruction: string;
   name: string;
@@ -77,8 +47,6 @@ export interface RouteResult {
   source?: 'ors' | 'osrm';
   /** travel mode the route + timing are for */
   profile?: RouteProfile;
-  /** how many presence-confirmed reports the engine routed around (ORS only) */
-  avoidedReports?: number;
 }
 
 export type RouteProfile = 'driving-car' | 'foot-walking';
@@ -105,7 +73,6 @@ export interface RouteCardData {
   profile?: string;
   geometry?: LatLng[];
   ascentM?: number;
-  avoidedReports?: number;
 }
 
 export interface ChatMessage {
