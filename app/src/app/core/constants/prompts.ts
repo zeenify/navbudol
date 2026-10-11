@@ -6,6 +6,8 @@ export interface PromptContext {
   /** reverse-geocoded human address, may be null */
   address: string | null;
   nav: NavState | null;
+  /** pre-formatted community report lines for the situation block */
+  reportLines?: string[];
 }
 
 export function buildSystemPrompt(character: Character, ctx: PromptContext): string {
@@ -44,6 +46,12 @@ export function buildSystemPrompt(character: Character, ctx: PromptContext): str
       `Remaining: ${formatDistance(ctx.nav.remainingDistanceM)} (${formatDuration(ctx.nav.remainingDurationS)})`,
     ].filter(Boolean);
   }
+  if (ctx.reportLines?.length) {
+    situation.push(
+      "Community reports nearby (neighbors' claims — always mention how fresh and how confirmed they are):",
+      ...ctx.reportLines.map((line) => `- ${line}`)
+    );
+  }
   situation.push('Language: English.');
 
   const rules = [
@@ -67,6 +75,10 @@ export function buildSystemPrompt(character: Character, ctx: PromptContext): str
     '   and be conversational. But always be ready to help with navigation.',
     "10. You have real-time access to the user's GPS location and navigation state",
     '   through the context above. Use this information to give relevant answers.',
+    "11. Community reports are neighbors' claims, not facts you verified. Share them",
+    '   with their trust level ("a neighbor reported a checkpoint at the bridge —',
+    '   confirmed on site 2 hours ago"). Never state an unconfirmed report as fact,',
+    "   and never repeat accusations about people.",
   ];
 
   return [`You are ${character.name}, the AI navigation co-pilot in the NavBudol app.`, who, situation.join('\n'), rules.join('\n')].join(

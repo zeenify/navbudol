@@ -1,7 +1,8 @@
-import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Output, inject } from '@angular/core';
 import { PlaceResult } from '../../../core/models';
 import { isSamePlace } from '../../../core/geo.utils';
 import { PlacesService } from '../../../core/services/places.service';
+import { REPORT_KINDS, ReportsService } from '../../../core/services/reports.service';
 import { LocationService } from '../../../core/services/location.service';
 
 const RECENTS_KEY = 'navbudol.recentSearches';
@@ -24,6 +25,13 @@ export class SearchBarComponent {
   locationName = '';
   locationDetail = '';
   locationError = '';
+  showAddReport = false;
+  savingReport = false;
+  reportKind: string = 'flood';
+  reportText = '';
+  reportError = '';
+  readonly reportKinds = REPORT_KINDS;
+  private reports = inject(ReportsService);
   private debounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -53,6 +61,7 @@ export class SearchBarComponent {
     this.showResults = true;
     void this.places.ensureLocalIndex();
     void this.places.ensureUserLocations(true);
+    void this.reports.ensureReports();
   }
 
   async runSearch(query: string): Promise<void> {
@@ -77,6 +86,7 @@ export class SearchBarComponent {
   }
 
   openAddLocation(): void {
+    this.showAddReport = false;
     this.showAddLocation = true;
     this.showResults = false;
     this.locationError = '';
@@ -87,6 +97,54 @@ export class SearchBarComponent {
     if (this.savingLocation) return;
     this.showAddLocation = false;
     this.locationError = '';
+  }
+
+  openAddReport(): void {
+    this.showAddLocation = false;
+    this.showAddReport = true;
+    this.showResults = false;
+    this.reportError = '';
+    if (!this.location.hasFix) void this.location.startWatch();
+  }
+
+  closeAddReport(): void {
+    if (this.savingReport) return;
+    this.showAddReport = false;
+    this.reportError = '';
+  }
+
+  selectKind(id: string): void {
+    this.reportKind = id;
+    this.cdr.markForCheck();
+  }
+
+  shelfLifeLabel(): string {
+    return this.reportKinds.find((k) => k.id === this.reportKind)?.shelfLife ?? '1 week';
+  }
+
+  async saveReport(): Promise<void> {
+    const text = this.reportText.trim();
+    if (!text) {
+      this.reportError = 'Write a short description first.';
+      return;
+    }
+    if (!this.location.hasFix || !this.location.position) {
+      this.reportError = 'Turn on your location so NavBudol can pin the report.';
+      return;
+    }
+    this.savingReport = true;
+    this.reportError = '';
+    try {
+      await this.reports.addReport(this.reportKind, text, this.location.position);
+      this.reportText = '';
+      this.showAddReport = false;
+      this.cdr.markForCheck();
+    } catch (e) {
+      this.reportError = e instanceof Error ? e.message : 'Could not save this report.';
+    } finally {
+      this.savingReport = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async saveLocation(): Promise<void> {
@@ -127,6 +185,7 @@ export class SearchBarComponent {
   dismiss(): void {
     this.showResults = false;
     this.showAddLocation = false;
+    this.showAddReport = false;
     this.results = [];
   }
 

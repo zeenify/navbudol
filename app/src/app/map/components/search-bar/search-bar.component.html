@@ -15,6 +15,13 @@
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
     </button>
+    <button class="add-location-button report-button" type="button" (click)="openAddReport()" aria-label="Add a community report">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </button>
   </div>
 
   <div class="add-location-card nb-glass" *ngIf="showAddLocation">
@@ -44,6 +51,42 @@
       </button>
     </div>
   </div>
+
+  @if (showAddReport) {
+    <div class="add-location-card nb-glass">
+      <div class="add-location-title">Add a community report</div>
+      <div class="add-location-copy">
+        Share what you know about this spot — floods, checkpoints, fares, anything worth
+        telling a neighbor. Reports expire on their own, and everyone can confirm or
+        dispute them.
+      </div>
+      <div class="kind-chips">
+        @for (k of reportKinds; track k.id) {
+          <button type="button" class="kind-chip" [class.active]="reportKind === k.id" (click)="selectKind(k.id)">
+            {{ k.emoji }} {{ k.label }}
+          </button>
+        }
+      </div>
+      <textarea
+        class="add-location-input report-text"
+        maxlength="240"
+        rows="2"
+        [(ngModel)]="reportText"
+        placeholder="e.g. This road floods when it rains hard"
+        autocomplete="off"
+      ></textarea>
+      <div class="add-location-hint">Pinned at your GPS position · stays visible for {{ shelfLifeLabel() }}</div>
+      @if (reportError) {
+        <div class="add-location-error" role="alert">{{ reportError }}</div>
+      }
+      <div class="add-location-actions">
+        <button class="add-location-cancel" type="button" (click)="closeAddReport()" [disabled]="savingReport">Cancel</button>
+        <button class="add-location-save" type="button" (click)="saveReport()" [disabled]="savingReport || !reportText.trim()">
+          {{ savingReport ? 'Sharing…' : 'Share report' }}
+        </button>
+      </div>
+    </div>
+  }
 
   <div class="results nb-glass" *ngIf="showResults && (results.length > 0 || searching || showRecents)">
     <div class="result-row" *ngFor="let place of results" (click)="select(place)">

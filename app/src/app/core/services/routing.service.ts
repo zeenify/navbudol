@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { environment } from '../../../environments/environment';
 import { LatLng, PlaceResult, RouteProfile, RouteResult, RouteStep } from '../models';
 import { isWithinGeneralTinioServiceArea } from '../service-area';
 import { BackendApiService } from './backend-api.service';
+import { ReportsService } from './reports.service';
 
 /**
  * Routing: OpenRouteService via our backend first (walking profile +
@@ -12,6 +13,8 @@ import { BackendApiService } from './backend-api.service';
  */
 @Injectable({ providedIn: 'root' })
 export class RoutingService {
+  private reports = inject(ReportsService);
+
   constructor(private api: BackendApiService) {}
 
   async getRoute(
@@ -23,6 +26,12 @@ export class RoutingService {
       throw new Error('That destination is outside the General Tinio service area.');
     }
     // 1. ORS via backend — supports foot-walking and returns elevation.
+    // Presence-confirmed reports ride along so the backend can hand ORS
+    // avoid_polygons; the OSRM fallback below cannot avoid anything, so the
+    // AI still mentions reports on the route.
+    const avoidReports = this.reports
+      .avoidPoints(from, { lat: destination.lat, lng: destination.lng })
+      .map((p) => [p.lat, p.lng] as [number, number]);
     try {
       const r = await this.api.post<{
         geometry: LatLng[];
@@ -30,9 +39,10 @@ export class RoutingService {
         distanceM: number;
         durationS: number;
         ascentM: number;
+        avoidedReports?: number;
       }>(
         '/api/directions',
-        { frm: from, to: { lat: destination.lat, lng: destination.lng }, profile },
+        { frm: from, to: { lat: destination.lat, lng: destination.lng }, profile, avoidReports },
         30000
       );
       // Backend sends geometry as [lat, lng] pairs — normalize to LatLng.
@@ -48,6 +58,7 @@ export class RoutingService {
         destination,
         source: 'ors',
         profile,
+        avoidedReports: r.avoidedReports ?? 0,
       };
     } catch {
       // ORS/backend unavailable — fall back to OSRM (driving only).
