@@ -273,3 +273,31 @@
   inset: 0;
   z-index: -1;
 }
+
+// community platform: the single "add a place" button
+.add-place-button {
+  flex-shrink: 0;
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(180deg, #2f8bff 0%, #007aff 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+  cursor: pointer;
+}
+
+.result-community-icon {
+  font-size: 17px;
+  color: #007aff;
+  font-variation-settings: 'FILL' 1;
+}
+
+.result-pin.community {
+  background: #eaf3ff;
+  color: #007aff;
+}

@@ -1,0 +1,108 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/map" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isMe ? 'Your profile' : 'Profile' }}</ion-title>
+    <ion-buttons slot="end">
+      @if (isMe && !editing) {
+        <ion-button (click)="toggleEdit()">Edit</ion-button>
+      }
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="profile-content">
+  @if (loading) {
+    <div class="state-block">
+      <span class="state-spinner"></span>
+      <p>Loading profile…</p>
+    </div>
+  } @else if (error) {
+    <div class="state-block"><p>{{ error }}</p></div>
+  } @else if (profile) {
+    <div class="profile-wrap">
+      <div class="identity-card nb-glass">
+        <div class="avatar-ring">
+          @if (editing) {
+            <div class="avatar-picker">
+              @for (emoji of avatarChoices; track emoji) {
+                <button type="button" class="avatar-choice" [class.mine]="editAvatar === emoji" (click)="editAvatar = emoji">
+                  {{ emoji }}
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="avatar-big">{{ profile.user.avatar }}</div>
+          }
+        </div>
+
+        @if (editing) {
+          <div class="edit-fields">
+            <input type="text" [(ngModel)]="editName" maxlength="48" placeholder="Display name" />
+            <textarea rows="2" [(ngModel)]="editBio" maxlength="280" placeholder="Tell the town about you…"></textarea>
+            <div class="edit-actions">
+              <button type="button" class="ghost" (click)="toggleEdit()">Cancel</button>
+              <button type="button" class="solid" (click)="saveProfile()">Save</button>
+            </div>
+          </div>
+        } @else {
+          <h1>{{ profile.user.displayName }}</h1>
+          <p class="username">\@{{ profile.user.username }}</p>
+          @if (profile.user.bio) {
+            <p class="bio">{{ profile.user.bio }}</p>
+          }
+          <p class="joined">Mapping since {{ joined(profile.user.createdAt) }}</p>
+        }
+      </div>
+
+      <div class="stats-row">
+        <div class="stat nb-glass">
+          <strong>{{ profile.stats.places }}</strong>
+          <span>Places</span>
+        </div>
+        <div class="stat nb-glass">
+          <strong>{{ profile.stats.photos }}</strong>
+          <span>Photos</span>
+        </div>
+        <div class="stat nb-glass">
+          <strong>{{ profile.stats.comments }}</strong>
+          <span>Comments</span>
+        </div>
+        <div class="stat nb-glass">
+          <strong>{{ profile.stats.placesVisited }}</strong>
+          <span>Visited</span>
+        </div>
+      </div>
+
+      @if (isMe && editing) {
+        <!-- edit fields shown above; logout stays visible below -->
+      }
+
+      <div class="section-head">
+        <h2>Places they added</h2>
+        <span>{{ profile.places.length }}</span>
+      </div>
+
+      @if (profile.places.length > 0) {
+        <div class="places-list">
+          @for (place of profile.places; track place.id) {
+            <button type="button" class="place-row nb-glass" (click)="router.navigate(['/place', place.id])">
+              <span class="place-icon material-symbols-rounded">{{ place.icon }}</span>
+              <span class="place-name">{{ place.name }}</span>
+              <span class="material-symbols-rounded chev">chevron_right</span>
+            </button>
+          }
+        </div>
+      } @else {
+        <p class="empty">No places yet — the map is waiting.</p>
+      }
+
+      @if (isMe) {
+        <button type="button" class="logout" (click)="logout()">
+          <span class="material-symbols-rounded">logout</span> Sign out
+        </button>
+      }
+    </div>
+  }
+</ion-content>

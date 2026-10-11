@@ -1,0 +1,337 @@
+import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ActionSheetController, ToastController } from '@ionic/angular/lazy';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
+import {
+  CommunityPlaceDetail,
+  CommunityPlacePhoto,
+  PlaceResult,
+} from '../core/models';
+import { LocationService } from '../core/services/location.service';
+import { CommunityPlacesService } from '../core/services/community-places.service';
+import { AuthService } from '../core/services/auth.service';
+import { ChatActionsService } from '../core/services/chat-actions.service';
+
+/**
+ * The place page — everything the community knows about one pin: the
+ * creator's gallery, live ratings, likes, and visit-verified comments.
+ */
+@Component({
+  selector: 'app-place',
+  templateUrl: './place.page.html',
+  styleUrls: ['./place.page.scss'],
+  standalone: false,
+})
+export class PlacePage implements OnInit {
+  @ViewChild('photoFileInput') photoFileInput!: ElementRef<HTMLInputElement>;
+
+  private route = inject(ActivatedRoute);
+  public router = inject(Router);
+  private community = inject(CommunityPlacesService);
+  private auth = inject(AuthService);
+  private location = inject(LocationService);
+  private chatActions = inject(ChatActionsService);
+  private toastCtrl = inject(ToastController);
+  private actionSheetCtrl = inject(ActionSheetController);
+  private cdr = inject(ChangeDetectorRef);
+
+  place: CommunityPlaceDetail | null = null;
+  loading = true;
+  error: string | null = null;
+  commentText = '';
+  busy = false;
+  editing = false;
+  editName = '';
+  editDescription = '';
+  editIcon: string | null = null;
+
+  get me() {
+    return this.auth.currentUser;
+  }
+
+  ngOnInit(): void {
+    void this.load();
+  }
+
+  async load(): Promise<void> {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.error = 'No place specified.';
+      this.loading = false;
+      return;
+    }
+    try {
+      this.place = await this.community.detail(id);
+      this.error = null;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : 'Could not load this place.';
+    } finally {
+      this.loading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  // --- ratings + votes ------------------------------------------------------
+
+  async rate(stars: number): Promise<void> {
+    if (!this.place) return;
+    this.busy = true;
+    try {
+      this.place.rating = await this.community.rate(this.place.id, stars);
+      this.place.myRating = stars;
+      await this.toast(`Rated ${stars} star${stars > 1 ? 's' : ''}.`);
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not save your rating.');
+    } finally {
+      this.busy = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async vote(value: 1 | -1): Promise<void> {
+    if (!this.place) return;
+    const next = this.place.myVote === value ? 0 : value;
+    this.busy = true;
+    try {
+      const res = await this.community.vote(this.place.id, next);
+      this.place.likes = res.likes;
+      this.place.dislikes = res.dislikes;
+      this.place.myVote = res.myVote;
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not save your vote.');
+    } finally {
+      this.busy = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  // --- photos -----------------------------------------------------------------
+
+  async takePhoto(): Promise<void> {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const photo = await Camera.getPhoto({
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+          quality: 70,
+          width: 1600,
+        });
+        if (photo.dataUrl) await this.uploadPhoto(photo.dataUrl);
+      } catch {
+        /* cancelled */
+      }
+      return;
+    }
+    this.photoFileInput.nativeElement.click();
+  }
+
+  openPhotoPicker(): void {
+    this.photoFileInput.nativeElement.click();
+  }
+
+  onFileChosen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (typeof reader.result === 'string') await this.uploadPhoto(reader.result);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  private async uploadPhoto(dataUrl: string): Promise<void> {
+    if (!this.place) return;
+    const pos = this.location.position;
+    this.busy = true;
+    try {
+      const photo = await this.community.addPhoto(
+        this.place.id,
+        dataUrl,
+        '',
+        pos ? { lat: pos.lat, lng: pos.lng } : undefined
+      );
+      if (photo.verifiedVisit ?? false) this.place.hasVisited = true;
+      this.place.communityPhotos = [photo, ...this.place.communityPhotos];
+      this.place.photoCount += 1;
+      await this.toast('Photo added — thank you for contributing!');
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not upload that photo.');
+    } finally {
+      this.busy = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async photoActions(photo: CommunityPlacePhoto): Promise<void> {
+    if (!this.place) return;
+    const isCreator = this.place.isCreator === true;
+    const isUploader = photo.uploader?.id === this.me?.id;
+    if (!isCreator && !isUploader) return;
+    const buttons: Array<{ text: string; handler?: () => void; role?: string }> = [];
+    if (isCreator) {
+      buttons.push({
+        text: photo.inGallery ? 'Remove from gallery' : 'Add to gallery',
+        handler: () => void this.toggleGallery(photo),
+      });
+    }
+    if (isUploader || isCreator) {
+      buttons.push({ text: 'Delete photo', role: 'destructive', handler: () => void this.deletePhoto(photo) });
+    }
+    buttons.push({ text: 'Cancel', role: 'cancel' });
+    const sheet = await this.actionSheetCtrl.create({
+      header: photo.caption || 'Community photo',
+      buttons,
+    });
+    await sheet.present();
+  }
+
+  private async toggleGallery(photo: CommunityPlacePhoto): Promise<void> {
+    if (!this.place) return;
+    try {
+      const updated = await this.community.setPhotoInGallery(this.place.id, photo.id, !photo.inGallery);
+      photo.inGallery = updated.inGallery;
+      if (updated.inGallery) {
+        this.place.gallery = [updated, ...this.place.gallery.filter((p) => p.id !== photo.id)];
+      } else {
+        this.place.gallery = this.place.gallery.filter((p) => p.id !== photo.id);
+      }
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not update the gallery.');
+    }
+    this.cdr.markForCheck();
+  }
+
+  private async deletePhoto(photo: CommunityPlacePhoto): Promise<void> {
+    if (!this.place) return;
+    try {
+      await this.community.deletePhoto(this.place.id, photo.id);
+      this.place.gallery = this.place.gallery.filter((p) => p.id !== photo.id);
+      this.place.communityPhotos = this.place.communityPhotos.filter((p) => p.id !== photo.id);
+      this.place.photoCount = Math.max(0, this.place.photoCount - 1);
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not delete that photo.');
+    }
+    this.cdr.markForCheck();
+  }
+
+  // --- comments -----------------------------------------------------------------
+
+  async addComment(): Promise<void> {
+    if (!this.place || !this.commentText.trim()) return;
+    this.busy = true;
+    try {
+      const comment = await this.community.addComment(this.place.id, this.commentText.trim());
+      this.place.comments = [comment, ...this.place.comments];
+      this.place.commentCount += 1;
+      this.commentText = '';
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not post that comment.');
+    } finally {
+      this.busy = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    if (!this.place) return;
+    try {
+      await this.community.deleteComment(this.place.id, commentId);
+      this.place.comments = this.place.comments.filter((c) => c.id !== commentId);
+      this.place.commentCount = Math.max(0, this.place.commentCount - 1);
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not delete that comment.');
+    }
+    this.cdr.markForCheck();
+  }
+
+  // --- navigation + creator tools ------------------------------------------------
+
+  async navigate(): Promise<void> {
+    if (!this.place) return;
+    const dest: PlaceResult = {
+      name: this.place.name,
+      detail: 'Community place',
+      lat: this.place.lat,
+      lng: this.place.lng,
+      communityPlaceId: this.place.id,
+    };
+    const route = await this.chatActions.routeToPlace(dest);
+    if (route) {
+      await this.router.navigateByUrl('/tabs/map');
+    }
+  }
+
+  startEditing(): void {
+    if (!this.place) return;
+    this.editing = true;
+    this.editName = this.place.name;
+    this.editDescription = this.place.description;
+    this.editIcon = this.place.icon;
+    this.cdr.markForCheck();
+  }
+
+  async saveEdits(): Promise<void> {
+    if (!this.place || !this.editName.trim() || !this.editIcon) return;
+    this.busy = true;
+    try {
+      const updated = await this.community.update(this.place.id, {
+        name: this.editName.trim(),
+        description: this.editDescription.trim(),
+        icon: this.editIcon,
+      });
+      this.place.name = updated.name;
+      this.place.description = updated.description;
+      this.place.icon = updated.icon;
+      this.editing = false;
+      await this.toast('Place updated.');
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not save the edits.');
+    } finally {
+      this.busy = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async retirePlace(): Promise<void> {
+    if (!this.place) return;
+    const sheet = await this.actionSheetCtrl.create({
+      header: `Remove "${this.place.name}" from the map?`,
+      buttons: [
+        { text: 'Remove place', role: 'destructive', handler: () => void this.confirmRetire() },
+        { text: 'Cancel', role: 'cancel' },
+      ],
+    });
+    await sheet.present();
+  }
+
+  private async confirmRetire(): Promise<void> {
+    if (!this.place) return;
+    try {
+      await this.community.retire(this.place.id);
+      await this.toast('Place removed.');
+      await this.router.navigateByUrl('/tabs/map', { replaceUrl: true });
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not remove the place.');
+    }
+  }
+
+  timeAgo(iso: string): string {
+    const seconds = Math.max(1, (Date.now() - new Date(iso).getTime()) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = seconds / 60;
+    if (minutes < 60) return `${Math.floor(minutes)}m ago`;
+    const hours = minutes / 60;
+    if (hours < 24) return `${Math.floor(hours)}h ago`;
+    const days = hours / 24;
+    if (days < 30) return `${Math.floor(days)}d ago`;
+    return new Date(iso).toLocaleDateString();
+  }
+
+  private async toast(message: string): Promise<void> {
+    const t = await this.toastCtrl.create({ message, duration: 2200, position: 'top', cssClass: 'nb-toast' });
+    await t.present();
+  }
+}

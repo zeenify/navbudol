@@ -1,0 +1,86 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/map" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>Add a place</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="add-place-content">
+  <div class="add-wrap">
+    <!-- where the pin will land: your current fix -->
+    <div class="loc-card nb-glass">
+      @if (hasFix && position; as pos) {
+        <app-place-preview-map [place]="{ name: 'New place', lat: pos.lat, lng: pos.lng }"></app-place-preview-map>
+        <div class="loc-line">
+          <span class="material-symbols-rounded loc-icon">my_location</span>
+          <div class="loc-text">
+            <strong>This pin drops where you're standing.</strong>
+            <span>Only places you're physically at can be added{{ accuracyLabel() ? ' · GPS ' + accuracyLabel() : '' }}.</span>
+          </div>
+        </div>
+      } @else {
+        <div class="loc-waiting">
+          <span class="loc-spinner"></span>
+          <div class="loc-text">
+            <strong>Getting your location…</strong>
+            <span>You can only add a place while you're physically there.</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- the essentials -->
+    <div class="form-card nb-glass">
+      <label class="form-field">
+        <span class="form-label">Place name</span>
+        <input type="text" [(ngModel)]="name" maxlength="80" placeholder="e.g. Ate Lita's Fishball Cart" />
+      </label>
+
+      <div class="form-field">
+        <span class="form-label">What kind of place is it? <em>(pick an icon)</em></span>
+        <app-icon-picker [selected]="selectedIcon" (selectedChange)="pickIcon($event)"></app-icon-picker>
+      </div>
+
+      <label class="form-field">
+        <span class="form-label">Description <em>(optional, the AI reads this)</em></span>
+        <textarea
+          rows="3"
+          [(ngModel)]="description"
+          maxlength="2000"
+          placeholder="What makes this place worth a pin? Hours, prices, what to order…"
+        ></textarea>
+      </label>
+    </div>
+
+    <!-- photos -->
+    <div class="photo-card nb-glass">
+      <div class="photo-head">
+        <span class="form-label">Photos <em>(optional, up to 6)</em></span>
+      </div>
+      <div class="photo-grid">
+        @for (photo of photos; track photo; let i = $index) {
+          <div class="photo-thumb">
+            <img [src]="photo" alt="Place photo" />
+            <button type="button" class="photo-remove" (click)="removePhoto(i)" aria-label="Remove photo">×</button>
+          </div>
+        }
+        @if (photos.length < 6) {
+          <button type="button" class="photo-add" (click)="takePhoto()">
+            <span class="material-symbols-rounded">photo_camera</span>
+            <span>Take / add</span>
+          </button>
+        }
+      </div>
+      <input #fileInput type="file" accept="image/*" style="display: none" (change)="onFileChosen($event)" />
+    </div>
+
+    <p class="submit-error" *ngIf="error">{{ error }}</p>
+
+    <button class="place-submit" type="button" (click)="submit()" [disabled]="submitting || !hasFix">
+      {{ submitting ? 'Placing…' : 'Place it on the map' }}
+    </button>
+    <p class="submit-note">Your name goes on it — the community can add photos, comments and ratings.</p>
+  </div>
+</ion-content>

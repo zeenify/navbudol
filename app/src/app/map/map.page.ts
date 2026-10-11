@@ -1,19 +1,12 @@
-import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  inject,
-  NgZone,
-  OnDestroy,
-  ViewChild,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { BehaviorSubject, map, Subscription } from 'rxjs';
 import maplibregl, { GeoJSONSource, Map as MlMap, Marker } from 'maplibre-gl';
 import type { Feature } from 'geojson';
 import { ActionSheetController, ToastController } from '@ionic/angular/lazy';
+
 import { environment } from '../../environments/environment';
-import { CommunityReport, GpsPosition, MapEvent, NavState, PlaceResult, RouteProfile } from '../core/models';
+import { GpsPosition, MapEvent, NavState, PlaceResult, RouteProfile } from '../core/models';
 import { LocationService } from '../core/services/location.service';
 import { NavigationService } from '../core/services/navigation.service';
 import { RoutingService } from '../core/services/routing.service';
@@ -24,7 +17,8 @@ import { BackendApiService, HealthResponse } from '../core/services/backend-api.
 import { CharacterService } from '../core/services/character.service';
 import { VoiceAssistantService } from '../core/services/voice-assistant.service';
 import { ChatActionsService } from '../core/services/chat-actions.service';
-import { ReportsService } from '../core/services/reports.service';
+import { CommunityPlacesService } from '../core/services/community-places.service';
+import { placeIconDef } from '../core/constants/place-icons';
 import { distanceFromGeneralTinio, isWithinGeneralTinioServiceArea } from '../core/service-area';
 import { formatDistance, haversineM, snapToSegment } from '../core/geo.utils';
 
@@ -39,8 +33,9 @@ interface WeatherInfo {
  * extrusions, globe projection when zoomed out). All the smart features (ORS
  * routes with elevation, Geoapify search, weather) come from our backend.
  *
- * The user dot only appears after a REAL GPS fix (or a simulated one) —
- * the app never pretends to know where you are.
+ * Community places render as teardrop icon pins up close and circle chips
+ * when zoomed out. The user dot only appears after a REAL GPS fix (or a
+ * simulated one) — the app never pretends to know where you are.
  */
 @Component({
   selector: 'app-map',
@@ -60,13 +55,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
   readonly routing$ = new BehaviorSubject(false);
   chatOpen = false;
   backendOk: boolean | null = null;
-  /** Rain + a flood report nearby → one-tap "still flooded?" (null = hidden). */
-  floodPrompt: (CommunityReport & { distanceM: number }) | null = null;
-  private dismissedFloodIds = new Set<string>();
-  /** Field-injected so existing constructor-injection files gain this without
-   *  adding new prefer-inject lint errors to the baseline. */
-  private reports = inject(ReportsService);
-  private actionSheetCtrl = inject(ActionSheetController);
 
   get isTraveling(): boolean {
     return this.nav.phase === 'navigating' || this.nav.phase === 'rerouting';
@@ -84,14 +72,15 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private userMarker: Marker | null = null;
   private destMarker: Marker | null = null;
   private placeMarkers: Marker[] = [];
-  private reportMarkers: Marker[] = [];
-  /** Live route geometry as [lng, lat] — reflects the progressive trim. */
+  private communityMarkers: Marker[] = [];
   private routeCoords: [number, number][] | null = null;
   private styleReady = false;
   private pitched = false;
   private follow = true;
   private gotFirstFix = false;
   private subs: Subscription[] = [];
+  /** Keeps the GL canvas in sync with the container through layout races. */
+  private resizeObserver: ResizeObserver | null = null;
 
   // Progressive route trimming: the passed part of the line disappears.
   private routePoints: { lat: number; lng: number }[] | null = null;
@@ -108,6 +97,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
     private characters: CharacterService,
     private voice: VoiceAssistantService,
     private chatActions: ChatActionsService,
+    private community: CommunityPlacesService,
+    private router: Router,
     private zone: NgZone,
     private cdr: ChangeDetectorRef,
     private toastCtrl: ToastController
@@ -123,7 +114,16 @@ export class MapPage implements AfterViewInit, OnDestroy {
       this.gemini.mapEvents$.subscribe((ev) => this.zone.run(() => this.onMapEvent(ev))),
       this.settings.dark$.subscribe(() => this.zone.run(() => this.applyStyle())),
       this.settings.satellite$.subscribe(() => this.zone.run(() => this.applyStyle())),
-      this.reports.reports$.subscribe(() => this.renderReports())
+      this.community.nearby$.subscribe(() =>
+        this.zone.run(() => this.map && this.renderCommunityPins(this.map.getZoom()))
+      ),
+      // Arriving at a community place = a GPS-verified visit. arrived$ emits
+      // before stopNavigation() clears the route, so the destination is still
+      // readable from nav state here.
+      this.nav.arrived$.subscribe(() => {
+        const destination = this.nav.navState$.value.route?.destination;
+        if (destination) void this.recordArrivalVisit(destination);
+      })
     );
   }
 
@@ -132,11 +132,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
     void this.location.startWatch();
     void this.checkBackend();
     void this.loadWeather();
-    void this.reports.ensureReports(true);
   }
 
   ngOnDestroy(): void {
     this.subs.forEach((s) => s.unsubscribe());
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
     this.map?.remove();
     this.map = null;
   }
@@ -157,17 +158,84 @@ export class MapPage implements AfterViewInit, OnDestroy {
       maxZoom: 19,
       attributionControl: false,
     });
+    // TEMP DEBUG: capture maplibre's internal errors for live diagnosis.
+    (window as unknown as { __mapErrors: string[] }).__mapErrors = [];
+    this.map.on('error', (e) => {
+      const bag = (window as unknown as { __mapErrors: string[] }).__mapErrors;
+      if (bag.length < 20) bag.push(String(e.error?.message ?? e).slice(0, 200));
+    });
     // The vector style carries its own MapTiler/OSM attribution; render it
     // compact so it reads as a small pill like the Leaflet one did.
     this.map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
+    // The GL canvas locks to the container size at creation — if the view
+    // hadn't laid out yet it stays 400x300 forever. Observe and resize.
+    this.resizeObserver = new ResizeObserver(() => this.map?.resize());
+    this.resizeObserver.observe(this.mapDiv.nativeElement);
+
     // Re-add our custom sources/layers after every style (re)load — setStyle
     // wipes them (this also fires once after the initial load).
     this.map.on('style.load', () => this.enhanceStyle());
+    // 'moveend' doesn't fire on the initial load — fetch community pins once
+    // the map is ready too.
+    this.map.on('load', () => this.zone.run(() => void this.onCameraIdle()));
     this.map.on('dragstart', () => this.zone.run(() => (this.follow = false)));
+    this.map.on('moveend', () => this.zone.run(() => void this.onCameraIdle()));
     this.map.on('click', (e) =>
       this.zone.run(() => void this.onMapTap({ lat: e.lngLat.lat, lng: e.lngLat.lng }))
     );
+  }
+
+  /** Every camera rest: refresh community pins around the visible area. */
+  private async onCameraIdle(): Promise<void> {
+    const map = this.map;
+    if (!map) return;
+    const zoom = map.getZoom();
+    this.renderCommunityPins(zoom);
+    const center = map.getCenter();
+    const radius = zoom >= 14 ? 3000 : zoom >= 12 ? 10000 : 25000;
+    await this.community.refreshNearby(center.lat, center.lng, radius);
+  }
+
+  /** Teardrop icon pins up close; small circle chips when zoomed out. */
+  private renderCommunityPins(zoom: number): void {
+    const map = this.map;
+    if (!map) return;
+    this.communityMarkers.forEach((m) => m.remove());
+    this.communityMarkers = [];
+    for (const place of this.community.nearby$.value) {
+      const icon = placeIconDef(place.icon)?.key ?? 'location_on';
+      const el = document.createElement('div');
+      if (zoom >= 14) {
+        el.className = 'community-pin';
+        el.innerHTML = `<span class="material-symbols-rounded">${icon}</span>`;
+      } else {
+        el.className = 'community-chip';
+        el.innerHTML = `<span class="material-symbols-rounded">${icon}</span>`;
+      }
+      el.title = place.name;
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        void this.router.navigateByUrl(`/place/${place.id}`);
+      });
+      this.communityMarkers.push(
+        new maplibregl.Marker({ element: el, anchor: zoom >= 14 ? 'bottom' : 'center' })
+          .setLngLat([place.lng, place.lat])
+          .addTo(map)
+      );
+    }
+  }
+
+  private async recordArrivalVisit(destination: PlaceResult): Promise<void> {
+    if (!destination.communityPlaceId) return;
+    const pos = this.location.position;
+    if (!pos) return;
+    try {
+      await this.community.recordVisit(destination.communityPlaceId, { lat: pos.lat, lng: pos.lng });
+      await this.toast(`Visit verified at ${destination.name} — your comments here now carry the badge.`);
+    } catch {
+      /* distance proof failed — no badge, no drama */
+    }
   }
 
   /** Dark / light / satellite switch — style.load re-applies the 3D layers. */
@@ -297,7 +365,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
     // While moving, swallow the part of the route already traveled.
     if (this.navState$.value.phase === 'navigating') this.trimRouteBehind(pos);
-    this.updateFloodPrompt();
   }
 
   private onNavState(state: NavState): void {
@@ -522,127 +589,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
   }
 
-  // --- community reports --------------------------------------------------------
-
-  /** Redraw every live report as a colored pin; confirmed ones get a bolder ring. */
-  private renderReports(): void {
-    if (!this.map) return;
-    this.reportMarkers.forEach((m) => m.remove());
-    this.reportMarkers = [];
-    for (const report of this.reports.reports$.value) {
-      const el = document.createElement('div');
-      el.className = 'report-dot';
-      el.title = `${report.kind} · tap for details`;
-      el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${this.reports.kindColor(
-        report.kind
-      )};border:${(report.presenceCount ?? 0) > 0 ? 2.5 : 1.5}px solid #ffffff;box-shadow:0 1px 5px rgba(0,0,0,0.4);box-sizing:border-box;cursor:pointer;`;
-      // stopPropagation so the tap doesn't ALSO hit the map and start a
-      // route to a dropped pin at the same spot (Leaflet: bubblingMouseEvents).
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        void this.openReportActions(report);
-      });
-      this.reportMarkers.push(
-        new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([report.lng, report.lat])
-          .addTo(this.map)
-      );
-    }
-    this.updateFloodPrompt();
-  }
-
-  private async openReportActions(report: CommunityReport): Promise<void> {
-    const sheet = await this.actionSheetCtrl.create({
-      header: report.text,
-      subHeader: `${report.kind} · ${this.reports.trustLabel(report)}`,
-      buttons: [
-        {
-          text: '✅ Still true — confirm',
-          handler: () => {
-            void this.confirmReport(report);
-          },
-        },
-        {
-          text: '👎 Not true — dispute',
-          handler: () => {
-            void this.disputeReport(report);
-          },
-        },
-        {
-          text: 'Retire this report',
-          role: 'destructive',
-          handler: () => {
-            void this.retireReport(report);
-          },
-        },
-        { text: 'Cancel', role: 'cancel' },
-      ],
-    });
-    await sheet.present();
-  }
-
-  private async confirmReport(report: CommunityReport): Promise<void> {
-    try {
-      const updated = await this.reports.confirmReport(report.id);
-      await this.toast(
-        this.reports.wasOnSite(updated) ? 'Confirmed on site — thank you!' : 'Confirmed — thank you!'
-      );
-    } catch (e) {
-      await this.toast(e instanceof Error ? e.message : 'Could not confirm that report.');
-    }
-  }
-
-  private async disputeReport(report: CommunityReport): Promise<void> {
-    try {
-      await this.reports.disputeReport(report.id);
-      await this.toast('Marked as not true — noted.');
-    } catch (e) {
-      await this.toast(e instanceof Error ? e.message : 'Could not dispute that report.');
-    }
-  }
-
-  private async retireReport(report: CommunityReport): Promise<void> {
-    try {
-      await this.reports.retireReport(report.id);
-      await this.toast('Report retired.');
-    } catch (e) {
-      await this.toast(e instanceof Error ? e.message : 'Could not retire that report.');
-    }
-  }
-
-  /** Step 6: raining + a flood report within 400 m → ask once, one tap. */
-  private updateFloodPrompt(): void {
-    const weather = this.weather$.value;
-    const pos = this.location.position;
-    const idle = this.navState$.value.phase === 'idle';
-    const raining = !!weather && /rain|drizzle|thunder|shower/i.test(weather.description);
-    const near =
-      idle && raining && pos
-        ? this.reports
-            .reportsNear(pos, 400)
-            .filter((r) => r.kind.toLowerCase().includes('flood') && !this.dismissedFloodIds.has(r.id))
-        : [];
-    const next = near[0] ?? null;
-    if (next?.id !== this.floodPrompt?.id) {
-      this.floodPrompt = next;
-      this.cdr.markForCheck();
-    }
-  }
-
-  async confirmFloodPrompt(): Promise<void> {
-    const report = this.floodPrompt;
-    if (!report) return;
-    this.dismissedFloodIds.add(report.id);
-    this.floodPrompt = null;
-    this.cdr.markForCheck();
-    await this.confirmReport(report);
-  }
-
-  dismissFloodPrompt(): void {
-    if (this.floodPrompt) this.dismissedFloodIds.add(this.floodPrompt.id);
-    this.floodPrompt = null;
-    this.cdr.markForCheck();
-  }
+  // --- community places ---------------------------------------------------------
 
   private async checkBackend(): Promise<void> {
     try {
@@ -663,10 +610,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
         8000
       );
       this.weather$.next({ temp: w.temp, description: w.description });
-      this.updateFloodPrompt();
     } catch {
       this.weather$.next(null);
-      this.updateFloodPrompt();
     }
   }
 

@@ -6,8 +6,8 @@ export interface PromptContext {
   /** reverse-geocoded human address, may be null */
   address: string | null;
   nav: NavState | null;
-  /** pre-formatted community report lines for the situation block */
-  reportLines?: string[];
+  /** pre-formatted community-place lines for the situation block */
+  placeLines?: string[];
 }
 
 export function buildSystemPrompt(character: Character, ctx: PromptContext): string {
@@ -46,10 +46,10 @@ export function buildSystemPrompt(character: Character, ctx: PromptContext): str
       `Remaining: ${formatDistance(ctx.nav.remainingDistanceM)} (${formatDuration(ctx.nav.remainingDurationS)})`,
     ].filter(Boolean);
   }
-  if (ctx.reportLines?.length) {
+  if (ctx.placeLines?.length) {
     situation.push(
-      "Community reports nearby (neighbors' claims — always mention how fresh and how confirmed they are):",
-      ...ctx.reportLines.map((line) => `- ${line}`)
+      'Community places nearby (added by neighbors — photos, ratings and verified visits included):',
+      ...ctx.placeLines.map((line) => `- ${line}`)
     );
   }
   situation.push('Language: English.');
@@ -75,10 +75,9 @@ export function buildSystemPrompt(character: Character, ctx: PromptContext): str
     '   and be conversational. But always be ready to help with navigation.',
     "10. You have real-time access to the user's GPS location and navigation state",
     '   through the context above. Use this information to give relevant answers.',
-    "11. Community reports are neighbors' claims, not facts you verified. Share them",
-    '   with their trust level ("a neighbor reported a checkpoint at the bridge —',
-    '   confirmed on site 2 hours ago"). Never state an unconfirmed report as fact,',
-    "   and never repeat accusations about people.",
+    "11. Community places and comments were contributed by real neighbors. When the",
+    '   user asks whether a place is good, weigh the rating, number of visits, and',
+    '   whether commenters were actually there (verified visits) — say so honestly.',
   ];
 
   return [`You are ${character.name}, the AI navigation co-pilot in the NavBudol app.`, who, situation.join('\n'), rules.join('\n')].join(

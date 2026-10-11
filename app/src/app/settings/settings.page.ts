@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CharacterService } from '../core/services/character.service';
 import { SettingsService, SimSpeed } from '../core/services/settings.service';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-settings',
@@ -15,6 +16,7 @@ export class SettingsPage {
   constructor(
     public settings: SettingsService,
     public characters: CharacterService,
+    public auth: AuthService,
     private router: Router
   ) {}
 
@@ -65,5 +67,14 @@ export class SettingsPage {
 
   openCharacterSelect(): void {
     void this.router.navigateByUrl('/character-select');
+  }
+
+  openProfile(): void {
+    void this.router.navigateByUrl(this.auth.currentUser ? '/profile/me' : '/auth');
+  }
+
+  async logout(): Promise<void> {
+    await this.auth.logout();
+    void this.router.navigateByUrl('/auth', { replaceUrl: true });
   }
 }

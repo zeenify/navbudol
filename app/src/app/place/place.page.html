@@ -1,0 +1,211 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/map" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>Place</ion-title>
+    <ion-buttons slot="end">
+      @if (place?.isCreator) {
+        <ion-button (click)="editing ? saveEdits() : startEditing()">
+          {{ editing ? 'Save' : 'Edit' }}
+        </ion-button>
+      }
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="place-content">
+  @if (loading) {
+    <div class="state-block">
+      <span class="state-spinner"></span>
+      <p>Opening the place…</p>
+    </div>
+  } @else if (error) {
+    <div class="state-block">
+      <span class="material-symbols-rounded state-icon">error</span>
+      <p>{{ error }}</p>
+    </div>
+  } @else if (place) {
+    <div class="place-wrap">
+      <!-- hero: creator gallery or icon banner -->
+      <div class="hero">
+        @if (place.gallery.length > 0) {
+          <div class="hero-strip">
+            @for (photo of place.gallery; track photo.id) {
+              <img [src]="photo.url" [alt]="photo.caption || place.name" />
+            }
+          </div>
+        } @else {
+          <div class="hero-fallback">
+            <div class="hero-pin">
+              <span class="material-symbols-rounded">{{ place.icon }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="head-card nb-glass">
+        <div class="head-row">
+          <div class="head-pin">
+            <span class="material-symbols-rounded">{{ place.icon }}</span>
+          </div>
+          <div class="head-main">
+            <h1>{{ place.name }}</h1>
+            <div class="head-sub">
+              @if (place.hasVisited) {
+                <span class="visited-chip"><span class="material-symbols-rounded">verified</span> You've been here</span>
+              }
+              <span class="head-rating">★ {{ place.rating.average ?? '—' }} <em>({{ place.rating.count }})</em></span>
+              <span class="head-photos">{{ place.photoCount }} photos</span>
+            </div>
+          </div>
+          <div class="vote-stack">
+            <button type="button" class="vote" [class.mine]="place.myVote === 1" (click)="vote(1)" [disabled]="busy">
+              <span class="material-symbols-rounded">thumb_up</span>
+              {{ place.likes }}
+            </button>
+            <button type="button" class="vote" [class.mine-neg]="place.myVote === -1" (click)="vote(-1)" [disabled]="busy">
+              <span class="material-symbols-rounded">thumb_down</span>
+              {{ place.dislikes }}
+            </button>
+          </div>
+        </div>
+
+        @if (place.creator) {
+          <button type="button" class="creator-row" (click)="place.creator && router.navigate(['/profile', place.creator.id])">
+            <span class="creator-avatar">{{ place.creator.avatar }}</span>
+            <span class="creator-name">Added by <strong>{{ place.creator.displayName }}</strong></span>
+            <span class="material-symbols-rounded creator-chevron">chevron_right</span>
+          </button>
+        }
+
+        <!-- rate it -->
+        <div class="rate-row">
+          <span class="rate-label">{{ place.myRating ? 'Your rating' : 'Rate this place' }}</span>
+          <div class="stars">
+            @for (star of [1, 2, 3, 4, 5]; track star) {
+              <button type="button" class="star" (click)="rate(star)" [disabled]="busy" [attr.aria-label]="star + ' stars'">
+                <span class="material-symbols-rounded" [class.filled]="(place.myRating ?? place.rating.average ?? 0) >= star">
+                  star
+                </span>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (editing) {
+        <div class="edit-card nb-glass">
+          <label class="edit-field">
+            <span>Name</span>
+            <input type="text" [(ngModel)]="editName" maxlength="80" />
+          </label>
+          <div class="edit-field">
+            <span>Icon</span>
+            <app-icon-picker [selected]="editIcon" (selectedChange)="editIcon = $event"></app-icon-picker>
+          </div>
+          <label class="edit-field">
+            <span>Description</span>
+            <textarea rows="3" [(ngModel)]="editDescription" maxlength="2000"></textarea>
+          </label>
+          <button type="button" class="retire-link" (click)="retirePlace()">Remove this place from the map…</button>
+        </div>
+      }
+
+      @if (place.description && !editing) {
+        <div class="desc-card nb-glass">
+          <p>{{ place.description }}</p>
+        </div>
+      }
+
+      <!-- actions -->
+      <div class="actions-row">
+        <button type="button" class="action primary" (click)="navigate()">
+          <span class="material-symbols-rounded">navigation</span> Navigate
+        </button>
+        <button type="button" class="action" (click)="takePhoto()">
+          <span class="material-symbols-rounded">photo_camera</span> Camera
+        </button>
+        <button type="button" class="action" (click)="openPhotoPicker()">
+          <span class="material-symbols-rounded">add_photo_alternate</span> Upload
+        </button>
+        <input #photoFileInput type="file" accept="image/*" style="display: none" (change)="onFileChosen($event)" />
+      </div>
+
+      <!-- community photos -->
+      <div class="section">
+        <div class="section-head">
+          <h2>Community photos</h2>
+          <span>{{ place.communityPhotos.length }}</span>
+        </div>
+        @if (place.communityPhotos.length > 0) {
+          <div class="photo-grid">
+            @for (photo of place.communityPhotos; track photo.id) {
+              <app-photo-tile
+                [photo]="photo"
+                [actions]="place.isCreator === true || photo.uploader?.id === me?.id"
+                (menu)="photoActions(photo)"
+              ></app-photo-tile>
+            }
+          </div>
+        } @else {
+          <p class="section-empty">No community photos yet — be the first to add one.</p>
+        }
+      </div>
+
+      <!-- gallery note -->
+      @if (place.isCreator && place.communityPhotos.length > 0) {
+        <p class="creator-note">Tip: tap the ••• on a community photo to add it to your gallery.</p>
+      }
+
+      <!-- comments -->
+      <div class="section">
+        <div class="section-head">
+          <h2>Comments</h2>
+          <span>{{ place.commentCount }}</span>
+        </div>
+
+        <div class="composer nb-glass">
+          <input
+            type="text"
+            [(ngModel)]="commentText"
+            placeholder="Share something helpful…"
+            maxlength="1000"
+            (keyup.enter)="addComment()"
+          />
+          <button type="button" class="send" (click)="addComment()" [disabled]="busy || !commentText.trim()">
+            <span class="material-symbols-rounded">send</span>
+          </button>
+        </div>
+
+        <div class="comment-list">
+          @for (comment of place.comments; track comment.id) {
+            <div class="comment">
+              <div class="comment-avatar">{{ comment.author?.avatar ?? '🙂' }}</div>
+              <div class="comment-body">
+                <div class="comment-meta">
+                  <button type="button" class="comment-author" (click)="comment.author && router.navigate(['/profile', comment.author.id])">
+                    {{ comment.author?.displayName ?? 'Neighbor' }}
+                  </button>
+                  @if (comment.verifiedVisit) {
+                    <span class="verified-badge" title="GPS-verified visit">
+                      <span class="material-symbols-rounded">verified</span> was here
+                    </span>
+                  }
+                  <span class="comment-time">{{ timeAgo(comment.createdAt) }}</span>
+                </div>
+                <p class="comment-text">{{ comment.text }}</p>
+                @if (comment.author?.id === me?.id) {
+                  <button type="button" class="comment-delete" (click)="deleteComment(comment.id)">Delete</button>
+                }
+              </div>
+            </div>
+          }
+          @if (place.comments.length === 0) {
+            <p class="section-empty">No comments yet.</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</ion-content>

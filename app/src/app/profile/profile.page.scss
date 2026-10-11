@@ -1,0 +1,271 @@
+.profile-content {
+  --background: linear-gradient(180deg, #f2f7ff 0%, #f8fbff 100%);
+}
+
+.profile-wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.state-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 80px 24px;
+  color: #5b6b7f;
+}
+
+.state-spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 122, 255, 0.2);
+  border-top-color: #007aff;
+  animation: state-spin 0.9s linear infinite;
+}
+
+@keyframes state-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.identity-card {
+  border-radius: 22px;
+  padding: 22px 18px;
+  text-align: center;
+}
+
+.avatar-ring {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.avatar-big {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #eaf3ff, #eefcf5);
+  border: 3px solid #fff;
+  box-shadow: 0 8px 22px rgba(16, 35, 63, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+}
+
+.avatar-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.avatar-choice {
+  aspect-ratio: 1;
+  border: 1.5px solid rgba(16, 35, 63, 0.1);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 22px;
+  cursor: pointer;
+
+  &.mine {
+    border-color: #007aff;
+    background: #eaf3ff;
+  }
+}
+
+h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #10233f;
+  letter-spacing: -0.01em;
+}
+
+.username {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #007aff;
+}
+
+.bio {
+  margin: 10px auto 0;
+  max-width: 380px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #33445c;
+}
+
+.joined {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: #9aa7ba;
+}
+
+.edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  input,
+  textarea {
+    border: 1.5px solid rgba(16, 35, 63, 0.12);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14.5px;
+    color: #10233f;
+    outline: none;
+    width: 100%;
+
+    &:focus {
+      border-color: #007aff;
+    }
+  }
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ghost,
+.solid {
+  border-radius: 11px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ghost {
+  border: 1.5px solid rgba(16, 35, 63, 0.15);
+  background: #fff;
+  color: #5b6b7f;
+}
+
+.solid {
+  border: none;
+  background: #007aff;
+  color: #fff;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+}
+
+.stat {
+  border-radius: 16px;
+  padding: 12px 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 19px;
+    color: #10233f;
+  }
+
+  span {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #7c8aa0;
+  }
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+
+  h2 {
+    margin: 0;
+    font-size: 15.5px;
+    font-weight: 800;
+    color: #10233f;
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7c8aa0;
+    background: rgba(16, 35, 63, 0.06);
+    border-radius: 8px;
+    padding: 1px 8px;
+  }
+}
+
+.places-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.place-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-radius: 15px;
+  padding: 11px 13px;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.place-icon {
+  font-size: 22px;
+  color: #007aff;
+  font-variation-settings: 'FILL' 1;
+}
+
+.place-name {
+  flex: 1;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #10233f;
+}
+
+.chev {
+  color: #9aa7ba;
+  font-size: 20px;
+}
+
+.empty {
+  font-size: 13.5px;
+  color: #7c8aa0;
+  margin: 2px;
+}
+
+.logout {
+  border: 1.5px solid rgba(217, 45, 32, 0.35);
+  background: rgba(217, 45, 32, 0.05);
+  color: #d92d20;
+  border-radius: 14px;
+  padding: 12px 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  margin-top: 6px;
+
+  .material-symbols-rounded {
+    font-size: 19px;
+  }
+}

@@ -1,0 +1,54 @@
+<ion-content [fullscreen]="true" class="auth-content">
+  <div class="auth-shell">
+    <div class="auth-glow"></div>
+
+    <div class="auth-card">
+      <div class="brand">
+        <div class="brand-pin">
+          <span class="material-symbols-rounded">location_on</span>
+        </div>
+        <h1>NavBudol</h1>
+        <p class="brand-sub">Your town, mapped by the neighbors who live in it.</p>
+      </div>
+
+      <div class="mode-switch" role="tablist">
+        <button type="button" class="mode" [class.active]="mode === 'login'" (click)="switchMode('login')">
+          Sign in
+        </button>
+        <button type="button" class="mode" [class.active]="mode === 'register'" (click)="switchMode('register')">
+          Create account
+        </button>
+      </div>
+
+      <div class="fields">
+        <label class="field" *ngIf="mode === 'register'">
+          <span class="field-label">Display name</span>
+          <input type="text" [(ngModel)]="displayName" placeholder="How neighbors will see you" maxlength="48" />
+        </label>
+        <label class="field">
+          <span class="field-label">Username</span>
+          <input type="text" [(ngModel)]="username" placeholder="lowercase_letters_only" autocapitalize="off" />
+        </label>
+        <label class="field">
+          <span class="field-label">Password</span>
+          <input
+            type="password"
+            [(ngModel)]="password"
+            placeholder="{{ mode === 'register' ? 'At least 6 characters' : 'Your password' }}"
+          />
+        </label>
+      </div>
+
+      <p class="error" *ngIf="error">{{ error }}</p>
+
+      <button class="submit" type="button" (click)="submit()" [disabled]="busy">
+        {{ busy ? 'One sec…' : mode === 'login' ? 'Sign in' : 'Join the community' }}
+      </button>
+
+      <p class="hint">
+        No email, no fuss — just a name so the town knows who mapped what.
+      </p>
+    </div>
+  </div>
+</ion-content>
+

@@ -20,37 +20,8 @@ export interface PlaceResult {
   type?: string;
   distanceM?: number;
   outsideServiceArea?: boolean;
-  sharedLocationId?: string;
-}
-
-/** A confirmation or dispute stamp on a community report. */
-export interface ReportStamp {
-  by: string;
-  at: string;
-  /** meters between the confirmer and the report pin when they confirmed */
-  nearM?: number | null;
-}
-
-/**
- * Community report — the perishable half of the shared map. A place is a
- * noun; a report is a sentence with a timestamp ("this road floods").
- * confirmCount/presenceCount/disputeCount arrive server-computed on every
- * response; presenceCount is the trust signal that may change a route.
- */
-export interface CommunityReport extends LatLng {
-  id: string;
-  kind: string;
-  text: string;
-  placeId?: string | null;
-  author: string;
-  createdAt: string;
-  expiresAt: string;
-  retiredAt?: string | null;
-  confirms: ReportStamp[];
-  disputes: ReportStamp[];
-  confirmCount?: number;
-  presenceCount?: number;
-  disputeCount?: number;
+  /** set when this entry is a community-created place */
+  communityPlaceId?: string;
 }
 
 export interface RouteStep {
@@ -77,8 +48,6 @@ export interface RouteResult {
   source?: 'ors' | 'osrm';
   /** travel mode the route + timing are for */
   profile?: RouteProfile;
-  /** how many presence-confirmed reports the engine routed around (ORS only) */
-  avoidedReports?: number;
 }
 
 export type RouteProfile = 'driving-car' | 'foot-walking';
@@ -105,7 +74,6 @@ export interface RouteCardData {
   profile?: string;
   geometry?: LatLng[];
   ascentM?: number;
-  avoidedReports?: number;
 }
 
 export interface ChatMessage {
@@ -180,3 +148,82 @@ export interface Character {
 }
 
 export type VoiceAssistantState = 'idle' | 'listening' | 'processing' | 'speaking';
+
+// ============================================================================
+// Community platform (accounts, places, social proof)
+// ============================================================================
+
+export interface UserRef {
+  id: string;
+  displayName: string;
+  avatar: string;
+}
+
+export interface AppUser extends UserRef {
+  username: string;
+  bio: string;
+  createdAt: string;
+}
+
+export interface RatingSummary {
+  average: number | null;
+  count: number;
+  distribution: Record<string, number>;
+}
+
+export interface CommunityPlaceSummary {
+  id: string;
+  name: string;
+  icon: string;
+  lat: number;
+  lng: number;
+  creator: UserRef | null;
+  rating: RatingSummary;
+  photoCount: number;
+  commentCount: number;
+  likes: number;
+  dislikes: number;
+  createdAt: string;
+  distanceM?: number;
+  myRating?: number | null;
+  myVote?: number;
+  hasVisited?: boolean;
+  isCreator?: boolean;
+}
+
+export interface CommunityPlacePhoto {
+  id: string;
+  url: string;
+  caption: string;
+  inGallery: boolean;
+  createdAt: string;
+  uploader: UserRef | null;
+  /** set on upload responses: whether the upload proved a visit */
+  verifiedVisit?: boolean;
+}
+
+export interface CommunityPlaceComment {
+  id: string;
+  text: string;
+  verifiedVisit: boolean;
+  createdAt: string;
+  author: UserRef | null;
+}
+
+export interface CommunityPlaceDetail extends CommunityPlaceSummary {
+  description: string;
+  gallery: CommunityPlacePhoto[];
+  communityPhotos: CommunityPlacePhoto[];
+  comments: CommunityPlaceComment[];
+}
+
+export interface UserProfile {
+  user: AppUser;
+  stats: { places: number; photos: number; comments: number; placesVisited: number };
+  places: Array<{ id: string; name: string; icon: string; lat: number; lng: number; createdAt: string }>;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AppUser;
+}

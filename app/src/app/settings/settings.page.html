@@ -5,6 +5,18 @@
 </ion-header>
 
 <ion-content class="settings-content">
+  <div class="section-label">Account</div>
+  <div class="nb-card group">
+    <button class="row row-btn" (click)="openProfile()">
+      <div class="row-avatar account-avatar">{{ auth.currentUser?.avatar ?? '🙂' }}</div>
+      <div class="row-main">
+        <div class="row-title">{{ auth.currentUser?.displayName ?? 'Signed out' }}</div>
+        <div class="row-sub">\@{{ auth.currentUser?.username ?? '—' }} · tap to view your contributions</div>
+      </div>
+      <span class="chevron">›</span>
+    </button>
+  </div>
+
   <div class="section-label">Copilot</div>
   <div class="nb-card group">
     <button class="row row-btn" (click)="openCharacterSelect()">

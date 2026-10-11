@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Component, EventEmitter, Output, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { PlaceResult } from '../../../core/models';
 import { isSamePlace } from '../../../core/geo.utils';
 import { PlacesService } from '../../../core/services/places.service';
-import { REPORT_KINDS, ReportsService } from '../../../core/services/reports.service';
 import { LocationService } from '../../../core/services/location.service';
 
 const RECENTS_KEY = 'navbudol.recentSearches';
@@ -20,24 +20,13 @@ export class SearchBarComponent {
   recents: string[] = this.loadRecents();
   showResults = false;
   searching = false;
-  showAddLocation = false;
-  savingLocation = false;
-  locationName = '';
-  locationDetail = '';
-  locationError = '';
-  showAddReport = false;
-  savingReport = false;
-  reportKind: string = 'flood';
-  reportText = '';
-  reportError = '';
-  readonly reportKinds = REPORT_KINDS;
-  private reports = inject(ReportsService);
   private debounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private places: PlacesService,
     private location: LocationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   onInput(event: { detail: { value?: string | null } }): void {
@@ -48,8 +37,7 @@ export class SearchBarComponent {
       this.searching = false;
       return;
     }
-    // Instant: curated landmarks + local/shared index (no network)
-    void this.places.ensureUserLocations();
+    // Instant: curated landmarks + local index + community places (no network)
     this.results = this.places.searchLocal(value, this.location.position);
     this.showResults = true;
     // Online results follow shortly and get merged in
@@ -60,8 +48,12 @@ export class SearchBarComponent {
   onFocus(): void {
     this.showResults = true;
     void this.places.ensureLocalIndex();
-    void this.places.ensureUserLocations(true);
-    void this.reports.ensureReports();
+  }
+
+  /** The + button: adding a place is a whole flow, not a modal. */
+  openAddPlace(): void {
+    this.dismiss();
+    void this.router.navigateByUrl('/add-place');
   }
 
   async runSearch(query: string): Promise<void> {
@@ -85,96 +77,6 @@ export class SearchBarComponent {
     }
   }
 
-  openAddLocation(): void {
-    this.showAddReport = false;
-    this.showAddLocation = true;
-    this.showResults = false;
-    this.locationError = '';
-    if (!this.location.hasFix) void this.location.startWatch();
-  }
-
-  closeAddLocation(): void {
-    if (this.savingLocation) return;
-    this.showAddLocation = false;
-    this.locationError = '';
-  }
-
-  openAddReport(): void {
-    this.showAddLocation = false;
-    this.showAddReport = true;
-    this.showResults = false;
-    this.reportError = '';
-    if (!this.location.hasFix) void this.location.startWatch();
-  }
-
-  closeAddReport(): void {
-    if (this.savingReport) return;
-    this.showAddReport = false;
-    this.reportError = '';
-  }
-
-  selectKind(id: string): void {
-    this.reportKind = id;
-    this.cdr.markForCheck();
-  }
-
-  shelfLifeLabel(): string {
-    return this.reportKinds.find((k) => k.id === this.reportKind)?.shelfLife ?? '1 week';
-  }
-
-  async saveReport(): Promise<void> {
-    const text = this.reportText.trim();
-    if (!text) {
-      this.reportError = 'Write a short description first.';
-      return;
-    }
-    if (!this.location.hasFix || !this.location.position) {
-      this.reportError = 'Turn on your location so NavBudol can pin the report.';
-      return;
-    }
-    this.savingReport = true;
-    this.reportError = '';
-    try {
-      await this.reports.addReport(this.reportKind, text, this.location.position);
-      this.reportText = '';
-      this.showAddReport = false;
-      this.cdr.markForCheck();
-    } catch (e) {
-      this.reportError = e instanceof Error ? e.message : 'Could not save this report.';
-    } finally {
-      this.savingReport = false;
-      this.cdr.markForCheck();
-    }
-  }
-
-  async saveLocation(): Promise<void> {
-    const name = this.locationName.trim();
-    if (!name) {
-      this.locationError = 'Give this location a name first.';
-      return;
-    }
-    if (!this.location.hasFix || !this.location.position) {
-      this.locationError = 'Turn on your location so NavBudol can save the pin.';
-      return;
-    }
-    this.savingLocation = true;
-    this.locationError = '';
-    try {
-      const place = await this.places.addSharedLocation(name, this.locationDetail.trim(), this.location.position);
-      this.locationName = '';
-      this.locationDetail = '';
-      this.showAddLocation = false;
-      this.showResults = true;
-      this.results = [place, ...this.results];
-      this.cdr.markForCheck();
-    } catch (e) {
-      this.locationError = e instanceof Error ? e.message : 'Could not save this shared location.';
-    } finally {
-      this.savingLocation = false;
-      this.cdr.markForCheck();
-    }
-  }
-
   select(place: PlaceResult): void {
     this.saveRecent(place.name);
     this.showResults = false;
@@ -184,8 +86,6 @@ export class SearchBarComponent {
 
   dismiss(): void {
     this.showResults = false;
-    this.showAddLocation = false;
-    this.showAddReport = false;
     this.results = [];
   }
 
