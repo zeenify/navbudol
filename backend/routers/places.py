@@ -49,7 +49,8 @@ class LatLngBody(BaseModel):
 
 class PlaceCreateBody(BaseModel):
     name: str = Field(min_length=1, max_length=80)
-    icon: str = Field(default="location-on", max_length=48)
+    icon: str = Field(default="location_on", max_length=48)
+    custom_icon_url: str | None = Field(default=None, max_length=255)
     description: str = Field(default="", max_length=2000)
     lat: float
     lng: float
@@ -61,6 +62,12 @@ class PlaceUpdateBody(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=80)
     description: str | None = Field(default=None, max_length=2000)
     icon: str | None = Field(default=None, max_length=48)
+    custom_icon_url: str | None = Field(default=None, max_length=255)
+
+
+class IconUploadBody(BaseModel):
+    imageBase64: str
+    mimeType: str
 
 
 class CommentBody(BaseModel):
@@ -182,6 +189,7 @@ def _place_summary(db: Session, place: Place, user: User | None) -> dict:
         "id": place.id,
         "name": place.name,
         "icon": place.icon,
+        "customIconUrl": place.custom_icon_url,
         "lat": place.lat,
         "lng": place.lng,
         "creator": {
@@ -236,6 +244,7 @@ def create_place(
         name=body.name.strip(),
         description=body.description.strip(),
         icon=body.icon,
+        custom_icon_url=_safe_icon_url(body.custom_icon_url),
         lat=body.lat,
         lng=body.lng,
     )
@@ -324,6 +333,8 @@ def update_place(
         place.description = body.description.strip()
     if body.icon is not None:
         place.icon = body.icon
+    if body.custom_icon_url is not None:
+        place.custom_icon_url = _safe_icon_url(body.custom_icon_url)
     db.commit()
     detail = _place_summary(db, place, user)
     detail["description"] = place.description
@@ -342,6 +353,45 @@ def retire_place(
     place.retired = True
     db.commit()
     return {"ok": True}
+
+
+# --- custom icons ---------------------------------------------------------------
+
+
+def _safe_icon_url(url: str | None) -> str | None:
+    """Only serve icon URLs that point at our own uploads mount."""
+    if url is None:
+        return None
+    url = url.strip()
+    if not url.startswith("/uploads/icons/"):
+        raise HTTPException(status_code=400, detail="Invalid custom icon.")
+    return url
+
+
+@router.post("/place-icons")
+def upload_custom_icon(
+    body: IconUploadBody,
+    user: User = Depends(auth.require_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    extension = ALLOWED_IMAGE_TYPES.get(body.mimeType.lower())
+    if extension is None:
+        raise HTTPException(status_code=400, detail="Icons must be JPEG, PNG, or WebP.")
+    try:
+        raw = base64.b64decode(body.imageBase64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not decode that image.")
+    if len(raw) == 0:
+        raise HTTPException(status_code=400, detail="That image is empty.")
+    if len(raw) > 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Icons must be under 1 MB.")
+
+    icons_dir = os.path.join(UPLOADS_DIR, "icons")
+    os.makedirs(icons_dir, exist_ok=True)
+    filename = f"{uid()}{extension}"
+    with open(os.path.join(icons_dir, filename), "wb") as fh:
+        fh.write(raw)
+    return {"url": f"/uploads/icons/{filename}"}
 
 
 # --- photos ------------------------------------------------------------------

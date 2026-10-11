@@ -40,7 +40,14 @@
 
       <div class="form-field">
         <span class="form-label">What kind of place is it? <em>(pick an icon)</em></span>
-        <app-icon-picker [selected]="selectedIcon" (selectedChange)="pickIcon($event)"></app-icon-picker>
+        <app-icon-picker
+          [selected]="selectedIcon"
+          (selectedChange)="pickIcon($event)"
+          (customIcon)="pickCustomIcon($event)"
+        ></app-icon-picker>
+        @if (customIconUrl) {
+          <p class="custom-ok"><span class="material-symbols-rounded">check_circle</span> Custom icon uploaded.</p>
+        }
         <button type="button" class="ai-pick" (click)="aiPickIcon()" [disabled]="aiPicking">
           <span class="material-symbols-rounded">auto_awesome</span>
           {{ aiPicking ? 'The AI is thinking…' : 'Not sure? Let the AI pick' }}

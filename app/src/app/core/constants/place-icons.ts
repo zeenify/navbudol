@@ -47,7 +47,7 @@ export const PLACE_ICONS: PlaceIconDef[] = [
   { key: 'toys', label: 'Day care / Playground' },
   // health
   { key: 'local_hospital', label: 'Hospital / Clinic', common: true },
-  { key: 'pharmacy', label: 'Pharmacy', common: true },
+  { key: 'medication', label: 'Pharmacy', common: true },
   { key: 'medication', label: 'Laboratory / Med clinic' },
   { key: 'dentistry', label: 'Dental clinic' },
   { key: 'pets', label: 'Vet / Pet supply' },

@@ -177,6 +177,7 @@ export interface CommunityPlaceSummary {
   id: string;
   name: string;
   icon: string;
+  customIconUrl?: string | null;
   lat: number;
   lng: number;
   creator: UserRef | null;

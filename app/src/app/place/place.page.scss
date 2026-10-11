@@ -547,3 +547,20 @@
   padding: 2px 0 0;
   cursor: pointer;
 }
+
+.hero-pin-img,
+.head-pin-img {
+  width: 60%;
+  height: 60%;
+  object-fit: cover;
+  border-radius: 50%;
+  transform: rotate(45deg);
+}
+
+.hero-pin .hero-pin-img {
+  transform: rotate(45deg);
+}
+
+.head-pin .head-pin-img {
+  transform: rotate(45deg);
+}

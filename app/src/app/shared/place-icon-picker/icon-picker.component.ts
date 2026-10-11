@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { COMMON_PLACE_ICONS, PLACE_ICONS, PlaceIconDef, searchPlaceIcons } from '../../core/constants/place-icons';
 
 /**
- * The place-type picker: a shortcut grid of common categories plus a
- * searchable full library, so contributors can label anything.
+ * The place-type picker: a shortcut grid of common categories, a searchable
+ * full library, and a custom-icon upload for anything the library misses.
  */
 @Component({
   selector: 'app-icon-picker',
@@ -35,9 +35,20 @@ import { COMMON_PLACE_ICONS, PLACE_ICONS, PlaceIconDef, searchPlaceIcons } from 
           </button>
         }
         @if (shown.length === 0) {
-          <div class="picker-empty">No icon matches — pick the closest one.</div>
+          <div class="picker-empty">No icon matches — upload your own below.</div>
         }
       </div>
+      <button type="button" class="custom-upload" (click)="fileInput.click()">
+        <span class="material-symbols-rounded">image_upload</span>
+        Upload your own icon
+      </button>
+      <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        style="display: none"
+        (change)="onFileChosen($event)"
+      />
     </div>
   `,
   styles: [
@@ -109,12 +120,35 @@ import { COMMON_PLACE_ICONS, PLACE_ICONS, PlaceIconDef, searchPlaceIcons } from 
         text-align: center;
         padding: 16px 0;
       }
+      .custom-upload {
+        width: 100%;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1.5px dashed rgba(0, 122, 255, 0.45);
+        border-radius: 11px;
+        background: rgba(0, 122, 255, 0.05);
+        color: #007aff;
+        padding: 8px 0;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .custom-upload .material-symbols-rounded {
+        font-size: 18px;
+      }
     `,
   ],
 })
 export class IconPickerComponent {
   @Input() selected: string | null = null;
   @Output() selectedChange = new EventEmitter<string>();
+  /** Fires when the contributor uploads a custom icon image (data URL). */
+  @Output() customIcon = new EventEmitter<string>();
+
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   query = '';
   shown: PlaceIconDef[] = COMMON_PLACE_ICONS;
@@ -126,6 +160,18 @@ export class IconPickerComponent {
   pick(icon: PlaceIconDef): void {
     this.selected = icon.key;
     this.selectedChange.emit(icon.key);
+  }
+
+  onFileChosen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') this.customIcon.emit(reader.result);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
   }
 
   get librarySize(): number {

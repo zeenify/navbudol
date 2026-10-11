@@ -38,7 +38,11 @@
         } @else {
           <div class="hero-fallback">
             <div class="hero-pin">
-              <span class="material-symbols-rounded">{{ place.icon }}</span>
+              @if (place.customIconUrl) {
+                <img class="hero-pin-img" [src]="community.absoluteUrl(place.customIconUrl)" alt="" />
+              } @else {
+                <span class="material-symbols-rounded">{{ place.icon }}</span>
+              }
             </div>
           </div>
         }
@@ -47,7 +51,11 @@
       <div class="head-card nb-glass">
         <div class="head-row">
           <div class="head-pin">
-            <span class="material-symbols-rounded">{{ place.icon }}</span>
+            @if (place.customIconUrl) {
+              <img class="head-pin-img" [src]="community.absoluteUrl(place.customIconUrl)" alt="" />
+            } @else {
+              <span class="material-symbols-rounded">{{ place.icon }}</span>
+            }
           </div>
           <div class="head-main">
             <h1>{{ place.name }}</h1>

@@ -225,15 +225,21 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (!map) return;
     this.communityMarkers.forEach((m) => m.remove());
     this.communityMarkers = [];
-    for (const place of this.community.nearby$.value) {
+    // Render from the session cache (everything the sweeps have seen), NOT
+    // the camera-scoped nearby list — the camera refresh would otherwise
+    // erase pins that are simply outside its radius.
+    for (const place of this.community.localPool()) {
       const icon = placeIconDef(place.icon)?.key ?? 'location_on';
       const el = document.createElement('div');
+      const inner = place.customIconUrl
+        ? `<img class="community-pin-img" src="${this.community.absoluteUrl(place.customIconUrl)}" alt="" />`
+        : `<span class="material-symbols-rounded">${icon}</span>`;
       if (zoom >= 14) {
         el.className = 'community-pin';
-        el.innerHTML = `<span class="material-symbols-rounded">${icon}</span>`;
+        el.innerHTML = inner;
       } else {
         el.className = 'community-chip';
-        el.innerHTML = `<span class="material-symbols-rounded">${icon}</span>`;
+        el.innerHTML = inner;
       }
       el.title = place.name;
       el.addEventListener('click', (e) => {

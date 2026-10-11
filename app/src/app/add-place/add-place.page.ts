@@ -34,6 +34,7 @@ export class AddPlacePage {
   name = '';
   description = '';
   selectedIcon: string | null = null;
+  customIconUrl: string | null = null;
   photos: string[] = []; // data URLs
   submitting = false;
   error: string | null = null;
@@ -63,6 +64,19 @@ export class AddPlacePage {
 
   async pickIcon(key: string): Promise<void> {
     this.selectedIcon = key;
+    this.customIconUrl = null;
+    this.cdr.markForCheck();
+  }
+
+  /** Uploaded a custom icon image — store it and prefer it over the library. */
+  async pickCustomIcon(dataUrl: string): Promise<void> {
+    try {
+      const res = await this.community.uploadCustomIcon(dataUrl);
+      this.customIconUrl = res.url;
+      this.error = null;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : 'Could not upload that icon.';
+    }
     this.cdr.markForCheck();
   }
 
@@ -138,7 +152,7 @@ export class AddPlacePage {
       this.error = 'Give the place a name.';
       return;
     }
-    if (!this.selectedIcon) {
+    if (!this.selectedIcon && !this.customIconUrl) {
       this.error = 'Pick an icon so neighbors recognize it on the map.';
       return;
     }
@@ -147,7 +161,8 @@ export class AddPlacePage {
     try {
       const place = await this.community.create({
         name: this.name.trim(),
-        icon: this.selectedIcon,
+        icon: this.selectedIcon ?? 'location_on',
+        customIconUrl: this.customIconUrl,
         description: this.description.trim(),
         lat: pos.lat,
         lng: pos.lng,

@@ -302,3 +302,23 @@ body.dark .maplibregl-ctrl-attrib a {
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
+
+.community-pin .community-pin-img,
+.community-chip .community-pin-img {
+  position: absolute;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.community-pin .community-pin-img {
+  top: 15px;
+}
+
+.community-chip .community-pin-img {
+  top: 50%;
+}

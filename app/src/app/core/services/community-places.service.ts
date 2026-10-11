@@ -9,6 +9,7 @@ import {
 } from '../models';
 import { environment } from '../../../environments/environment';
 import { BackendApiService } from './backend-api.service';
+import { AuthService } from './auth.service';
 
 /**
  * Client for the community places platform. Keeps the latest nearby fetch in
@@ -26,7 +27,19 @@ export class CommunityPlacesService {
   private cache = new Map<string, CommunityPlaceSummary>();
   private townSweep: Promise<void> | null = null;
 
-  constructor(private api: BackendApiService) {}
+  constructor(
+    private api: BackendApiService,
+    auth: AuthService
+  ) {
+    // A sweep that ran while signed out (or with a dead session) found
+    // nothing — re-sweep whenever a user session becomes active.
+    auth.currentUser$.subscribe((user) => {
+      if (user) {
+        this.townSweep = null;
+        void this.ensureTownSweep();
+      }
+    });
+  }
 
   /**
    * One town-wide fetch (25 km around the service-area center) so search and
@@ -74,6 +87,7 @@ export class CommunityPlacesService {
   async create(body: {
     name: string;
     icon: string;
+    customIconUrl?: string | null;
     description: string;
     lat: number;
     lng: number;
@@ -82,6 +96,15 @@ export class CommunityPlacesService {
     const place = await this.api.post<CommunityPlaceSummary>('/api/places', body);
     this.bump();
     return place;
+  }
+
+  /** Upload a custom icon image; returns the served URL. */
+  uploadCustomIcon(dataUrl: string): Promise<{ url: string }> {
+    const [meta, base64] = this.splitDataUrl(dataUrl);
+    return this.api.post<{ url: string }>('/api/place-icons', {
+      imageBase64: base64,
+      mimeType: meta.mimeType,
+    });
   }
 
   async update(

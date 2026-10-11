@@ -28,7 +28,7 @@ export class PlacePage implements OnInit {
 
   private route = inject(ActivatedRoute);
   public router = inject(Router);
-  private community = inject(CommunityPlacesService);
+  public community = inject(CommunityPlacesService);
   private auth = inject(AuthService);
   private location = inject(LocationService);
   private chatActions = inject(ChatActionsService);

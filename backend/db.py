@@ -86,7 +86,10 @@ class Place(Base):
     creator_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(80))
     description: Mapped[str] = mapped_column(Text, default="")
-    icon: Mapped[str] = mapped_column(String(48), default="location-on")
+    icon: Mapped[str] = mapped_column(String(48), default="location_on")
+    # Set when the contributor uploaded a custom icon image instead of picking
+    # a library key; the frontend renders this image inside the pin.
+    custom_icon_url: Mapped[str | None] = mapped_column(String(255), default=None)
     lat: Mapped[float] = mapped_column(Float)
     lng: Mapped[float] = mapped_column(Float)
     retired: Mapped[bool] = mapped_column(Boolean, default=False)

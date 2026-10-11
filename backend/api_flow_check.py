@@ -53,7 +53,7 @@ r = c.post(
     headers=ah,
     json={
         "name": "Kuya Jun's Milk Tea",
-        "icon": "local-cafe",
+        "icon": "local_cafe",
         "description": "Best salted caramel in town.",
         "lat": lat,
         "lng": lng,
@@ -65,6 +65,15 @@ place = r.json()
 pid = place["id"]
 check("creator flag set", place["isCreator"] is True)
 check("creation counts as verified visit", place["hasVisited"] is True)
+
+# custom icon upload
+r = c.post("/place-icons", headers=ah, json={"imageBase64": PNG, "mimeType": "image/png"})
+check("upload custom icon", r.status_code == 200, r.text)
+icon_url = r.json()["url"]
+r = c.patch(f"/places/{pid}", headers=ah, json={"custom_icon_url": icon_url})
+check("attach custom icon", r.status_code == 200 and r.json()["customIconUrl"] == icon_url, r.text)
+r = c.patch(f"/places/{pid}", headers=ah, json={"custom_icon_url": "https://evil.example/x.png"})
+check("foreign icon URL rejected", r.status_code == 400)
 
 r = c.post(
     "/places",
