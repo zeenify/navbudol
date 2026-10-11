@@ -156,22 +156,22 @@ export class ReportsService {
 
   /**
    * Pins to route around: only presence-confirmed reports (plan rule — one
-   * unverified note must never change someone's route), clipped to the
-   * origin→destination corridor so a far-off report can't distort the path.
+   * unverified note must never change someone's route), within corridorM of
+   * the straight origin→destination line. Reports at your own position or at
+   * the destination are excluded — you cannot avoid where you already are
+   * (those boxes would throw the route kilometres off), so the AI mentions
+   * them instead. ORS only detours when the box actually touches the road.
    */
-  avoidPoints(from: LatLng, to: LatLng, padM = 2000): LatLng[] {
-    const latPad = padM / 111320;
-    const cosLat = Math.cos((from.lat * Math.PI) / 180);
-    const lngPad = padM / (111320 * (cosLat || 1));
-    const minLat = Math.min(from.lat, to.lat) - latPad;
-    const maxLat = Math.max(from.lat, to.lat) + latPad;
-    const minLng = Math.min(from.lng, to.lng) - lngPad;
-    const maxLng = Math.max(from.lng, to.lng) + lngPad;
+  avoidPoints(from: LatLng, to: LatLng, corridorM = 400, skipNearM = 250): LatLng[] {
+    const line = [from, to];
     return this.reports$.value
       .filter((r) => (r.presenceCount ?? 0) >= 1)
-      .filter((r) => r.lat >= minLat && r.lat <= maxLat && r.lng >= minLng && r.lng <= maxLng)
+      .filter((r) => haversineM(from, r) > skipNearM && haversineM(to, r) > 150)
+      .map((r) => ({ r, d: distanceToPolylineM(r, line) }))
+      .filter((x) => x.d <= corridorM)
+      .sort((a, b) => a.d - b.d)
       .slice(0, 25)
-      .map((r) => ({ lat: r.lat, lng: r.lng }));
+      .map((x) => ({ lat: x.r.lat, lng: x.r.lng }));
   }
 
   /** "2 confirmed (1 on site) · 3 hr old" — the whole trust model in one line. */
