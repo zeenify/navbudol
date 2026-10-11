@@ -20,6 +20,7 @@ class TtsRequest(BaseModel):
 def tts(req: TtsRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="text is empty")
+    print(f"TTS ▶ {req.text[:120]}", flush=True)
     if not req.reference_id.strip():
         raise HTTPException(
             status_code=400,

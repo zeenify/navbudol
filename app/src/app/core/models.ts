@@ -34,6 +34,8 @@ export interface RouteStep {
   location: LatLng;
   /** cumulative distance from route start to the END of this step */
   cumulativeDistanceM: number;
+  /** roads meeting at this step's junction (OSRM) — ≥3 means a real crossing */
+  junctionRoads?: number;
 }
 
 export interface RouteResult {

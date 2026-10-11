@@ -81,6 +81,7 @@ export class RoutingService {
           maneuverModifier: maneuver.modifier ?? '',
           location: { lat, lng },
           cumulativeDistanceM: 0,
+          junctionRoads: step.intersections?.[0]?.bearings?.length ?? 0,
         };
         cumulative += s.distanceM;
         s.cumulativeDistanceM = cumulative;
@@ -192,6 +193,7 @@ interface OsrmResponse {
         name?: string;
         distance: number;
         duration: number;
+        intersections?: Array<{ bearings?: number[] }>;
         maneuver: {
           type: string;
           modifier?: string;

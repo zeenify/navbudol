@@ -37,6 +37,13 @@ export class VoiceAssistantService {
         void this.tts.speak(this.navigationLine(character, destination, 'arrival'), character);
       });
     });
+    // Approach calls — the voice layer speaks them with no AI round trip.
+    this.nav.alerts$.subscribe((text) => {
+      this.zone.run(() => {
+        const character = this.navigationCharacter ?? this.characters.getSelected();
+        void this.tts.speak(text, character);
+      });
+    });
   }
 
   get state(): VoiceAssistantState {

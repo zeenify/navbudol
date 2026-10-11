@@ -24,6 +24,8 @@ export class NavigationService {
   private offRouteCount = 0;
   private gpsSub: Subscription | null = null;
   private rerouting = false;
+  /** Spoken-announcement bookkeeping: `${stepIndex}:${stage}` — each fires once. */
+  private announcedStages = new Set<string>();
 
   constructor(
     private location: LocationService,
@@ -122,6 +124,11 @@ export class NavigationService {
 
     const distToManeuver = haversineM(pos, nextStep.location);
 
+    // Voice: staged, precise approach calls for EVERY decision point —
+    // turns, forks, ramps, roundabouts, and real crossings. Runs before the
+    // step-advance block so the "now" call isn't skipped by it.
+    this.checkApproachAlerts(nextIndex, nextStep, distToManeuver);
+
     let displayDistance = distToManeuver;
     if (distToManeuver < environment.stepAdvanceM) {
       this.currentStepIndex = Math.max(this.currentStepIndex, nextIndex);
@@ -131,6 +138,69 @@ export class NavigationService {
     }
 
     this.emit(this.snapshot(displayDistance));
+  }
+
+  // --- approach voice alerts (plan §7.4 — precise, staged, every junction) ---
+
+  /**
+   * Three-stage calls per decision point: ~200 m out ("In 200 meters, turn
+   * left onto Rizal Street"), 50 m ("50 meters — turn left"), and at the
+   * maneuver ("Turn left now"). Each stage fires once per step; distances
+   * round to 10 m. A junction with 3+ roads counts as a crossing even when
+   * the maneuver is straight.
+   */
+  private checkApproachAlerts(nextIndex: number, step: RouteStep, distToManeuver: number): void {
+    const isDecision =
+      this.isMeaningfulManeuver(step) || (step.junctionRoads ?? 0) >= 3;
+    if (!isDecision || step.maneuverType.toLowerCase().includes('arrive')) return;
+
+    const has = (stage: string) => this.announcedStages.has(`${nextIndex}:${stage}`);
+    const mark = (stage: string) => this.announcedStages.add(`${nextIndex}:${stage}`);
+
+    if (distToManeuver <= 22) {
+      if (!has('now')) {
+        mark('now');
+        this.alerts$.next(`${this.spokenManeuver(step)} now.`);
+      }
+    } else if (distToManeuver <= environment.alertDistance2M) {
+      if (!has('near')) {
+        mark('near');
+        this.alerts$.next(
+          `${this.spokenDistance(distToManeuver)} — ${this.spokenManeuver(step).toLowerCase()}.`
+        );
+      }
+    } else if (distToManeuver <= environment.alertDistance1M) {
+      if (!has('far')) {
+        mark('far');
+        this.alerts$.next(`In ${this.spokenDistance(distToManeuver)}, ${this.spokenManeuver(step).toLowerCase()}.`);
+      }
+    }
+  }
+
+  /** Voice-friendly verb for a maneuver ("Turn left onto Rizal Street"). */
+  private spokenManeuver(step: RouteStep): string {
+    const type = `${step.maneuverType} ${step.maneuverModifier}`.toLowerCase();
+    const mod = step.maneuverModifier.toLowerCase();
+    const onto = step.name ? ` onto ${step.name}` : '';
+
+    if (type.includes('uturn')) return 'Make a U-turn';
+    if (type.includes('fork')) return `Keep ${mod.includes('left') ? 'left' : 'right'} at the fork`;
+    if (type.includes('roundabout') || type.includes('rotary'))
+      return `At the roundabout, take the exit${onto}`;
+    if (type.includes('merge')) return `Merge ${mod || 'carefully'}${onto}`;
+    if (type.includes('ramp')) return `Take the ramp${onto}`;
+    if (type.includes('sharp left')) return `Turn sharp left${onto}`;
+    if (type.includes('sharp right')) return `Turn sharp right${onto}`;
+    if (type.includes('left')) return `Turn left${onto}`;
+    if (type.includes('right')) return `Turn right${onto}`;
+    if ((step.junctionRoads ?? 0) >= 3) return `Go straight through the intersection${onto}`;
+    return `Continue${onto}`;
+  }
+
+  /** Spoken distance: meters rounded to 10, or kilometers to one decimal. */
+  private spokenDistance(meters: number): string {
+    if (meters >= 1000) return `${(meters / 1000).toFixed(1)} kilometers`;
+    return `${Math.max(10, Math.round(meters / 10) * 10)} meters`;
   }
 
   private async reroute(pos: LatLng): Promise<void> {
