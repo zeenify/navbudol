@@ -6,7 +6,7 @@ import type { Feature } from 'geojson';
 import { ActionSheetController, ToastController } from '@ionic/angular/lazy';
 
 import { environment } from '../../environments/environment';
-import { GpsPosition, MapEvent, NavState, PlaceResult, RouteProfile } from '../core/models';
+import { CommunityPlaceSummary, GpsPosition, MapEvent, NavState, PlaceResult, RouteProfile } from '../core/models';
 import { LocationService } from '../core/services/location.service';
 import { NavigationService } from '../core/services/navigation.service';
 import { RoutingService } from '../core/services/routing.service';
@@ -18,6 +18,7 @@ import { CharacterService } from '../core/services/character.service';
 import { VoiceAssistantService } from '../core/services/voice-assistant.service';
 import { ChatActionsService } from '../core/services/chat-actions.service';
 import { CommunityPlacesService } from '../core/services/community-places.service';
+import { PhotoWatcherService, CapturedPhoto } from '../core/services/photo-watcher.service';
 import { placeIconDef } from '../core/constants/place-icons';
 import { distanceFromGeneralTinio, isWithinGeneralTinioServiceArea } from '../core/service-area';
 import { formatDistance, haversineM, snapToSegment } from '../core/geo.utils';
@@ -55,6 +56,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
   readonly routing$ = new BehaviorSubject(false);
   chatOpen = false;
   backendOk: boolean | null = null;
+  /** Camera photo taken on-site → one-tap "post it?" card. */
+  photoPrompt: { placeId: string; placeName: string; dataUrl: string; comment: string } | null = null;
+  postingPhoto = false;
 
   get isTraveling(): boolean {
     return this.nav.phase === 'navigating' || this.nav.phase === 'rerouting';
@@ -100,6 +104,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     private voice: VoiceAssistantService,
     private chatActions: ChatActionsService,
     private community: CommunityPlacesService,
+    private photoWatcher: PhotoWatcherService,
     private router: Router,
     private zone: NgZone,
     private cdr: ChangeDetectorRef,
@@ -125,7 +130,21 @@ export class MapPage implements AfterViewInit, OnDestroy {
       this.nav.arrived$.subscribe(() => {
         const destination = this.nav.navState$.value.route?.destination;
         if (destination) void this.recordArrivalVisit(destination);
-      })
+      }),
+      // One-tap contribution: photos taken with the native camera while
+      // on-site at a community place.
+      this.photoWatcher.photoCaptured$.subscribe((event: { place: CommunityPlaceSummary; photo: CapturedPhoto }) =>
+        this.zone.run(() => {
+          if (this.photoPrompt) return; // one at a time
+          this.photoPrompt = {
+            placeId: event.place.id,
+            placeName: event.place.name,
+            dataUrl: `data:${event.photo.mimeType};base64,${event.photo.base64}`,
+            comment: '',
+          };
+          this.cdr.markForCheck();
+        })
+      )
     );
   }
 
@@ -134,6 +153,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     void this.location.startWatch();
     void this.checkBackend();
     void this.loadWeather();
+    this.photoWatcher.start();
   }
 
   ngOnDestroy(): void {
@@ -238,6 +258,34 @@ export class MapPage implements AfterViewInit, OnDestroy {
     } catch {
       /* distance proof failed — no badge, no drama */
     }
+  }
+
+  async postPhotoPrompt(): Promise<void> {
+    const prompt = this.photoPrompt;
+    if (!prompt || this.postingPhoto) return;
+    const pos = this.location.position;
+    this.postingPhoto = true;
+    this.cdr.markForCheck();
+    try {
+      await this.community.addPhoto(
+        prompt.placeId,
+        prompt.dataUrl,
+        prompt.comment.trim(),
+        pos ? { lat: pos.lat, lng: pos.lng } : undefined
+      );
+      this.photoPrompt = null;
+      await this.toast('Posted — thanks for contributing!');
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not post that photo.');
+    } finally {
+      this.postingPhoto = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  dismissPhotoPrompt(): void {
+    this.photoPrompt = null;
+    this.cdr.markForCheck();
   }
 
   /** Dark / light / satellite switch — style.load re-applies the 3D layers. */

@@ -321,3 +321,88 @@
   font-weight: 700;
   color: #10233f;
 }
+
+// One-tap photo contribution card
+.photo-prompt {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 108px;
+  z-index: 30;
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.photo-prompt-main {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+
+.photo-prompt-thumb {
+  width: 62px;
+  height: 62px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(16, 35, 63, 0.25);
+}
+
+.photo-prompt-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.photo-prompt-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #10233f;
+  margin-bottom: 6px;
+}
+
+.photo-prompt-comment {
+  width: 100%;
+  border: 1.5px solid rgba(16, 35, 63, 0.12);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #10233f;
+  outline: none;
+
+  &:focus {
+    border-color: #007aff;
+  }
+}
+
+.photo-prompt-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.photo-prompt-post {
+  flex: 1;
+  border: none;
+  border-radius: 11px;
+  padding: 9px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, #2f8bff 0%, #007aff 100%);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+  }
+}
+
+.photo-prompt-dismiss {
+  border: 1.5px solid rgba(16, 35, 63, 0.15);
+  background: #fff;
+  color: #5b6b7f;
+  border-radius: 11px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
