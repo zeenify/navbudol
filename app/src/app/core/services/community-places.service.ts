@@ -7,6 +7,7 @@ import {
   CommunityPlaceSummary,
   UserProfile,
 } from '../models';
+import { environment } from '../../../environments/environment';
 import { BackendApiService } from './backend-api.service';
 
 /**
@@ -23,8 +24,24 @@ export class CommunityPlacesService {
 
   /** Everything seen this session — feeds name search and the AI context. */
   private cache = new Map<string, CommunityPlaceSummary>();
+  private townSweep: Promise<void> | null = null;
 
   constructor(private api: BackendApiService) {}
+
+  /**
+   * One town-wide fetch (25 km around the service-area center) so search and
+   * the AI see every community place, not just the ones near the camera.
+   */
+  ensureTownSweep(): Promise<void> {
+    if (!this.townSweep) {
+      this.townSweep = this.refreshNearby(
+        environment.defaultCenter.lat,
+        environment.defaultCenter.lng,
+        25000
+      ).then(() => undefined);
+    }
+    return this.townSweep;
+  }
 
   async refreshNearby(lat: number, lng: number, radiusM = 5000): Promise<CommunityPlaceSummary[]> {
     try {

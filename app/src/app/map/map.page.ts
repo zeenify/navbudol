@@ -65,7 +65,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   get chatLocked(): boolean {
-    return this.isTraveling || this.aiThinking;
+    // Chat stays available DURING navigation on purpose — the copilot can
+    // find detours, answer questions, and converse mid-trip.
+    return this.aiThinking;
   }
 
   private map: MlMap | null = null;

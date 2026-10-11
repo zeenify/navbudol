@@ -21,6 +21,9 @@ import { ChatActionsService } from './chat-actions.service';
 import { LocationService } from './location.service';
 import { NavigationService } from './navigation.service';
 import { PlacesService } from './places.service';
+import { CommunityPlacesService } from './community-places.service';
+import { CommunityPlaceDetail } from '../models';
+import { placeIconDef, PLACE_ICONS } from '../constants/place-icons';
 import { RoutingService } from './routing.service';
 import { SettingsService } from './settings.service';
 import { TtsService } from './tts.service';
@@ -116,6 +119,33 @@ export class GeminiService {
         'Use when the user asks about weather, rain, or whether to bring an umbrella.',
       parameters: { type: 'object', properties: {} },
     },
+    {
+      name: 'get_nearby_community_places',
+      description:
+        'List community-added places near the user with their ratings, likes and visit counts. ' +
+        'Use when the user asks what is around, wants recommendations, or asks about places ' +
+        'other neighbors added. Optional query filters by name or kind.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Optional filter: food, cafe, school, church…' },
+        },
+      },
+    },
+    {
+      name: 'get_place_details',
+      description:
+        'Full community intel for ONE place: description, rating breakdown, like/dislike counts, ' +
+        'photos, and recent comments with verified-visit badges. Use when the user asks whether a ' +
+        'specific community place is good, legit, or worth visiting.',
+      parameters: {
+        type: 'object',
+        properties: {
+          place_name: { type: 'string', description: 'The community place name the user mentioned' },
+        },
+        required: ['place_name'],
+      },
+    },
   ];
 
   constructor(
@@ -125,6 +155,7 @@ export class GeminiService {
     private location: LocationService,
     private nav: NavigationService,
     private places: PlacesService,
+    private community: CommunityPlacesService,
     private routing: RoutingService,
     private settings: SettingsService,
     private tts: TtsService,
@@ -272,6 +303,10 @@ export class GeminiService {
         return `Finding the route to ${String(fc.args['place_name'] ?? '')}…`;
       case 'get_weather':
         return 'Checking the weather…';
+      case 'get_nearby_community_places':
+        return 'Checking community places…';
+      case 'get_place_details':
+        return `Reading neighbor reviews…`;
       default:
         return 'Working on it…';
     }
@@ -493,6 +528,74 @@ export class GeminiService {
             location: w.city,
           };
         }
+        case 'get_nearby_community_places': {
+          const query = String(fc.args['query'] ?? '').trim().toLowerCase();
+          const pos = this.location.position;
+          const pool = this.community.localPool();
+          const scored = pool
+            .map((p) => {
+              const label = placeIconDef(p.icon)?.label ?? '';
+              const hay = `${p.name} ${label}`.toLowerCase();
+              const match = !query || query.split(/\s+/).some((w) => w.length > 2 && hay.includes(w));
+              return { p, label, match, d: pos ? haversineM(pos, p) : (p.distanceM ?? 0) };
+            })
+            .filter((x) => x.match)
+            .sort((a, b) => (b.p.rating.average ?? 0) * 10 + b.p.likes - ((a.p.rating.average ?? 0) * 10 + a.p.likes))
+            .slice(0, 8);
+          if (scored.length === 0) {
+            return {
+              places: [],
+              note: query
+                ? 'No community places match that nearby yet.'
+                : 'No community places nearby yet — the user could add the first one.',
+            };
+          }
+          return {
+            places: scored.map(({ p, label, d }) => ({
+              name: p.name,
+              kind: label,
+              rating: p.rating.average ?? null,
+              rating_count: p.rating.count,
+              likes: p.likes,
+              dislikes: p.dislikes,
+              photos: p.photoCount,
+              comments: p.commentCount,
+              distance_m: Math.round(d),
+              creator: p.creator?.displayName ?? null,
+            })),
+            note:
+              'These were added by neighbors. Higher rating + more likes + more comments = more trusted. ' +
+              'Offer to navigate to one the user sounds interested in.',
+          };
+        }
+        case 'get_place_details': {
+          const name = String(fc.args['place_name'] ?? '').trim().toLowerCase();
+          const match = this.community
+            .localPool()
+            .find((p) => p.name.toLowerCase().includes(name) || name.includes(p.name.toLowerCase()));
+          if (!match) {
+            return { error: `No community place named "${name}" is on the map around here.` };
+          }
+          const detail: CommunityPlaceDetail = await this.community.detail(match.id);
+          return {
+            name: detail.name,
+            description: detail.description || null,
+            rating: detail.rating,
+            likes: detail.likes,
+            dislikes: detail.dislikes,
+            photos: detail.photoCount,
+            created_by: detail.creator?.displayName ?? null,
+            comments: detail.comments.slice(0, 6).map((c) => ({
+              author: c.author?.displayName ?? 'Neighbor',
+              text: c.text,
+              verified_visit: c.verifiedVisit,
+              age: this.relativeAge(c.createdAt),
+            })),
+            note:
+              'Judge legitimacy honestly: comments with verified_visit=true come from people whose GPS ' +
+              'proves they were there. Weight rating count and likes; say when evidence is thin.',
+          };
+        }
         default:
           return { error: `Unknown function: ${fc.name}` };
       }
@@ -529,8 +632,69 @@ export class GeminiService {
       position: this.location.position,
       address: this.lastAddress,
       nav: this.nav.navState$.value,
+      placeLines: this.communityPlaceLines(),
     };
     return buildSystemPrompt(this.characters.getSelected(), ctx);
+  }
+
+  /** Up to 6 nearby community places, best-signal first, into the prompt. */
+  private communityPlaceLines(): string[] {
+    const pos = this.location.position;
+    return this.community
+      .localPool()
+      .map((p) => ({
+        p,
+        d: pos ? haversineM(pos, p) : (p.distanceM ?? 0),
+        label: placeIconDef(p.icon)?.label ?? 'Place',
+      }))
+      .sort(
+        (a, b) =>
+          (b.p.rating.average ?? 0) * 10 + b.p.likes - ((a.p.rating.average ?? 0) * 10 + a.p.likes)
+      )
+      .slice(0, 6)
+      .map(({ p, d, label }) => {
+        const trust = p.rating.average ? `★${p.rating.average} (${p.rating.count})` : 'unrated';
+        return `${p.name} — ${label}, ${trust}, ${p.likes} likes, ${p.photoCount} photos, ${formatDistance(d)} away`;
+      });
+  }
+
+  /** Coarse age for comment lines handed to the model. */
+  private relativeAge(iso: string): string {
+    const s = Math.max(1, (Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+    return `${Math.floor(s / 86400)}d ago`;
+  }
+
+  /**
+   * AI icon matching for the add-place flow: one cheap round trip that picks
+   * the best library key for a description. Returns null on any failure —
+   * the picker stays usable without it.
+   */
+  async matchIcon(description: string): Promise<string | null> {
+    const text = description.trim();
+    if (!text) return null;
+    const keys = PLACE_ICONS.map((i) => `${i.key} (${i.label})`).join(', ');
+    try {
+      const res = await this.api.post<ChatApiResponse>(
+        '/api/chat',
+        {
+          system:
+            'You match place descriptions to icon keys from a fixed list. Reply with EXACTLY one key from the list and nothing else.',
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `Place: "${text}"\n\nIcon keys:\n${keys}\n\nReply with only the single best key.` }],
+            },
+          ],
+        },
+        30000
+      );
+      const key = (res.text ?? '').trim().toLowerCase().replace(/[^a-z_]/g, '');
+      return PLACE_ICONS.some((i) => i.key === key) ? key : null;
+    } catch {
+      return null;
+    }
   }
 
   private trimmedContents(): GeminiContent[] {

@@ -52,6 +52,18 @@
     Turn on your location
   </button>
 
+  <!-- chat during navigation: a small copilot chip that opens the compact sheet -->
+  <button
+    class="nav-chat-fab nb-glass"
+    *ngIf="isTraveling && !chatOpen"
+    type="button"
+    (click)="openChat()"
+    [attr.aria-label]="'Chat with ' + character.name"
+  >
+    <img class="nav-chat-avatar" [src]="character.avatar" [alt]="character.name" />
+    <span class="nav-chat-label">Ask {{ character.name }}</span>
+  </button>
+
   <!-- route calculation in progress -->
   <div class="routing-pill nb-glass" *ngIf="routing$ | async">
     <span class="routing-spinner"></span> Finding the best route…
@@ -81,5 +93,5 @@
     <app-mic-fab [disabled]="chatLocked" (voiceToggle)="onMicToggle()"></app-mic-fab>
   </div>
 
-  <app-chat-sheet [open]="chatOpen" [locked]="isTraveling" (closed)="onChatClosed()"></app-chat-sheet>
+  <app-chat-sheet [open]="chatOpen" [compact]="isTraveling" (closed)="onChatClosed()"></app-chat-sheet>
 </ion-content>

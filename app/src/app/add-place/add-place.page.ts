@@ -6,6 +6,7 @@ import { ToastController } from '@ionic/angular/lazy';
 import { PlaceResult } from '../core/models';
 import { LocationService } from '../core/services/location.service';
 import { CommunityPlacesService } from '../core/services/community-places.service';
+import { GeminiService } from '../core/services/gemini.service';
 
 /**
  * Add a community place — a full flow, because this is the feature that
@@ -24,6 +25,7 @@ export class AddPlacePage {
 
   private location = inject(LocationService);
   private community = inject(CommunityPlacesService);
+  private gemini = inject(GeminiService);
   private router = inject(Router);
   private zone = inject(NgZone);
   private toastCtrl = inject(ToastController);
@@ -35,6 +37,7 @@ export class AddPlacePage {
   photos: string[] = []; // data URLs
   submitting = false;
   error: string | null = null;
+  aiPicking = false;
 
   /** Feeds the mini preview map; identity-stable per fix. */
   previewPlace: PlaceResult | null = null;
@@ -60,6 +63,25 @@ export class AddPlacePage {
 
   async pickIcon(key: string): Promise<void> {
     this.selectedIcon = key;
+    this.cdr.markForCheck();
+  }
+
+  /** AI matches the description to a library icon — never blocks the form. */
+  async aiPickIcon(): Promise<void> {
+    if (this.aiPicking) return;
+    const hint = `${this.name} ${this.description}`.trim();
+    if (!hint) {
+      this.error = 'Write the place name (or description) first, then let the AI pick.';
+      this.cdr.markForCheck();
+      return;
+    }
+    this.aiPicking = true;
+    this.error = null;
+    this.cdr.markForCheck();
+    const key = await this.gemini.matchIcon(hint);
+    if (key) await this.pickIcon(key);
+    else this.error = 'The AI could not pick an icon — choose one manually.';
+    this.aiPicking = false;
     this.cdr.markForCheck();
   }
 

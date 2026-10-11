@@ -192,3 +192,26 @@
   color: #7c8aa0;
   margin: -4px 12px 0;
 }
+
+.ai-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px solid rgba(0, 122, 255, 0.35);
+  background: rgba(0, 122, 255, 0.06);
+  color: #007aff;
+  border-radius: 11px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 17px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+  }
+}

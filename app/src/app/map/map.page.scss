@@ -293,3 +293,31 @@
     transform: translateX(-50%);
   }
 }
+
+// Copilot chip during navigation (opens the compact chat sheet)
+.nav-chat-fab {
+  position: absolute;
+  right: 14px;
+  bottom: 180px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 22px;
+  padding: 7px 13px 7px 8px;
+  cursor: pointer;
+}
+
+.nav-chat-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.nav-chat-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #10233f;
+}

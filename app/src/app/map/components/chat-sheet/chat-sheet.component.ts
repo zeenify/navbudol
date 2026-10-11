@@ -15,6 +15,8 @@ import { VoiceAssistantService } from '../../../core/services/voice-assistant.se
 export class ChatSheetComponent implements OnDestroy {
   @Input() open = false;
   @Input() locked = false;
+  /** During navigation the sheet stays short so the map + banner stay visible. */
+  @Input() compact = false;
   @Output() closed = new EventEmitter<void>();
 
   draft = '';
@@ -34,11 +36,11 @@ export class ChatSheetComponent implements OnDestroy {
   }
 
   get isLocked(): boolean {
-    return this.locked || this.gemini.thinking$.value;
+    return this.gemini.thinking$.value;
   }
 
   get lockLabel(): string {
-    return this.locked ? 'Cancel navigation to chat' : 'AI is thinking…';
+    return 'AI is thinking…';
   }
 
   async send(): Promise<void> {
