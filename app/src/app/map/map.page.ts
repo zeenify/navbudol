@@ -9,7 +9,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { BehaviorSubject, map, Subscription } from 'rxjs';
-import * as L from 'leaflet';
+import maplibregl, { GeoJSONSource, Map as MlMap, Marker } from 'maplibre-gl';
+import type { Feature } from 'geojson';
 import { ActionSheetController, ToastController } from '@ionic/angular/lazy';
 import { environment } from '../../environments/environment';
 import { CommunityReport, GpsPosition, MapEvent, NavState, PlaceResult, RouteProfile } from '../core/models';
@@ -33,8 +34,9 @@ interface WeatherInfo {
 }
 
 /**
- * Leaflet map + MapTiler raster tiles @2x (crisp, keyless-free rendering —
- * no webview worker pipelines involved). All the smart features (ORS
+ * MapLibre GL + MapTiler VECTOR styles (same key as the old raster setup —
+ * vector tiles render GPU-side: smooth zoom, 3D terrain + hillshade, building
+ * extrusions, globe projection when zoomed out). All the smart features (ORS
  * routes with elevation, Geoapify search, weather) come from our backend.
  *
  * The user dot only appears after a REAL GPS fix (or a simulated one) —
@@ -78,13 +80,15 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return this.isTraveling || this.aiThinking;
   }
 
-  private map: L.Map | null = null;
-  private userMarker: L.Marker | null = null;
-  private destMarker: L.Marker | null = null;
-  private routeLine: L.Polyline | null = null;
-  private placesLayer: L.LayerGroup | null = null;
-  private reportsLayer: L.LayerGroup | null = null;
-  private tileLayer: L.TileLayer | null = null;
+  private map: MlMap | null = null;
+  private userMarker: Marker | null = null;
+  private destMarker: Marker | null = null;
+  private placeMarkers: Marker[] = [];
+  private reportMarkers: Marker[] = [];
+  /** Live route geometry as [lng, lat] — reflects the progressive trim. */
+  private routeCoords: [number, number][] | null = null;
+  private styleReady = false;
+  private pitched = false;
   private follow = true;
   private gotFirstFix = false;
   private subs: Subscription[] = [];
@@ -117,14 +121,14 @@ export class MapPage implements AfterViewInit, OnDestroy {
       this.location.position$.subscribe((pos) => this.zone.run(() => this.onPosition(pos))),
       this.nav.navState$.subscribe((state) => this.zone.run(() => this.onNavState(state))),
       this.gemini.mapEvents$.subscribe((ev) => this.zone.run(() => this.onMapEvent(ev))),
-      this.settings.dark$.subscribe(() => this.zone.run(() => this.applyTiles())),
-      this.settings.satellite$.subscribe(() => this.zone.run(() => this.applyTiles())),
+      this.settings.dark$.subscribe(() => this.zone.run(() => this.applyStyle())),
+      this.settings.satellite$.subscribe(() => this.zone.run(() => this.applyStyle())),
       this.reports.reports$.subscribe(() => this.renderReports())
     );
   }
 
   ionViewDidEnter(): void {
-    setTimeout(() => this.map?.invalidateSize(), 60);
+    setTimeout(() => this.map?.resize(), 60);
     void this.location.startWatch();
     void this.checkBackend();
     void this.loadWeather();
@@ -139,37 +143,127 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   // --- map init -------------------------------------------------------------
 
-  private tileUrl(): string {
+  private styleUrl(): string {
     const base = environment.maptilerStyles[this.settings.mapStyle];
-    return `${base}/{z}/{x}/{y}@2x.png?key=${environment.maptilerKey}`;
+    return `${base}/style.json?key=${environment.maptilerKey}`;
   }
 
   private initMap(): void {
-    this.map = L.map(this.mapDiv.nativeElement, {
-      zoomControl: false,
-      attributionControl: true,
-    });
-    this.tileLayer = L.tileLayer(this.tileUrl(), {
-      attribution: '© <a href="https://www.maptiler.com/">MapTiler</a> © OpenStreetMap contributors',
+    this.map = new maplibregl.Map({
+      container: this.mapDiv.nativeElement,
+      style: this.styleUrl(),
+      center: [environment.defaultCenter.lng, environment.defaultCenter.lat],
+      zoom: environment.defaultZoom,
       maxZoom: 19,
+      attributionControl: false,
     });
-    this.tileLayer.addTo(this.map);
-    this.map.setView([environment.defaultCenter.lat, environment.defaultCenter.lng], environment.defaultZoom);
+    // The vector style carries its own MapTiler/OSM attribution; render it
+    // compact so it reads as a small pill like the Leaflet one did.
+    this.map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
-    // No user marker until a real fix arrives (see onPosition).
-
-    this.placesLayer = L.layerGroup().addTo(this.map);
-    this.reportsLayer = L.layerGroup().addTo(this.map);
-
+    // Re-add our custom sources/layers after every style (re)load — setStyle
+    // wipes them (this also fires once after the initial load).
+    this.map.on('style.load', () => this.enhanceStyle());
     this.map.on('dragstart', () => this.zone.run(() => (this.follow = false)));
-    this.map.on('click', (e: L.LeafletMouseEvent) =>
-      this.zone.run(() => void this.onMapTap({ lat: e.latlng.lat, lng: e.latlng.lng }))
+    this.map.on('click', (e) =>
+      this.zone.run(() => void this.onMapTap({ lat: e.lngLat.lat, lng: e.lngLat.lng }))
     );
   }
 
-  private applyTiles(): void {
-    if (!this.map || !this.tileLayer) return;
-    this.tileLayer.setUrl(this.tileUrl());
+  /** Dark / light / satellite switch — style.load re-applies the 3D layers. */
+  private applyStyle(): void {
+    if (!this.map) return;
+    this.styleReady = false;
+    this.map.setStyle(this.styleUrl());
+  }
+
+  /**
+   * The wow layer: 3D terrain + hillshade (MapTiler DEM), building
+   * extrusions from the style's own OpenMapTiles source, globe projection,
+   * and the Waze-style route source. Idempotent — runs on every style.load.
+   */
+  private enhanceStyle(): void {
+    const map = this.map;
+    if (!map) return;
+    this.styleReady = true;
+    try {
+      if (!map.getSource('nb-terrain')) {
+        map.addSource('nb-terrain', {
+          type: 'raster-dem',
+          tileSize: 256,
+          maxzoom: 12,
+          attribution: '© MapTiler',
+          tiles: [
+            `https://api.maptiler.com/tiles/terrain-rgb-v2/{z}/{x}/{y}.webp?key=${environment.maptilerKey}`,
+          ],
+        });
+      }
+      if (!map.getTerrain()) map.setTerrain({ source: 'nb-terrain', exaggeration: 1.35 });
+      if (!map.getLayer('nb-hillshade')) {
+        map.addLayer({
+          id: 'nb-hillshade',
+          type: 'hillshade',
+          source: 'nb-terrain',
+          paint: { 'hillshade-exaggeration': 0.35, 'hillshade-shadow-color': '#26343f' },
+        });
+      }
+
+      const style = map.getStyle();
+      if (style.sources['openmaptiles'] && !map.getLayer('nb-3d-buildings')) {
+        map.addLayer({
+          id: 'nb-3d-buildings',
+          type: 'fill-extrusion',
+          source: 'openmaptiles',
+          'source-layer': 'building',
+          minzoom: 14,
+          paint: {
+            'fill-extrusion-color': '#9aa7b8',
+            'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 5],
+            'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+            'fill-extrusion-opacity': 0.5,
+          },
+        });
+      }
+
+      if (!map.getSource('nb-route')) {
+        map.addSource('nb-route', { type: 'geojson', data: this.routeFeature() });
+        map.addLayer({
+          id: 'nb-route-casing',
+          type: 'line',
+          source: 'nb-route',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#ffffff', 'line-width': 9, 'line-opacity': 0.7 },
+        });
+        map.addLayer({
+          id: 'nb-route-line',
+          type: 'line',
+          source: 'nb-route',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#007aff', 'line-width': 5.5, 'line-opacity': 0.95 },
+        });
+      }
+
+      // Globe projection — the Google-Earth look when zoomed way out.
+      map.setProjection({ type: 'globe' });
+
+      // A style switch mid-navigation must not lose the drawn route.
+      if (this.routeCoords) this.pushRouteData();
+    } catch (e) {
+      console.warn('map style enhancement failed', e);
+    }
+  }
+
+  private routeFeature(): Feature {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: this.routeCoords ?? [] },
+    };
+  }
+
+  private pushRouteData(): void {
+    const source = this.map?.getSource('nb-route') as GeoJSONSource | undefined;
+    source?.setData(this.routeFeature());
   }
 
   // --- streams ---------------------------------------------------------------
@@ -178,25 +272,27 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (!this.map) return;
     if (!pos) return;
     if (!this.userMarker) {
-      this.userMarker = L.marker([pos.lat, pos.lng], {
-        icon: L.divIcon({
-          className: 'user-dot',
-          html: '<div class="nb-halo"></div><div class="nb-dot"></div>',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        }),
-        interactive: false,
-        zIndexOffset: 1000,
-      }).addTo(this.map);
+      const el = document.createElement('div');
+      el.className = 'user-dot';
+      el.style.width = '24px';
+      el.style.height = '24px';
+      el.innerHTML = '<div class="nb-halo"></div><div class="nb-dot"></div>';
+      this.userMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([pos.lng, pos.lat])
+        .addTo(this.map);
+    } else {
+      this.userMarker.setLngLat([pos.lng, pos.lat]);
     }
-    this.userMarker.setLatLng([pos.lat, pos.lng]);
 
     if (!this.gotFirstFix) {
       this.gotFirstFix = true;
       this.follow = true;
-      this.map.setView([pos.lat, pos.lng], 16);
-    } else if (this.follow && (this.navState$.value.phase === 'navigating' || this.navState$.value.phase === 'rerouting')) {
-      this.map.panTo([pos.lat, pos.lng], { animate: true, duration: 0.5 });
+      this.map.jumpTo({ center: [pos.lng, pos.lat], zoom: 16 });
+    } else if (
+      this.follow &&
+      (this.navState$.value.phase === 'navigating' || this.navState$.value.phase === 'rerouting')
+    ) {
+      this.map.easeTo({ center: [pos.lng, pos.lat], duration: 500 });
     }
 
     // While moving, swallow the part of the route already traveled.
@@ -212,11 +308,29 @@ export class MapPage implements AfterViewInit, OnDestroy {
     try {
       if (!this.map) return;
 
+      const moving = state.phase === 'navigating' || state.phase === 'rerouting';
+      // Tilt into a Waze-style 3D view while driving, flatten when done.
+      if (moving && !this.pitched && this.styleReady) {
+        this.pitched = true;
+        this.map.easeTo({ pitch: 45, duration: 800 });
+      } else if (!moving && this.pitched) {
+        this.pitched = false;
+        this.map.easeTo({ pitch: 0, duration: 600 });
+      }
+
       if (state.route && state.phase !== 'idle') {
         this.drawRoute(state);
-        if (state.phase === 'preview' && this.routeLine) {
+        if (state.phase === 'preview' && this.routeCoords && this.routeCoords.length > 1) {
           this.follow = false;
-          this.map.fitBounds(this.routeLine.getBounds(), { padding: [60, 120] });
+          const lons = this.routeCoords.map((c) => c[0]);
+          const lats = this.routeCoords.map((c) => c[1]);
+          this.map.fitBounds(
+            [
+              [Math.min(...lons), Math.min(...lats)],
+              [Math.max(...lons), Math.max(...lats)],
+            ],
+            { padding: { top: 60, bottom: 60, left: 60, right: 120 }, duration: 800 }
+          );
         }
       } else {
         this.clearRoute();
@@ -231,46 +345,32 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
     // The nav state re-emits on every GPS tick — only rebuild the line when
     // the route itself changed, otherwise the progressive trim gets undone.
-    if (this.routePoints !== state.route.geometry || !this.routeLine) {
+    if (this.routePoints !== state.route.geometry) {
       this.routePoints = state.route.geometry;
       this.trimIndex = 0;
-      const pts = state.route.geometry.map((p) => [p.lat, p.lng]) as [number, number][];
-
-      if (!this.routeLine) {
-        this.routeLine = L.polyline(pts, {
-          color: '#007aff',
-          weight: 6,
-          opacity: 0.95,
-          lineCap: 'round',
-          lineJoin: 'round',
-          className: 'nb-route-line',
-        }).addTo(this.map);
-      } else {
-        this.routeLine.setLatLngs(pts);
-      }
+      this.routeCoords = this.routePoints.map((p) => [p.lng, p.lat] as [number, number]);
+      this.pushRouteData();
     }
 
     const dest = state.route.destination;
     if (!this.destMarker) {
-      this.destMarker = L.marker([dest.lat, dest.lng], {
-        icon: L.divIcon({
-          className: 'dest-pin',
-          html: '<div class="nb-pin"></div>',
-          iconSize: [26, 34],
-          iconAnchor: [13, 34],
-        }),
-        interactive: false,
-        zIndexOffset: 500,
-      }).addTo(this.map);
+      const el = document.createElement('div');
+      el.className = 'dest-pin';
+      el.style.width = '26px';
+      el.style.height = '34px';
+      el.innerHTML = '<div class="nb-pin"></div>';
+      this.destMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([dest.lng, dest.lat])
+        .addTo(this.map);
     } else {
-      this.destMarker.setLatLng([dest.lat, dest.lng]);
+      this.destMarker.setLngLat([dest.lng, dest.lat]);
     }
   }
 
   /** Drop every vertex the user has already passed, Waze-style. */
   private trimRouteBehind(pos: GpsPosition): void {
     const pts = this.routePoints;
-    if (!pts || !this.routeLine || pts.length < 2) return;
+    if (!pts || !this.routeCoords || pts.length < 2) return;
 
     // Nearest vertex from the cursor onward (never moves backwards, so a
     // route that doubles back near the start can't stall the trim).
@@ -288,13 +388,16 @@ export class MapPage implements AfterViewInit, OnDestroy {
     // The line now starts at the point on the incoming segment closest to us.
     const snapped =
       best > 0 ? snapToSegment(pos, pts[best - 1], pts[best]) : snapToSegment(pos, pts[0], pts[1]);
-    const rest = pts.slice(best + 1).map((p) => [p.lat, p.lng] as [number, number]);
-    this.routeLine.setLatLngs([[snapped.lat, snapped.lng], ...rest]);
+    this.routeCoords = [
+      [snapped.lng, snapped.lat],
+      ...pts.slice(best + 1).map((p) => [p.lng, p.lat] as [number, number]),
+    ];
+    this.pushRouteData();
   }
 
   private clearRoute(): void {
-    this.routeLine?.remove();
-    this.routeLine = null;
+    this.routeCoords = null;
+    this.pushRouteData();
     this.destMarker?.remove();
     this.destMarker = null;
     this.routePoints = null;
@@ -302,29 +405,35 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   private onMapEvent(ev: MapEvent): void {
-    if (!this.map || !this.placesLayer) return;
-    if (ev.type === 'clear-places') {
-      this.placesLayer.clearLayers();
-      return;
-    }
+    if (!this.map) return;
+    this.placeMarkers.forEach((m) => m.remove());
+    this.placeMarkers = [];
+    if (ev.type === 'clear-places') return;
     if (ev.type === 'places') {
-      this.placesLayer.clearLayers();
       const bounds: [number, number][] = [];
       for (const p of ev.places) {
-        L.marker([p.lat, p.lng], {
-          icon: L.divIcon({
-            className: 'place-dot',
-            html: `<div class="nb-place"></div><div class="nb-place-label">${p.name}</div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8],
-          }),
-        }).addTo(this.placesLayer);
-        bounds.push([p.lat, p.lng]);
+        const el = document.createElement('div');
+        el.className = 'place-dot';
+        el.style.width = '16px';
+        el.style.height = '16px';
+        el.innerHTML = `<div class="nb-place"></div><div class="nb-place-label">${p.name}</div>`;
+        this.placeMarkers.push(
+          new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([p.lng, p.lat]).addTo(this.map)
+        );
+        bounds.push([p.lng, p.lat]);
       }
       if (bounds.length === 1) {
-        this.map.setView(bounds[0], 16, { animate: true });
+        this.map.easeTo({ center: bounds[0], zoom: 16, duration: 600 });
       } else if (bounds.length > 1) {
-        this.map.fitBounds(L.latLngBounds(bounds), { padding: [70, 70] });
+        const lons = bounds.map((c) => c[0]);
+        const lats = bounds.map((c) => c[1]);
+        this.map.fitBounds(
+          [
+            [Math.min(...lons), Math.min(...lats)],
+            [Math.max(...lons), Math.max(...lats)],
+          ],
+          { padding: 70, duration: 800, maxZoom: 16 }
+        );
       }
     }
   }
@@ -339,7 +448,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     const pos = this.location.position;
     if (!pos || !this.map) return;
     this.follow = true;
-    this.map.setView([pos.lat, pos.lng], Math.max(this.map.getZoom(), 15), { animate: true });
+    this.map.easeTo({ center: [pos.lng, pos.lat], zoom: Math.max(this.map.getZoom(), 15), duration: 500 });
   }
 
   openChat(): void {
@@ -417,22 +526,27 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   /** Redraw every live report as a colored pin; confirmed ones get a bolder ring. */
   private renderReports(): void {
-    if (!this.map || !this.reportsLayer) return;
-    this.reportsLayer.clearLayers();
+    if (!this.map) return;
+    this.reportMarkers.forEach((m) => m.remove());
+    this.reportMarkers = [];
     for (const report of this.reports.reports$.value) {
-      L.circleMarker([report.lat, report.lng], {
-        radius: 7,
-        color: '#ffffff',
-        weight: (report.presenceCount ?? 0) > 0 ? 2.5 : 1.5,
-        fillColor: this.reports.kindColor(report.kind),
-        fillOpacity: 0.95,
-        // Without this, the tap also bubbles to the map and starts a route
-        // to a dropped pin at the same spot.
-        bubblingMouseEvents: false,
-      })
-        .bindTooltip(`${report.kind} · tap for details`, { direction: 'top', offset: [0, -8] })
-        .on('click', () => void this.openReportActions(report))
-        .addTo(this.reportsLayer!);
+      const el = document.createElement('div');
+      el.className = 'report-dot';
+      el.title = `${report.kind} · tap for details`;
+      el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${this.reports.kindColor(
+        report.kind
+      )};border:${(report.presenceCount ?? 0) > 0 ? 2.5 : 1.5}px solid #ffffff;box-shadow:0 1px 5px rgba(0,0,0,0.4);box-sizing:border-box;cursor:pointer;`;
+      // stopPropagation so the tap doesn't ALSO hit the map and start a
+      // route to a dropped pin at the same spot (Leaflet: bubblingMouseEvents).
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        void this.openReportActions(report);
+      });
+      this.reportMarkers.push(
+        new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([report.lng, report.lat])
+          .addTo(this.map)
+      );
     }
     this.updateFloodPrompt();
   }

@@ -17,10 +17,10 @@ export const environment = {
   // === Map ===
   // MapTiler key — public by design (map keys are meant for the client;
   // restrict it to your domains in the MapTiler dashboard later).
-  // These are RASTER style bases: the app appends /{z}/{x}/{y}@2x.png.
+  // Vector style bases — the app appends /style.json for MapLibre GL.
   maptilerKey: 'BgsOnI7Mec1DAzJCOWSF',
   maptilerStyles: {
-    light: 'https://api.maptiler.com/maps/streets-v2',
+    light: 'https://api.maptiler.com/maps/bright',
     dark: 'https://api.maptiler.com/maps/streets-v2-dark',
     satellite: 'https://api.maptiler.com/maps/hybrid',
   },

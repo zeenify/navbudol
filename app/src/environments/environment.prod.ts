@@ -13,7 +13,7 @@ export const environment = {
   // === Map ===
   maptilerKey: 'BgsOnI7Mec1DAzJCOWSF',
   maptilerStyles: {
-    light: 'https://api.maptiler.com/maps/streets-v2',
+    light: 'https://api.maptiler.com/maps/bright',
     dark: 'https://api.maptiler.com/maps/streets-v2-dark',
     satellite: 'https://api.maptiler.com/maps/hybrid',
   },

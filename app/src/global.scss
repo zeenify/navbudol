@@ -127,17 +127,20 @@
   stroke-linejoin: round;
 }
 
-// Leaflet attribution — keep, but tone down to match the glass aesthetic
-.leaflet-control-attribution {
+// MapLibre attribution — keep, but tone down to match the glass aesthetic
+.maplibregl-ctrl-attrib {
   background: rgba(255, 255, 255, 0.6) !important;
   font-size: 9px !important;
   border-radius: 6px 0 0 0;
 }
-body.dark .leaflet-control-attribution {
+.maplibregl-ctrl-attrib a {
+  color: #007aff;
+}
+body.dark .maplibregl-ctrl-attrib {
   background: rgba(28, 28, 30, 0.6) !important;
   color: #bbb;
 }
-body.dark .leaflet-control-attribution a {
+body.dark .maplibregl-ctrl-attrib a {
   color: #9ecbff;
 }
 

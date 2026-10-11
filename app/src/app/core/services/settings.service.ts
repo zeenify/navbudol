@@ -17,7 +17,9 @@ export class SettingsService {
     (Number(localStorage.getItem('navbudol.simSpeed')) || 2) as SimSpeed
   );
   readonly simMode$ = new BehaviorSubject(this.bool('navbudol.simMode', false));
-  readonly satellite$ = new BehaviorSubject(this.bool('navbudol.satellite', false));
+  // Satellite imagery is the default look — it reads as "premium" instantly;
+  // the toggle falls back to the vector streets map.
+  readonly satellite$ = new BehaviorSubject(this.bool('navbudol.satellite', true));
   readonly profile$ = new BehaviorSubject<RouteProfile>(
     (localStorage.getItem('navbudol.profile') as RouteProfile) || 'driving-car'
   );
