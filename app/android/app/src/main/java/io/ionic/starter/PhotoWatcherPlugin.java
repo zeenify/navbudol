@@ -1,5 +1,13 @@
 package io.ionic.starter;
 
+import android.Manifest;
+import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,29 +18,43 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Base64;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Watches the system MediaStore for NEW camera photos while the app is in the
- * foreground — the hook behind the one-tap contribution flow ("you took a
- * photo at a mapped place, want to post it?").
+ * Watches the system MediaStore for NEW camera photos — the hook behind the
+ * one-tap contribution flow.
  *
- * Android does not allow background listening, so the watch runs only while
- * the web layer keeps it started (i.e. the app is open and the user is
- * on-site at a community place). Polling every 4 s is deliberately simple and
- * robust; IS_PENDING rows are filtered so half-written captures are skipped.
+ * The user takes the photo in their OWN camera app, so our app is usually in
+ * the background at that moment. Detection therefore works in two layers:
+ *  - a real system notification (heads-up, visible over the camera app) with
+ *    a tap-action that opens the app, posted whenever the app is not focused;
+ *  - the JS 'photoCaptured' event for the in-app card when the app IS focused;
+ *  - a checkNow() call the web layer uses on resume to catch anything missed.
+ *
+ * The watch runs only while the web layer keeps it started (app open and the
+ * user on-site at a community place) — Android forbids true background
+ * listening, and the process must be alive for polling to run.
  */
 @CapacitorPlugin(name = "PhotoWatcher")
 public class PhotoWatcherPlugin extends Plugin {
     private static final long POLL_MS = 4000;
     private static final int MAX_EDGE = 1280;
+    private static final String CHANNEL_ID = "navbudol-photos";
+    private static final String NOTIF_PERMISSION_ALIAS = "postNotifications";
 
     private Handler handler;
     private Runnable pollRunnable;
@@ -42,6 +64,7 @@ public class PhotoWatcherPlugin extends Plugin {
     public void startWatch(PluginCall call) {
         Double since = call.getDouble("since");
         lastTimestamp = since != null ? since.longValue() : System.currentTimeMillis() / 1000;
+        ensureChannel();
         stopPolling();
         handler = new Handler(Looper.getMainLooper());
         pollRunnable = new Runnable() {
@@ -63,6 +86,41 @@ public class PhotoWatcherPlugin extends Plugin {
         call.resolve();
     }
 
+    /** One-shot sweep — the web layer calls this when the app is resumed. */
+    @PluginMethod
+    public void checkNow(PluginCall call) {
+        Double since = call.getDouble("since");
+        long sinceTs = since != null ? since.longValue() : lastTimestamp;
+        List<JSObject> photos = collectNew(sinceTs);
+        JSObject result = new JSObject();
+        try {
+            result.put("photos", JSArray.from(photos.toArray()));
+        } catch (Exception e) {
+            result.put("photos", new JSArray());
+        }
+        call.resolve(result);
+    }
+
+    /** Android 13+ requires a runtime grant for posting notifications. */
+    @PluginMethod
+    public void requestNotificationPermission(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                call.resolve();
+            } else {
+                requestPermissionForAlias(NOTIF_PERMISSION_ALIAS, call, "onNotificationPermissionResult");
+            }
+        } else {
+            call.resolve();
+        }
+    }
+
+    @Permission(alias = NOTIF_PERMISSION_ALIAS, permissions = { Manifest.permission.POST_NOTIFICATIONS })
+    public void onNotificationPermissionResult(PluginCall call, boolean granted) {
+        call.resolve();
+    }
+
     private void stopPolling() {
         if (handler != null && pollRunnable != null) {
             handler.removeCallbacks(pollRunnable);
@@ -70,7 +128,27 @@ public class PhotoWatcherPlugin extends Plugin {
         pollRunnable = null;
     }
 
+    private boolean isAppFocused() {
+        Activity activity = bridge.getActivity();
+        return activity != null
+                && activity.getWindow() != null
+                && activity.getWindow().getDecorView().hasWindowFocus();
+    }
+
     private void poll() {
+        List<JSObject> photos = collectNew(lastTimestamp);
+        boolean focused = isAppFocused();
+        for (JSObject photo : photos) {
+            notifyListeners("photoCaptured", photo);
+            if (!focused) {
+                postNotification();
+            }
+        }
+    }
+
+    /** Returns every NEW readable photo since `since`, advancing the watermark. */
+    private List<JSObject> collectNew(long since) {
+        List<JSObject> found = new ArrayList<>();
         Cursor cursor = null;
         try {
             String[] projection = {
@@ -83,10 +161,10 @@ public class PhotoWatcherPlugin extends Plugin {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 selection = MediaStore.Images.Media.DATE_ADDED + " > ? AND " +
                         MediaStore.Images.Media.IS_PENDING + " = 0";
-                args = new String[]{String.valueOf(lastTimestamp)};
+                args = new String[]{String.valueOf(since)};
             } else {
                 selection = MediaStore.Images.Media.DATE_ADDED + " > ?";
-                args = new String[]{String.valueOf(lastTimestamp)};
+                args = new String[]{String.valueOf(since)};
             }
             cursor = getContext().getContentResolver().query(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -95,7 +173,7 @@ public class PhotoWatcherPlugin extends Plugin {
                     args,
                     MediaStore.Images.Media.DATE_ADDED + " ASC"
             );
-            if (cursor == null) return;
+            if (cursor == null) return found;
             while (cursor.moveToNext()) {
                 long id = cursor.getLong(0);
                 long added = cursor.getLong(1);
@@ -110,7 +188,7 @@ public class PhotoWatcherPlugin extends Plugin {
                 data.put("base64", base64);
                 data.put("mimeType", mime != null ? mime : "image/jpeg");
                 data.put("capturedAt", added);
-                notifyListeners("photoCaptured", data);
+                found.add(data);
             }
         } catch (Exception e) {
             // MediaStore can be briefly inconsistent right after a capture —
@@ -118,6 +196,44 @@ public class PhotoWatcherPlugin extends Plugin {
         } finally {
             if (cursor != null) cursor.close();
         }
+        return found;
+    }
+
+    private void ensureChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID, "Photo contributions", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Photos you took near community places");
+            NotificationManager nm = (NotificationManager)
+                    getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.createNotificationChannel(channel);
+        }
+    }
+
+    /** Heads-up notification that opens the app (visible over the camera). */
+    private void postNotification() {
+        if (Build.VERSION.SDK_INT >= 33
+                && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        ensureChannel();
+        Intent launch = getContext().getPackageManager().getLaunchIntentForPackage(getContext().getPackageName());
+        if (launch == null) return;
+        PendingIntent contentIntent = PendingIntent.getActivity(
+                getContext(), 0, launch,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_menu_camera)
+                .setContentTitle("📸 Photo taken near a mapped place")
+                .setContentText("Tap to post it for your neighbors")
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+        NotificationManager nm = (NotificationManager)
+                getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) nm.notify((int) System.currentTimeMillis(), builder.build());
     }
 
     /** Reads a content URI and returns a downscaled JPEG as base64 (no prefix). */

@@ -91,10 +91,10 @@ r = c.post(
     json={"imageBase64": PNG, "mimeType": "image/png", "caption": "Front counter", "at": {"lat": lat, "lng": lng}},
 )
 check("upload photo", r.status_code == 200, r.text)
-photo_url = r.json()["url"]
-
-r = c.get(f"http://localhost:8010{photo_url}")
-check("photo served from /uploads", r.status_code == 200)
+first_photo_url = r.json()["url"]
+fetch_first = first_photo_url if first_photo_url.startswith("http") else f"http://localhost:8010{first_photo_url}"
+r = c.get(fetch_first)
+check("uploaded photo fetchable", r.status_code == 200)
 
 r = c.post(f"/places/{pid}/comments", headers=ah, json={"text": "Salted caramel is elite."})
 check("creator comment is visit-verified", r.status_code == 200 and r.json()["verifiedVisit"] is True, r.text)
@@ -143,6 +143,8 @@ check("creator promotes community photo", r.status_code == 200 and r.json()["inG
 
 r = c.get(f"/places/{pid}", headers=bh)
 d = r.json()
+photo_url = d["communityPhotos"][0]["url"]
+check("photo stored on Cloudinary CDN", photo_url.startswith("https://res.cloudinary.com/"), photo_url)
 check(
     "detail shape (gallery, comments, myVote)",
     r.status_code == 200
@@ -153,6 +155,9 @@ check(
     and d["rating"]["average"] == 4.5,
     json.dumps(d)[:300],
 )
+
+r = c.get(photo_url)
+check("CDN photo fetchable", r.status_code == 200)
 
 r = c.post(f"/places/{pid}/visit", headers=bh, json={"at": {"lat": lat + 0.1, "lng": lng}})
 check("far visit rejected (403)", r.status_code == 403)

@@ -29,6 +29,7 @@ from db import (
     uid,
 )
 from geo_utils import haversine_m
+from services import cloudinary_client
 
 router = APIRouter(tags=["places"])
 
@@ -170,7 +171,28 @@ def _counts(db: Session, place_id: str) -> dict:
 
 
 def _photo_url(photo: PlacePhoto) -> str:
+    # Cloudinary-stored photos carry their full CDN URL in `filename`;
+    # locally-stored ones are filenames under /uploads/places/<id>/.
+    if photo.filename.startswith("http"):
+        return photo.filename
     return f"/uploads/places/{photo.place_id}/{photo.filename}"
+
+
+def _store_image(raw: bytes, folder: str, public_id: str) -> str:
+    """Persist an image: Cloudinary when configured, local disk otherwise.
+    Returns either a full CDN URL or a local filename relative to /uploads."""
+    if cloudinary_client.is_configured():
+        try:
+            return cloudinary_client.upload_image(raw, folder, public_id)
+        except cloudinary_client.CloudinaryError as e:
+            # CDN hiccup shouldn't lose a community contribution — keep locally.
+            print(f"Cloudinary upload failed, storing locally: {e}", flush=True)
+    local_dir = os.path.join(UPLOADS_DIR, folder)
+    os.makedirs(local_dir, exist_ok=True)
+    filename = f"{public_id}.jpg"
+    with open(os.path.join(local_dir, filename), "wb") as fh:
+        fh.write(raw)
+    return filename
 
 
 def _place_summary(db: Session, place: Place, user: User | None) -> dict:
@@ -359,13 +381,13 @@ def retire_place(
 
 
 def _safe_icon_url(url: str | None) -> str | None:
-    """Only serve icon URLs that point at our own uploads mount."""
+    """Only serve icon URLs that point at our uploads mount or our Cloudinary."""
     if url is None:
         return None
     url = url.strip()
-    if not url.startswith("/uploads/icons/"):
-        raise HTTPException(status_code=400, detail="Invalid custom icon.")
-    return url
+    if url.startswith("/uploads/icons/") or cloudinary_client.owns_url(url):
+        return url
+    raise HTTPException(status_code=400, detail="Invalid custom icon.")
 
 
 @router.post("/place-icons")
@@ -385,13 +407,9 @@ def upload_custom_icon(
         raise HTTPException(status_code=400, detail="That image is empty.")
     if len(raw) > 1024 * 1024:
         raise HTTPException(status_code=413, detail="Icons must be under 1 MB.")
-
-    icons_dir = os.path.join(UPLOADS_DIR, "icons")
-    os.makedirs(icons_dir, exist_ok=True)
-    filename = f"{uid()}{extension}"
-    with open(os.path.join(icons_dir, filename), "wb") as fh:
-        fh.write(raw)
-    return {"url": f"/uploads/icons/{filename}"}
+    stored = _store_image(raw, "icons", uid())
+    url = stored if stored.startswith("http") else f"/uploads/icons/{stored}"
+    return {"url": url}
 
 
 # --- photos ------------------------------------------------------------------
@@ -417,11 +435,9 @@ def upload_photo(
     if len(raw) > MAX_PHOTO_BYTES:
         raise HTTPException(status_code=413, detail="Photos must be under 8 MB.")
 
-    place_dir = os.path.join(UPLOADS_DIR, "places", place.id)
-    os.makedirs(place_dir, exist_ok=True)
-    filename = f"{uid()}{extension}"
-    with open(os.path.join(place_dir, filename), "wb") as fh:
-        fh.write(raw)
+    stored = _store_image(raw, f"places/{place.id}", uid())
+    # Cloudinary returns a full CDN URL; local storage returns a filename.
+    filename = stored if stored.startswith("http") else os.path.basename(stored)
 
     photo = PlacePhoto(
         place_id=place.id,
@@ -452,9 +468,10 @@ def delete_photo(
         raise HTTPException(status_code=404, detail="No such photo.")
     if photo.uploader_id != user.id and place.creator_id != user.id:
         raise HTTPException(status_code=403, detail="Only the uploader or the creator can remove a photo.")
-    path = os.path.join(UPLOADS_DIR, "places", place.id, photo.filename)
-    if os.path.exists(path):
-        os.remove(path)
+    if not photo.filename.startswith("http"):
+        path = os.path.join(UPLOADS_DIR, "places", place.id, photo.filename)
+        if os.path.exists(path):
+            os.remove(path)
     db.delete(photo)
     db.commit()
     return {"ok": True}
