@@ -27,3 +27,10 @@ services:
         sync: false
       - key: HF_TOKEN
         sync: false
+      # Community database — set to a hosted Postgres connection string
+      # (free tier on Neon/Supabase). SQLite fallback wipes on redeploys.
+      - key: DATABASE_URL
+        sync: false
+      # Image storage (signed uploads to the navbudol cloud)
+      - key: CLOUDINARY_URL
+        sync: false

@@ -63,3 +63,8 @@ Desktop.ini
 
 # Local agent notes (kept on disk, not for GitHub)
 AGENTS.md
+.neon
+.env.local
+backend/data/navbudol.db
+.env.local
+.claude/
