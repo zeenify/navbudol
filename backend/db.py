@@ -9,6 +9,7 @@ import secrets
 import uuid
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -22,11 +23,21 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
+# Pinned to this file's directory — the backend must find its .env no matter
+# which working directory it was launched from.
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 UPLOADS_DIR = os.path.join(DATA_DIR, "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(DATA_DIR, 'navbudol.db')}")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", f"sqlite:///{os.path.join(DATA_DIR, 'navbudol.db')}"
+).strip().strip('"').strip("'")
+# requirements.txt ships psycopg2 — point plain postgresql:// URLs at it
+# (SQLAlchemy would otherwise look for the uninstalled psycopg v3).
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 engine = create_engine(
     DATABASE_URL,
