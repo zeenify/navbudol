@@ -49,7 +49,12 @@ import java.util.List;
  * user on-site at a community place) — Android forbids true background
  * listening, and the process must be alive for polling to run.
  */
-@CapacitorPlugin(name = "PhotoWatcher")
+@CapacitorPlugin(
+    name = "PhotoWatcher",
+    permissions = {
+        @Permission(alias = "postNotifications", strings = { Manifest.permission.POST_NOTIFICATIONS })
+    }
+)
 public class PhotoWatcherPlugin extends Plugin {
     private static final long POLL_MS = 4000;
     private static final int MAX_EDGE = 1280;
@@ -116,7 +121,7 @@ public class PhotoWatcherPlugin extends Plugin {
         }
     }
 
-    @Permission(alias = NOTIF_PERMISSION_ALIAS, permissions = { Manifest.permission.POST_NOTIFICATIONS })
+    @Permission(alias = "postNotifications")
     public void onNotificationPermissionResult(PluginCall call, boolean granted) {
         call.resolve();
     }
