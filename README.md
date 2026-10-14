@@ -2,6 +2,10 @@
 
 NavBudol is a **community-mapped, voice-first navigation companion** for **General Tinio, Nueva Ecija (Philippines)**. Neighbors add the places that matter to them — a milk-tea shop, a shortcut, a barber that isn't on any map — right from where they're standing, complete with photos, ratings, comments, and likes. An AI co-pilot (you pick the character) navigates everyone there with precise spoken turn-by-turn directions, reads the community's reviews with its trust signals, and chats with you *while you drive*. The frontend is an Angular/Ionic app packaged for Android with Capacitor; the backend is a FastAPI service holding the accounts, the community database, and the API keys for the AI, speech, and geo providers.
 
+## Download (Android)
+
+Grab the latest build here: **[NavBudol.apk](NavBudol.apk)** — open it on your phone, allow "install unknown apps" when Android asks, and sign in. It talks to the deployed backend out of the box; nothing to configure.
+
 ## Features
 
 - **Accounts** — lightweight username/password registration with bcrypt-hashed passwords and server-side sessions. Every contribution is public and attributable: profiles show the places someone added, their photos, comments, and verified visits.
