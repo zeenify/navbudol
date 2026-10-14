@@ -156,10 +156,21 @@ export class CommunityPlacesService {
       });
   }
 
-  async addComment(placeId: string, text: string): Promise<CommunityPlaceComment> {
-    const comment = await this.api.post<CommunityPlaceComment>(`/api/places/${placeId}/comments`, {
-      text,
-    });
+  async addComment(
+    placeId: string,
+    text: string,
+    imageDataUrl?: string
+  ): Promise<CommunityPlaceComment> {
+    const body: Record<string, unknown> = { text };
+    if (imageDataUrl) {
+      const [meta, base64] = this.splitDataUrl(imageDataUrl);
+      body['imageBase64'] = base64;
+      body['mimeType'] = meta.mimeType;
+    }
+    const comment = await this.api.post<CommunityPlaceComment>(
+      `/api/places/${placeId}/comments`,
+      body
+    );
     this.bump();
     return comment;
   }

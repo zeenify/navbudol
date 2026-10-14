@@ -39,9 +39,21 @@ DATABASE_URL = os.getenv(
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
+_connect_args: dict = {}
+if DATABASE_URL.startswith("sqlite"):
+    _connect_args["check_same_thread"] = False
+else:
+    # Fail fast when the database host is unreachable: a hung connect at
+    # import time must never stop the service from booting (Render would
+    # report "no open ports" and crash-loop the deploy).
+    _connect_args["connect_timeout"] = 10
+
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    connect_args=_connect_args,
+    # Neon suspends idle databases; pre-ping replaces dead pooled connections
+    # instead of failing the first request after a wake.
+    pool_pre_ping=True,
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
@@ -127,6 +139,8 @@ class Comment(Base):
     place_id: Mapped[str] = mapped_column(ForeignKey("places.id"), index=True)
     author_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     text: Mapped[str] = mapped_column(Text)
+    # Optional photo attached to the comment (full CDN URL or /uploads path).
+    image_url: Mapped[str | None] = mapped_column(String(255), default=None)
     # True when we have GPS proof this author was actually at the place.
     verified_visit: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now)
@@ -170,4 +184,34 @@ class Visit(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now)
 
 
-Base.metadata.create_all(engine)
+def _ensure_columns() -> None:
+    """create_all never adds columns to tables that already exist (dev SQLite
+    and the deployed Neon database both predate later schema tweaks) — add any
+    missing ones with portable ALTER TABLE statements."""
+    from sqlalchemy import inspect, text
+
+    wanted = {
+        "comments": {"image_url": "VARCHAR(255)"},
+    }
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table, columns in wanted.items():
+            existing = {c["name"] for c in inspector.get_columns(table)}
+            for name, ddl in columns.items():
+                if name not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+
+
+def _init_schema() -> None:
+    """Create tables + apply lightweight migrations. Wrapped so a transient
+    database outage at boot can NEVER stop the service from starting — the
+    /api/health endpoint stays answerable for diagnosis, and DB-backed routes
+    surface their own errors until the database is reachable again."""
+    try:
+        Base.metadata.create_all(engine)
+        _ensure_columns()
+    except Exception as e:  # noqa: BLE001 — boot must survive an unreachable DB
+        print(f"WARNING: database schema init failed: {e}", flush=True)
+
+
+_init_schema()

@@ -406,3 +406,161 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+// Photo watcher armed — proof the on-site hook is live.
+.photo-watch-chip {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 122px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 800;
+  max-width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-color-success);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.photo-watch-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ion-color-success);
+  animation: sim-blink 1.6s infinite;
+  flex-shrink: 0;
+}
+
+.photo-watch-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  em {
+    font-style: normal;
+    color: #c77700;
+    font-weight: 600;
+  }
+}
+
+// Search-result / dropped-pin preview card.
+.place-preview {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: calc(var(--nb-tabbar-h) + 108px);
+  z-index: 810;
+  border-radius: 18px;
+  padding: 13px 14px;
+  box-shadow: 0 10px 34px rgba(9, 20, 40, 0.18);
+}
+
+.place-preview-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.place-preview-title {
+  flex: 1;
+  min-width: 0;
+
+  strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 800;
+    color: #10233f;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: #5b6b7f;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.place-preview-close {
+  border: none;
+  background: rgba(16, 35, 63, 0.06);
+  color: #5b6b7f;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+}
+
+.place-preview-community {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1.5px solid rgba(0, 122, 255, 0.25);
+  background: rgba(0, 122, 255, 0.07);
+  border-radius: 12px;
+  padding: 9px 11px;
+  font-size: 12.5px;
+  color: #0a5ac2;
+  cursor: pointer;
+  text-align: left;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  span:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  strong {
+    font-weight: 800;
+  }
+}
+
+.place-preview-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.place-preview-go {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 0;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, #2f8bff 0%, #007aff 100%);
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+}

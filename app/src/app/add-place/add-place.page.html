@@ -31,31 +31,20 @@
       }
     </div>
 
-    <!-- the essentials -->
+    <!-- step 1: the essentials -->
     <div class="form-card nb-glass">
-      <label class="form-field">
-        <span class="form-label">Place name</span>
-        <input type="text" [(ngModel)]="name" maxlength="80" placeholder="e.g. Ate Lita's Fishball Cart" />
-      </label>
-
-      <div class="form-field">
-        <span class="form-label">What kind of place is it? <em>(pick an icon)</em></span>
-        <app-icon-picker
-          [selected]="selectedIcon"
-          (selectedChange)="pickIcon($event)"
-          (customIcon)="pickCustomIcon($event)"
-        ></app-icon-picker>
-        @if (customIconUrl) {
-          <p class="custom-ok"><span class="material-symbols-rounded">check_circle</span> Custom icon uploaded.</p>
-        }
-        <button type="button" class="ai-pick" (click)="aiPickIcon()" [disabled]="aiPicking">
-          <span class="material-symbols-rounded">auto_awesome</span>
-          {{ aiPicking ? 'The AI is thinking…' : 'Not sure? Let the AI pick' }}
-        </button>
+      <div class="step-head">
+        <span class="step-num">1</span>
+        <span class="step-title">What is this place?</span>
       </div>
 
       <label class="form-field">
-        <span class="form-label">Description <em>(optional, the AI reads this)</em></span>
+        <span class="form-label">Place name <em>(required)</em></span>
+        <input type="text" [(ngModel)]="name" maxlength="80" placeholder="e.g. Ate Lita's Fishball Cart" />
+      </label>
+
+      <label class="form-field">
+        <span class="form-label">Description <em>(optional — helps the AI and your neighbors)</em></span>
         <textarea
           rows="3"
           [(ngModel)]="description"
@@ -65,10 +54,52 @@
       </label>
     </div>
 
-    <!-- photos -->
+    <!-- step 2: the icon -->
+    <div class="form-card nb-glass">
+      <div class="step-head">
+        <span class="step-num">2</span>
+        <span class="step-title">Pick an icon <em>(required — it shows on the map)</em></span>
+      </div>
+
+      <div class="icon-live">
+        <div class="icon-live-pin" [class.filled]="customIconUrl || selectedIcon">
+          @if (customIconUrl) {
+            <img [src]="community.absoluteUrl(customIconUrl)" alt="Your custom icon" />
+          } @else if (selectedIcon) {
+            <span class="material-symbols-rounded">{{ selectedIcon }}</span>
+          } @else {
+            <span class="material-symbols-rounded icon-live-empty">help</span>
+          }
+        </div>
+        <div class="icon-live-text">
+          <strong>{{ customIconUrl || selectedIcon ? chosenIconLabel() : 'No icon chosen yet' }}</strong>
+          <span>This is exactly how your pin will look on the map.</span>
+        </div>
+        <button type="button" class="ai-pick" (click)="aiPickIcon()" [disabled]="aiPicking">
+          @if (aiPicking) {
+            <span class="ai-spinner"></span> Picking…
+          } @else {
+            <span class="material-symbols-rounded">auto_awesome</span> AI pick
+          }
+        </button>
+      </div>
+
+      @if (aiPickResult) {
+        <p class="ai-result"><span class="material-symbols-rounded">check_circle</span> {{ aiPickResult }}</p>
+      }
+
+      <app-icon-picker
+        [selected]="selectedIcon"
+        (selectedChange)="pickIcon($event)"
+        (customIcon)="pickCustomIcon($event)"
+      ></app-icon-picker>
+    </div>
+
+    <!-- step 3: photos -->
     <div class="photo-card nb-glass">
-      <div class="photo-head">
-        <span class="form-label">Photos <em>(optional, up to 6)</em></span>
+      <div class="step-head">
+        <span class="step-num">3</span>
+        <span class="step-title">Photos <em>(optional, up to 6 — shown as this place's slideshow)</em></span>
       </div>
       <div class="photo-grid">
         @for (photo of photos; track photo; let i = $index) {

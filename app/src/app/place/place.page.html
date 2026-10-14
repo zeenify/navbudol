@@ -27,14 +27,32 @@
     </div>
   } @else if (place) {
     <div class="place-wrap">
-      <!-- hero: creator gallery or icon banner -->
+      <!-- hero: the creator's curated images as a swipeable carousel -->
       <div class="hero">
         @if (place.gallery.length > 0) {
-          <div class="hero-strip">
-            @for (photo of place.gallery; track photo.id) {
-              <img [src]="photo.url" [alt]="photo.caption || place.name" />
+          <div class="hero-strip" #heroStrip (scroll)="onHeroScroll()">
+            @for (photo of place.gallery; track photo.id; let i = $index) {
+              <button
+                type="button"
+                class="hero-slide"
+                (click)="openPhoto(photo, place.gallery)"
+                [attr.aria-label]="photo.caption || 'Photo ' + (i + 1)"
+              >
+                <img [src]="imgUrl(photo.url)" [alt]="photo.caption || place.name" loading="lazy" />
+                @if (photo.caption) {
+                  <span class="hero-caption">{{ photo.caption }}</span>
+                }
+              </button>
             }
           </div>
+          @if (place.gallery.length > 1) {
+            <div class="hero-dots">
+              @for (photo of place.gallery; track photo.id; let i = $index) {
+                <span class="hero-dot" [class.on]="heroIndex === i"></span>
+              }
+            </div>
+            <span class="hero-counter">{{ heroIndex + 1 }} / {{ place.gallery.length }}</span>
+          }
         } @else {
           <div class="hero-fallback">
             <div class="hero-pin">
@@ -44,6 +62,11 @@
                 <span class="material-symbols-rounded">{{ place.icon }}</span>
               }
             </div>
+            @if (place.isCreator) {
+              <span class="hero-hint">Add photos below — they become this place's slideshow.</span>
+            } @else {
+              <span class="hero-hint">No photos yet — the creator hasn't added any.</span>
+            }
           </div>
         }
       </div>
@@ -86,47 +109,9 @@
             <span class="material-symbols-rounded creator-chevron">chevron_right</span>
           </button>
         }
-
-        <!-- rate it -->
-        <div class="rate-row">
-          <span class="rate-label">{{ place.myRating ? 'Your rating' : 'Rate this place' }}</span>
-          <div class="stars">
-            @for (star of [1, 2, 3, 4, 5]; track star) {
-              <button type="button" class="star" (click)="rate(star)" [disabled]="busy" [attr.aria-label]="star + ' stars'">
-                <span class="material-symbols-rounded" [class.filled]="(place.myRating ?? place.rating.average ?? 0) >= star">
-                  star
-                </span>
-              </button>
-            }
-          </div>
-        </div>
       </div>
 
-      @if (editing) {
-        <div class="edit-card nb-glass">
-          <label class="edit-field">
-            <span>Name</span>
-            <input type="text" [(ngModel)]="editName" maxlength="80" />
-          </label>
-          <div class="edit-field">
-            <span>Icon</span>
-            <app-icon-picker [selected]="editIcon" (selectedChange)="editIcon = $event"></app-icon-picker>
-          </div>
-          <label class="edit-field">
-            <span>Description</span>
-            <textarea rows="3" [(ngModel)]="editDescription" maxlength="2000"></textarea>
-          </label>
-          <button type="button" class="retire-link" (click)="retirePlace()">Remove this place from the map…</button>
-        </div>
-      }
-
-      @if (place.description && !editing) {
-        <div class="desc-card nb-glass">
-          <p>{{ place.description }}</p>
-        </div>
-      }
-
-      <!-- actions -->
+      <!-- actions: navigation first, contribution second -->
       <div class="actions-row">
         <button type="button" class="action primary" (click)="navigate()">
           <span class="material-symbols-rounded">navigation</span> Navigate
@@ -140,79 +125,211 @@
         <input #photoFileInput type="file" accept="image/*" style="display: none" (change)="onFileChosen($event)" />
       </div>
 
-      <!-- community photos -->
-      <div class="section">
-        <div class="section-head">
-          <h2>Community photos</h2>
-          <span>{{ place.communityPhotos.length }}</span>
-        </div>
-        @if (place.communityPhotos.length > 0) {
-          <div class="photo-grid">
-            @for (photo of place.communityPhotos; track photo.id) {
-              <app-photo-tile
-                [photo]="photo"
-                [actions]="place.isCreator === true || photo.uploader?.id === me?.id"
-                (menu)="photoActions(photo)"
-              ></app-photo-tile>
-            }
-          </div>
-        } @else {
-          <p class="section-empty">No community photos yet — be the first to add one.</p>
-        }
-      </div>
+      <!-- community sections -->
+      <ion-segment class="place-segments" [(ngModel)]="segment" mode="ios">
+        <ion-segment-button value="overview">
+          <ion-label>Overview</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="gallery">
+          <ion-label>Gallery <span class="seg-count">{{ place.communityPhotos.length }}</span></ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="comments">
+          <ion-label>Comments <span class="seg-count">{{ place.commentCount }}</span></ion-label>
+        </ion-segment-button>
+      </ion-segment>
 
-      <!-- gallery note -->
-      @if (place.isCreator && place.communityPhotos.length > 0) {
-        <p class="creator-note">Tip: tap the ••• on a community photo to add it to your gallery.</p>
-      }
-
-      <!-- comments -->
-      <div class="section">
-        <div class="section-head">
-          <h2>Comments</h2>
-          <span>{{ place.commentCount }}</span>
-        </div>
-
-        <div class="composer nb-glass">
-          <input
-            type="text"
-            [(ngModel)]="commentText"
-            placeholder="Share something helpful…"
-            maxlength="1000"
-            (keyup.enter)="addComment()"
-          />
-          <button type="button" class="send" (click)="addComment()" [disabled]="busy || !commentText.trim()">
-            <span class="material-symbols-rounded">send</span>
-          </button>
-        </div>
-
-        <div class="comment-list">
-          @for (comment of place.comments; track comment.id) {
-            <div class="comment">
-              <div class="comment-avatar">{{ comment.author?.avatar ?? '🙂' }}</div>
-              <div class="comment-body">
-                <div class="comment-meta">
-                  <button type="button" class="comment-author" (click)="comment.author && router.navigate(['/profile', comment.author.id])">
-                    {{ comment.author?.displayName ?? 'Neighbor' }}
-                  </button>
-                  @if (comment.verifiedVisit) {
-                    <span class="verified-badge" title="GPS-verified visit">
-                      <span class="material-symbols-rounded">verified</span> was here
-                    </span>
-                  }
-                  <span class="comment-time">{{ timeAgo(comment.createdAt) }}</span>
-                </div>
-                <p class="comment-text">{{ comment.text }}</p>
-                @if (comment.author?.id === me?.id) {
-                  <button type="button" class="comment-delete" (click)="deleteComment(comment.id)">Delete</button>
-                }
+      <!-- ======================= OVERVIEW ======================= -->
+      @if (segment === 'overview') {
+        <div class="segment-body">
+          @if (editing) {
+            <div class="edit-card nb-glass">
+              <label class="edit-field">
+                <span>Name</span>
+                <input type="text" [(ngModel)]="editName" maxlength="80" />
+              </label>
+              <div class="edit-field">
+                <span>Icon</span>
+                <app-icon-picker [selected]="editIcon" (selectedChange)="editIcon = $event"></app-icon-picker>
               </div>
+              <label class="edit-field">
+                <span>Description</span>
+                <textarea rows="3" [(ngModel)]="editDescription" maxlength="2000"></textarea>
+              </label>
+              <button type="button" class="retire-link" (click)="retirePlace()">Remove this place from the map…</button>
+            </div>
+          } @else {
+            @if (place.description) {
+              <div class="desc-card nb-glass">
+                <p>{{ place.description }}</p>
+              </div>
+            } @else {
+              <div class="desc-card nb-glass muted">
+                <p>The creator hasn't written a description yet.</p>
+              </div>
+            }
+
+            <!-- rating breakdown -->
+            <div class="ratings-card nb-glass">
+              <div class="ratings-head">
+                <div class="ratings-score">
+                  <strong>{{ place.rating.average ?? '—' }}</strong>
+                  <span class="material-symbols-rounded">star</span>
+                </div>
+                <div class="ratings-meta">
+                  <span>{{ place.rating.count }} rating{{ place.rating.count === 1 ? '' : 's' }}</span>
+                  <div class="rate-row">
+                    <span class="rate-label">{{ place.myRating ? 'Your rating' : 'Rate it' }}</span>
+                    <div class="stars">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <button type="button" class="star" (click)="rate(star)" [disabled]="busy" [attr.aria-label]="star + ' stars'">
+                          <span class="material-symbols-rounded" [class.filled]="(place.myRating ?? place.rating.average ?? 0) >= star">
+                            star
+                          </span>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+              @if (place.rating.count > 0) {
+                <div class="ratings-bars">
+                  @for (row of ratingRows; track row.stars) {
+                    <div class="ratings-bar-row">
+                      <span class="bar-label">{{ row.stars }}★</span>
+                      <div class="bar-track"><div class="bar-fill" [style.width.%]="row.pct"></div></div>
+                      <span class="bar-count">{{ row.count }}</span>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           }
-          @if (place.comments.length === 0) {
-            <p class="section-empty">No comments yet.</p>
+        </div>
+      }
+
+      <!-- ======================= GALLERY ======================= -->
+      @if (segment === 'gallery') {
+        <div class="segment-body">
+          <div class="gallery-intro nb-glass-soft">
+            <span class="material-symbols-rounded">groups</span>
+            <span>Photos the community took at this place. Yours too — hit Camera or Upload above.</span>
+          </div>
+          @if (place.communityPhotos.length > 0) {
+            <div class="photo-grid">
+              @for (photo of place.communityPhotos; track photo.id) {
+                <app-photo-tile
+                  [photo]="photo"
+                  [actions]="place.isCreator === true || photo.uploader?.id === me?.id"
+                  (menu)="openPhoto(photo, place.communityPhotos)"
+                  (open)="openPhoto(photo, place.communityPhotos)"
+                ></app-photo-tile>
+              }
+            </div>
+          } @else {
+            <p class="section-empty">No community photos yet — be the first to add one.</p>
+          }
+          @if (place.isCreator && place.communityPhotos.length > 0) {
+            <p class="creator-note">Tip: tap a photo, then ••• to add it to the main slideshow.</p>
           }
         </div>
+      }
+
+      <!-- ======================= COMMENTS ======================= -->
+      @if (segment === 'comments') {
+        <div class="segment-body">
+          <div class="composer nb-glass">
+            @if (commentImage) {
+              <div class="composer-attachment">
+                <img [src]="commentImage" alt="Attached photo" />
+                <button type="button" class="composer-remove" (click)="removeCommentImage()" aria-label="Remove photo">×</button>
+              </div>
+            }
+            <div class="composer-row">
+              <button type="button" class="composer-attach" (click)="attachCommentImage()" aria-label="Attach a photo">
+                <span class="material-symbols-rounded">image</span>
+              </button>
+              <input
+                type="text"
+                [(ngModel)]="commentText"
+                placeholder="Share something helpful…"
+                maxlength="1000"
+                (keyup.enter)="addComment()"
+              />
+              <button type="button" class="send" (click)="addComment()" [disabled]="busy || !canPostComment">
+                <span class="material-symbols-rounded">send</span>
+              </button>
+            </div>
+            <input #commentFileInput type="file" accept="image/*" style="display: none" (change)="onCommentFileChosen($event)" />
+          </div>
+
+          <div class="comment-list">
+            @for (comment of place.comments; track comment.id) {
+              <div class="comment">
+                <div class="comment-avatar">{{ comment.author?.avatar ?? '🙂' }}</div>
+                <div class="comment-body">
+                  <div class="comment-meta">
+                    <button type="button" class="comment-author" (click)="comment.author && router.navigate(['/profile', comment.author.id])">
+                      {{ comment.author?.displayName ?? 'Neighbor' }}
+                    </button>
+                    @if (comment.verifiedVisit) {
+                      <span class="verified-badge" title="GPS-verified visit">
+                        <span class="material-symbols-rounded">verified</span> was here
+                      </span>
+                    }
+                    <span class="comment-time">{{ timeAgo(comment.createdAt) }}</span>
+                  </div>
+                  @if (comment.text) {
+                    <p class="comment-text">{{ comment.text }}</p>
+                  }
+                  @if (comment.imageUrl) {
+                    <button type="button" class="comment-photo" (click)="openCommentImage(comment)">
+                      <img [src]="imgUrl(comment.imageUrl)" alt="Comment photo" loading="lazy" />
+                    </button>
+                  }
+                  @if (comment.author?.id === me?.id) {
+                    <button type="button" class="comment-delete" (click)="deleteComment(comment.id)">Delete</button>
+                  }
+                </div>
+              </div>
+            }
+            @if (place.comments.length === 0) {
+              <p class="section-empty">No comments yet — start the conversation.</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- fullscreen photo viewer -->
+  @if (viewer; as v) {
+    <div class="viewer">
+      <button type="button" class="viewer-close" (click)="closeViewer()" aria-label="Close">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+      @if (v.items.length > 1) {
+        <button type="button" class="viewer-nav prev" (click)="viewerStep(-1)" aria-label="Previous photo">
+          <span class="material-symbols-rounded">chevron_left</span>
+        </button>
+        <button type="button" class="viewer-nav next" (click)="viewerStep(1)" aria-label="Next photo">
+          <span class="material-symbols-rounded">chevron_right</span>
+        </button>
+      }
+      <div class="viewer-stage">
+        <img class="viewer-img" [src]="v.items[v.index].url" [alt]="v.items[v.index].caption || 'Photo'" />
+      </div>
+      <div class="viewer-bar">
+        <div class="viewer-info">
+          <span class="viewer-caption">{{ v.items[v.index].caption || 'Community photo' }}</span>
+          @if (v.items[v.index].authorName) {
+            <span class="viewer-author">by {{ v.items[v.index].authorName }}</span>
+          }
+        </div>
+        @if (viewerPhoto) {
+          <button type="button" class="viewer-menu" (click)="viewerMenu()" aria-label="Photo options">
+            <span class="material-symbols-rounded">more_horiz</span>
+          </button>
+        }
       </div>
     </div>
   }

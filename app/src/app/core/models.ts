@@ -208,6 +208,8 @@ export interface CommunityPlacePhoto {
 export interface CommunityPlaceComment {
   id: string;
   text: string;
+  /** optional photo attached to the comment (CDN URL or /uploads path) */
+  imageUrl?: string | null;
   verifiedVisit: boolean;
   createdAt: string;
   author: UserRef | null;

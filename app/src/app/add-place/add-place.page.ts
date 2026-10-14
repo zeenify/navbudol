@@ -7,6 +7,7 @@ import { PlaceResult } from '../core/models';
 import { LocationService } from '../core/services/location.service';
 import { CommunityPlacesService } from '../core/services/community-places.service';
 import { GeminiService } from '../core/services/gemini.service';
+import { placeIconDef } from '../core/constants/place-icons';
 
 /**
  * Add a community place — a full flow, because this is the feature that
@@ -24,7 +25,7 @@ export class AddPlacePage {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   private location = inject(LocationService);
-  private community = inject(CommunityPlacesService);
+  public community = inject(CommunityPlacesService);
   private gemini = inject(GeminiService);
   private router = inject(Router);
   private zone = inject(NgZone);
@@ -39,12 +40,18 @@ export class AddPlacePage {
   submitting = false;
   error: string | null = null;
   aiPicking = false;
+  /** What the AI just picked — shown as explicit feedback, never silent. */
+  aiPickResult: string | null = null;
 
   /** Feeds the mini preview map; identity-stable per fix. */
   previewPlace: PlaceResult | null = null;
 
   constructor() {
     void this.location.startWatch();
+    // Zoneless CD: the page reads position through getters, so a fix that
+    // arrives AFTER this page opened must still repaint it (otherwise the
+    // form sits on "Getting your location…" forever).
+    this.location.position$.subscribe(() => this.cdr.markForCheck());
   }
 
   get position() {
@@ -53,6 +60,13 @@ export class AddPlacePage {
 
   get hasFix(): boolean {
     return this.location.hasFix && !!this.position;
+  }
+
+  /** Human label of the currently chosen icon (library key or custom image). */
+  chosenIconLabel(): string {
+    if (this.customIconUrl) return 'Your uploaded image';
+    if (this.selectedIcon) return placeIconDef(this.selectedIcon)?.label ?? 'Custom icon';
+    return 'None yet';
   }
 
   /** Accuracy pill copy — honest about what the phone knows. */
@@ -65,6 +79,7 @@ export class AddPlacePage {
   async pickIcon(key: string): Promise<void> {
     this.selectedIcon = key;
     this.customIconUrl = null;
+    this.aiPickResult = null;
     this.cdr.markForCheck();
   }
 
@@ -73,6 +88,8 @@ export class AddPlacePage {
     try {
       const res = await this.community.uploadCustomIcon(dataUrl);
       this.customIconUrl = res.url;
+      this.selectedIcon = null;
+      this.aiPickResult = null;
       this.error = null;
     } catch (e) {
       this.error = e instanceof Error ? e.message : 'Could not upload that icon.';
@@ -80,7 +97,12 @@ export class AddPlacePage {
     this.cdr.markForCheck();
   }
 
-  /** AI matches the description to a library icon — never blocks the form. */
+  /**
+   * AI matches the name/description to a LIBRARY icon (not generation — the
+   * pin renders a crisp Material symbol that matches every other pin). The
+   * result is announced in place so it never looks like the button did
+   * nothing.
+   */
   async aiPickIcon(): Promise<void> {
     if (this.aiPicking) return;
     const hint = `${this.name} ${this.description}`.trim();
@@ -90,12 +112,18 @@ export class AddPlacePage {
       return;
     }
     this.aiPicking = true;
+    this.aiPickResult = null;
     this.error = null;
     this.cdr.markForCheck();
     const key = await this.gemini.matchIcon(hint);
-    if (key) await this.pickIcon(key);
-    else this.error = 'The AI could not pick an icon — choose one manually.';
     this.aiPicking = false;
+    if (key) {
+      this.selectedIcon = key;
+      this.customIconUrl = null;
+      this.aiPickResult = `AI picked “${placeIconDef(key)?.label ?? key}” for this place.`;
+    } else {
+      this.error = 'The AI could not pick an icon — choose one from the grid below.';
+    }
     this.cdr.markForCheck();
   }
 

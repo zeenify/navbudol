@@ -99,6 +99,20 @@ check("uploaded photo fetchable", r.status_code == 200)
 r = c.post(f"/places/{pid}/comments", headers=ah, json={"text": "Salted caramel is elite."})
 check("creator comment is visit-verified", r.status_code == 200 and r.json()["verifiedVisit"] is True, r.text)
 
+# comments can carry a photo attachment (text optional)
+r = c.post(f"/places/{pid}/comments", headers=ah, json={"text": "", "imageBase64": PNG, "mimeType": "image/png"})
+check("comment with image + empty text accepted", r.status_code == 200 and r.json()["imageUrl"], r.text)
+comment_img_url = r.json()["imageUrl"]
+fetch_ci = comment_img_url if comment_img_url.startswith("http") else f"http://localhost:8010{comment_img_url}"
+r = c.get(fetch_ci)
+check("comment image fetchable", r.status_code == 200)
+
+r = c.post(f"/places/{pid}/comments", headers=ah, json={"text": "", "imageBase64": "", "mimeType": "image/png"})
+check("empty comment rejected (400)", r.status_code == 400, r.text)
+
+r = c.post(f"/places/{pid}/comments", headers=ah, json={"text": "text only", "imageBase64": "not-base64!", "mimeType": "image/png"})
+check("bad comment image rejected (400)", r.status_code == 400, r.text)
+
 r = c.put(f"/places/{pid}/rating", headers=ah, json={"stars": 5})
 check("rate 5 -> average 5.0", r.status_code == 200 and r.json()["average"] == 5.0, r.text)
 
@@ -150,7 +164,8 @@ check(
     r.status_code == 200
     and len(d["gallery"]) == 1
     and len(d["communityPhotos"]) == 1
-    and len(d["comments"]) == 3
+    and len(d["comments"]) == 4
+    and any(cm.get("imageUrl") for cm in d["comments"])
     and d["myVote"] == -1
     and d["rating"]["average"] == 4.5,
     json.dumps(d)[:300],
@@ -168,7 +183,7 @@ check(
     r.status_code == 200
     and r.json()["stats"]["places"] == 1
     and r.json()["stats"]["photos"] == 1
-    and r.json()["stats"]["comments"] == 1,
+    and r.json()["stats"]["comments"] == 2,
     r.text,
 )
 

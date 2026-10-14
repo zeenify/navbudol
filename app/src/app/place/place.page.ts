@@ -4,6 +4,7 @@ import { ActionSheetController, ToastController } from '@ionic/angular/lazy';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 import {
+  CommunityPlaceComment,
   CommunityPlaceDetail,
   CommunityPlacePhoto,
   PlaceResult,
@@ -13,9 +14,19 @@ import { CommunityPlacesService } from '../core/services/community-places.servic
 import { AuthService } from '../core/services/auth.service';
 import { ChatActionsService } from '../core/services/chat-actions.service';
 
+/** One image in the fullscreen viewer (gallery, community photo or comment). */
+interface ViewerItem {
+  url: string;
+  caption: string;
+  authorName: string | null;
+  /** when set, the viewer's ••• manages this photo (creator/uploader) */
+  photo?: CommunityPlacePhoto;
+}
+
 /**
  * The place page — everything the community knows about one pin: the
- * creator's gallery, live ratings, likes, and visit-verified comments.
+ * creator's photo carousel, live ratings, likes, and visit-verified
+ * comments (with photo attachments).
  */
 @Component({
   selector: 'app-place',
@@ -25,6 +36,8 @@ import { ChatActionsService } from '../core/services/chat-actions.service';
 })
 export class PlacePage implements OnInit {
   @ViewChild('photoFileInput') photoFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('commentFileInput') commentFileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('heroStrip') heroStrip!: ElementRef<HTMLDivElement>;
 
   private route = inject(ActivatedRoute);
   public router = inject(Router);
@@ -40,14 +53,27 @@ export class PlacePage implements OnInit {
   loading = true;
   error: string | null = null;
   commentText = '';
+  /** data URL of the image attached to the comment being written */
+  commentImage: string | null = null;
   busy = false;
   editing = false;
   editName = '';
   editDescription = '';
   editIcon: string | null = null;
+  /** which community section is open */
+  segment: 'overview' | 'gallery' | 'comments' = 'overview';
+  /** carousel position over the creator's gallery */
+  heroIndex = 0;
+  /** fullscreen photo viewer state */
+  viewer: { items: ViewerItem[]; index: number } | null = null;
 
   get me() {
     return this.auth.currentUser;
+  }
+
+  /** Photos may be full CDN URLs or backend-relative /uploads paths. */
+  imgUrl(path: string): string {
+    return this.community.absoluteUrl(path);
   }
 
   ngOnInit(): void {
@@ -217,16 +243,125 @@ export class PlacePage implements OnInit {
     this.cdr.markForCheck();
   }
 
+  // --- carousel + viewer ---------------------------------------------------------
+
+  onHeroScroll(): void {
+    const strip = this.heroStrip?.nativeElement;
+    if (!strip || !this.place?.gallery.length) return;
+    const index = Math.round(strip.scrollLeft / strip.clientWidth);
+    if (index !== this.heroIndex) {
+      this.heroIndex = Math.max(0, Math.min(index, this.place.gallery.length - 1));
+      this.cdr.markForCheck();
+    }
+  }
+
+  get ratingRows(): Array<{ stars: number; count: number; pct: number }> {
+    const dist = this.place?.rating.distribution ?? {};
+    const max = Math.max(1, ...Object.values(dist).map((n) => Number(n) || 0));
+    return [5, 4, 3, 2, 1].map((stars) => {
+      const count = Number(dist[String(stars)] ?? 0);
+      return { stars, count, pct: Math.round((count / max) * 100) };
+    });
+  }
+
+  openViewer(items: ViewerItem[], index: number): void {
+    if (!items.length) return;
+    this.viewer = { items, index: Math.max(0, Math.min(index, items.length - 1)) };
+    this.cdr.markForCheck();
+  }
+
+  openPhoto(photo: CommunityPlacePhoto, list: CommunityPlacePhoto[]): void {
+    const items: ViewerItem[] = list.map((p) => ({
+      url: this.community.absoluteUrl(p.url),
+      caption: p.caption,
+      authorName: p.uploader?.displayName ?? null,
+      photo: p,
+    }));
+    this.openViewer(items, Math.max(0, list.indexOf(photo)));
+  }
+
+  openCommentImage(comment: CommunityPlaceComment): void {
+    if (!comment.imageUrl) return;
+    this.openViewer(
+      [
+        {
+          url: this.community.absoluteUrl(comment.imageUrl),
+          caption: comment.text,
+          authorName: comment.author?.displayName ?? null,
+        },
+      ],
+      0
+    );
+  }
+
+  viewerStep(delta: number): void {
+    if (!this.viewer) return;
+    const next = this.viewer.index + delta;
+    if (next < 0 || next >= this.viewer.items.length) return;
+    this.viewer.index = next;
+    this.cdr.markForCheck();
+  }
+
+  closeViewer(): void {
+    this.viewer = null;
+    this.cdr.markForCheck();
+  }
+
+  async viewerMenu(): Promise<void> {
+    const item = this.viewer?.items[this.viewer.index];
+    if (!item?.photo) return;
+    this.closeViewer();
+    await this.photoActions(item.photo);
+  }
+
+  get viewerPhoto(): CommunityPlacePhoto | null {
+    return this.viewer?.items[this.viewer.index]?.photo ?? null;
+  }
+
   // --- comments -----------------------------------------------------------------
 
+  attachCommentImage(): void {
+    this.commentFileInput.nativeElement.click();
+  }
+
+  onCommentFileChosen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        this.commentImage = reader.result;
+        this.cdr.markForCheck();
+      }
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  removeCommentImage(): void {
+    this.commentImage = null;
+    this.cdr.markForCheck();
+  }
+
+  get canPostComment(): boolean {
+    return !!this.commentText.trim() || !!this.commentImage;
+  }
+
   async addComment(): Promise<void> {
-    if (!this.place || !this.commentText.trim()) return;
+    if (!this.place || (!this.commentText.trim() && !this.commentImage)) return;
     this.busy = true;
     try {
-      const comment = await this.community.addComment(this.place.id, this.commentText.trim());
+      const comment = await this.community.addComment(
+        this.place.id,
+        this.commentText.trim(),
+        this.commentImage ?? undefined
+      );
       this.place.comments = [comment, ...this.place.comments];
       this.place.commentCount += 1;
       this.commentText = '';
+      this.commentImage = null;
+      this.segment = 'comments';
     } catch (e) {
       await this.toast(e instanceof Error ? e.message : 'Could not post that comment.');
     } finally {

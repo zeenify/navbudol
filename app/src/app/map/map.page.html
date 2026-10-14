@@ -47,6 +47,48 @@
     </div>
   }
 
+  <!-- photo watcher armed: tiny persistent proof the hook is live here -->
+  @if (!chatOpen && (navState$ | async)?.phase === 'idle' && (photoWatchPlace$ | async); as watch) {
+    <div class="photo-watch-chip nb-glass-soft">
+      <span class="photo-watch-dot"></span>
+      <span class="photo-watch-text">
+        Photo watch on — {{ watch.name }}
+        @if ((notificationsGranted$ | async) === false) {
+          <em>notifications are off — enable them in system settings to catch background shots</em>
+        }
+      </span>
+    </div>
+  }
+
+  <!-- search result / dropped pin: preview card, directions on demand -->
+  @if (previewPlace && !chatOpen && (navState$ | async)?.phase === 'idle') {
+    <div class="place-preview nb-glass-soft">
+      <div class="place-preview-head">
+        <div class="place-preview-title">
+          <strong>{{ previewPlace.name }}</strong>
+          <span>
+            {{ previewDistance() ? previewDistance() + ' away · ' : '' }}{{ previewPlace.detail || previewPlace.type || 'Map location' }}
+          </span>
+        </div>
+        <button class="place-preview-close" type="button" (click)="closePreview()" aria-label="Close">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+      @if (previewCommunity; as cp) {
+        <button type="button" class="place-preview-community" (click)="openPreviewCommunity()">
+          <span class="material-symbols-rounded">storefront</span>
+          <span>Neighbors mapped <strong>{{ cp.name }}</strong> here — see photos &amp; comments</span>
+          <span class="material-symbols-rounded">chevron_right</span>
+        </button>
+      }
+      <div class="place-preview-actions">
+        <button class="place-preview-go" type="button" (click)="directionsFromPreview()">
+          <span class="material-symbols-rounded">navigation</span> Get directions
+        </button>
+      </div>
+    </div>
+  }
+
   <!-- simulation chip -->
   <div class="sim-chip nb-glass-soft" *ngIf="simulating$ | async">
     <span class="sim-dot"></span> Simulated

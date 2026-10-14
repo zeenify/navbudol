@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommunityPlacePhoto } from '../../core/models';
+import { CommunityPlacesService } from '../../core/services/community-places.service';
 
 /**
  * One community photo tile with the right ownership actions surfaced:
@@ -9,8 +10,8 @@ import { CommunityPlacePhoto } from '../../core/models';
   selector: 'app-photo-tile',
   standalone: false,
   template: `
-    <div class="photo-tile">
-      <img [src]="photo.url" [alt]="photo.caption || 'Community photo'" loading="lazy" />
+    <div class="photo-tile" (click)="openPhoto()" role="button" [attr.aria-label]="photo.caption || 'View photo'">
+      <img [src]="community.absoluteUrl(photo.url)" [alt]="photo.caption || 'Community photo'" loading="lazy" />
       @if (photo.caption) {
         <div class="photo-caption">{{ photo.caption }}</div>
       }
@@ -18,7 +19,7 @@ import { CommunityPlacePhoto } from '../../core/models';
         <div class="gallery-flag"><span class="material-symbols-rounded">star</span> In gallery</div>
       }
       @if (actions) {
-        <button type="button" class="tile-menu" (click)="openMenu()" aria-label="Photo actions">
+        <button type="button" class="tile-menu" (click)="openMenu(); $event.stopPropagation()" aria-label="Photo actions">
           <span class="material-symbols-rounded">more_horiz</span>
         </button>
       }
@@ -32,6 +33,7 @@ import { CommunityPlacePhoto } from '../../core/models';
         overflow: hidden;
         aspect-ratio: 1;
         background: #e7ecf3;
+        cursor: pointer;
       }
       img {
         width: 100%;
@@ -95,8 +97,15 @@ export class PhotoTileComponent {
   @Input({ required: true }) photo!: CommunityPlacePhoto;
   @Input() actions = false;
   @Output() menu = new EventEmitter<void>();
+  @Output() open = new EventEmitter<void>();
+
+  public community = inject(CommunityPlacesService);
 
   openMenu(): void {
     this.menu.emit();
+  }
+
+  openPhoto(): void {
+    this.open.emit();
   }
 }

@@ -72,7 +72,9 @@ class IconUploadBody(BaseModel):
 
 
 class CommentBody(BaseModel):
-    text: str = Field(min_length=1, max_length=1000)
+    text: str = Field(default="", max_length=1000)
+    imageBase64: str | None = None
+    mimeType: str | None = None
 
 
 class RatingBody(BaseModel):
@@ -193,6 +195,27 @@ def _store_image(raw: bytes, folder: str, public_id: str) -> str:
     with open(os.path.join(local_dir, filename), "wb") as fh:
         fh.write(raw)
     return filename
+
+
+def _decode_image(
+    image_base64: str | None, mime_type: str | None, max_bytes: int = MAX_PHOTO_BYTES
+) -> bytes:
+    """Validate + decode a base64 image the client uploaded."""
+    if not image_base64:
+        raise HTTPException(status_code=400, detail="No image was attached.")
+    if ALLOWED_IMAGE_TYPES.get((mime_type or "").lower()) is None:
+        raise HTTPException(status_code=400, detail="Images must be JPEG, PNG, or WebP.")
+    try:
+        raw = base64.b64decode(image_base64, validate=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not decode that image.")
+    if len(raw) == 0:
+        raise HTTPException(status_code=400, detail="That image is empty.")
+    if len(raw) > max_bytes:
+        raise HTTPException(
+            status_code=413, detail=f"Images must be under {max_bytes // (1024 * 1024)} MB."
+        )
+    return raw
 
 
 def _place_summary(db: Session, place: Place, user: User | None) -> dict:
@@ -323,6 +346,7 @@ def place_detail(
         {
             "id": c.id,
             "text": c.text,
+            "imageUrl": c.image_url,
             "verifiedVisit": c.verified_visit,
             "createdAt": c.created_at.isoformat(),
             "author": _user_ref(db, c.author_id),
@@ -423,17 +447,7 @@ def upload_photo(
     db: Session = Depends(get_db),
 ) -> dict:
     place = _place_or_404(db, place_id)
-    extension = ALLOWED_IMAGE_TYPES.get(body.mimeType.lower())
-    if extension is None:
-        raise HTTPException(status_code=400, detail="Photos must be JPEG, PNG, or WebP.")
-    try:
-        raw = base64.b64decode(body.imageBase64, validate=True)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Could not decode that image.")
-    if len(raw) == 0:
-        raise HTTPException(status_code=400, detail="That image is empty.")
-    if len(raw) > MAX_PHOTO_BYTES:
-        raise HTTPException(status_code=413, detail="Photos must be under 8 MB.")
+    raw = _decode_image(body.imageBase64, body.mimeType)
 
     stored = _store_image(raw, f"places/{place.id}", uid())
     # Cloudinary returns a full CDN URL; local storage returns a filename.
@@ -507,10 +521,19 @@ def add_comment(
     db: Session = Depends(get_db),
 ) -> dict:
     place = _place_or_404(db, place_id)
+    text = body.text.strip()
+    image_url: str | None = None
+    if body.imageBase64:
+        raw = _decode_image(body.imageBase64, body.mimeType)
+        stored = _store_image(raw, "comments", uid())
+        image_url = stored if stored.startswith("http") else f"/uploads/comments/{stored}"
+    if not text and not image_url:
+        raise HTTPException(status_code=400, detail="Write something or attach a photo.")
     comment = Comment(
         place_id=place.id,
         author_id=user.id,
-        text=body.text.strip(),
+        text=text,
+        image_url=image_url,
         verified_visit=_visit_exists(db, place.id, user.id),
     )
     db.add(comment)
@@ -518,6 +541,7 @@ def add_comment(
     return {
         "id": comment.id,
         "text": comment.text,
+        "imageUrl": comment.image_url,
         "verifiedVisit": comment.verified_visit,
         "createdAt": comment.created_at.isoformat(),
         "author": {"id": user.id, "displayName": user.display_name, "avatar": user.avatar},

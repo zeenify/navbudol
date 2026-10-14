@@ -59,6 +59,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
   /** Camera photo taken on-site → one-tap "post it?" card. */
   photoPrompt: { placeId: string; placeName: string; dataUrl: string; comment: string } | null = null;
   postingPhoto = false;
+  /** Search result selected → preview card (details + directions), not a surprise route. */
+  previewPlace: PlaceResult | null = null;
+  previewCommunity: CommunityPlaceSummary | null = null;
+  /** The photo watcher's latched on-site place (arming chip). */
+  readonly photoWatchPlace$ = this.photoWatcher.onSite$;
+  readonly notificationsGranted$ = this.photoWatcher.notificationsGranted$;
 
   get isTraveling(): boolean {
     return this.nav.phase === 'navigating' || this.nav.phase === 'rerouting';
@@ -126,10 +132,15 @@ export class MapPage implements AfterViewInit, OnDestroy {
       ),
       // Arriving at a community place = a GPS-verified visit. arrived$ emits
       // before stopNavigation() clears the route, so the destination is still
-      // readable from nav state here.
+      // readable from nav state here. Arrival also ARMS the photo watcher —
+      // the strongest proof of being on-site, immune to later GPS drift.
       this.nav.arrived$.subscribe(() => {
         const destination = this.nav.navState$.value.route?.destination;
-        if (destination) void this.recordArrivalVisit(destination);
+        if (!destination) return;
+        if (destination.communityPlaceId) {
+          this.photoWatcher.latchArrival(destination.communityPlaceId, destination.name);
+        }
+        void this.recordArrivalVisit(destination);
       }),
       // One-tap contribution: photos taken with the native camera while
       // on-site at a community place.
@@ -540,6 +551,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
         el.style.width = '16px';
         el.style.height = '16px';
         el.innerHTML = `<div class="nb-place"></div><div class="nb-place-label">${p.name}</div>`;
+        // AI-found results behave like search results: community places open
+        // their page, everything else gets the preview card.
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          void this.onPlaceSelected(p);
+        });
         this.placeMarkers.push(
           new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([p.lng, p.lat]).addTo(this.map)
         );
@@ -564,7 +581,56 @@ export class MapPage implements AfterViewInit, OnDestroy {
   // --- actions -----------------------------------------------------------------
 
   async onPlaceSelected(place: PlaceResult): Promise<void> {
+    // Community places have a whole page (photos, comments, ratings) —
+    // opening it IS the details experience. Only plain map results fall
+    // back to the preview card.
+    if (place.communityPlaceId) {
+      this.closePreview();
+      await this.router.navigateByUrl(`/place/${place.communityPlaceId}`);
+      return;
+    }
+    this.previewPlace = place;
+    this.previewCommunity = this.communityNear(place, 120);
+    this.cdr.markForCheck();
+  }
+
+  /** The community place mapped within `radiusM` of a plain map result. */
+  private communityNear(place: PlaceResult, radiusM: number): CommunityPlaceSummary | null {
+    let best: CommunityPlaceSummary | null = null;
+    let bestD = radiusM;
+    for (const p of this.community.localPool()) {
+      const d = haversineM(place, p);
+      if (d <= bestD) {
+        best = p;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  previewDistance(): string | null {
+    if (this.previewPlace?.distanceM == null) return null;
+    return formatDistance(this.previewPlace.distanceM);
+  }
+
+  openPreviewCommunity(): void {
+    const id = this.previewCommunity?.id;
+    if (!id) return;
+    this.closePreview();
+    void this.router.navigateByUrl(`/place/${id}`);
+  }
+
+  async directionsFromPreview(): Promise<void> {
+    const place = this.previewPlace;
+    if (!place) return;
+    this.closePreview();
     await this.routeTo(place);
+  }
+
+  closePreview(): void {
+    this.previewPlace = null;
+    this.previewCommunity = null;
+    this.cdr.markForCheck();
   }
 
   recenter(): void {
@@ -618,7 +684,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
       this.toast('Turn on your location to get a route there.');
       return;
     }
-    await this.routeTo({ name: 'Dropped pin', detail: 'Tap on map', lat: at.lat, lng: at.lng });
+    // Same flow as search results: a card first, directions on demand.
+    await this.onPlaceSelected({ name: 'Dropped pin', detail: 'Tap on map', lat: at.lat, lng: at.lng });
   }
 
   private async routeTo(place: PlaceResult): Promise<void> {

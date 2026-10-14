@@ -32,7 +32,9 @@ import com.getcapacitor.annotation.Permission;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Watches the system MediaStore for NEW camera photos — the hook behind the
@@ -64,11 +66,18 @@ public class PhotoWatcherPlugin extends Plugin {
     private Handler handler;
     private Runnable pollRunnable;
     private long lastTimestamp;
+    /** Photos surfaced this session — ids let the >= since query rescan the
+     * same second without re-reading or double-delivering anything. */
+    private final Set<String> deliveredIds = new HashSet<>();
+    /** Place name for the notification text (set by startWatch). */
+    private String placeName;
 
     @PluginMethod
     public void startWatch(PluginCall call) {
         Double since = call.getDouble("since");
         lastTimestamp = since != null ? since.longValue() : System.currentTimeMillis() / 1000;
+        String name = call.getString("placeName");
+        placeName = name != null && !name.isEmpty() ? name : null;
         ensureChannel();
         stopPolling();
         handler = new Handler(Looper.getMainLooper());
@@ -112,18 +121,24 @@ public class PhotoWatcherPlugin extends Plugin {
         if (Build.VERSION.SDK_INT >= 33) {
             if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS)
                     == PackageManager.PERMISSION_GRANTED) {
-                call.resolve();
+                call.resolve(grantedResult(true));
             } else {
                 requestPermissionForAlias(NOTIF_PERMISSION_ALIAS, call, "onNotificationPermissionResult");
             }
         } else {
-            call.resolve();
+            call.resolve(grantedResult(true));
         }
     }
 
     @Permission(alias = "postNotifications")
     public void onNotificationPermissionResult(PluginCall call, boolean granted) {
-        call.resolve();
+        call.resolve(grantedResult(granted));
+    }
+
+    private JSObject grantedResult(boolean granted) {
+        JSObject result = new JSObject();
+        result.put("granted", granted);
+        return result;
     }
 
     private void stopPolling() {
@@ -151,7 +166,13 @@ public class PhotoWatcherPlugin extends Plugin {
         }
     }
 
-    /** Returns every NEW readable photo since `since`, advancing the watermark. */
+    /**
+     * Returns every NEW readable camera photo since `since` (inclusive, so
+     * two captures within the same second are both seen — the delivered-id
+     * set prevents re-reading or double-delivering). Advancing the watermark
+     * only counts once a photo is fully readable — half-written captures
+     * retry on the next tick.
+     */
     private List<JSObject> collectNew(long since) {
         List<JSObject> found = new ArrayList<>();
         Cursor cursor = null;
@@ -161,14 +182,17 @@ public class PhotoWatcherPlugin extends Plugin {
                     MediaStore.Images.Media.DATE_ADDED,
                     MediaStore.Images.Media.MIME_TYPE
             };
+            // Only real camera shots — screenshots and saved images live
+            // outside DCIM and must never trigger "post this photo?".
+            String cameraOnly = MediaStore.Images.Media.RELATIVE_PATH + " LIKE 'DCIM/%'";
             String selection;
             String[] args;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                selection = MediaStore.Images.Media.DATE_ADDED + " > ? AND " +
-                        MediaStore.Images.Media.IS_PENDING + " = 0";
+                selection = MediaStore.Images.Media.DATE_ADDED + " >= ? AND " +
+                        MediaStore.Images.Media.IS_PENDING + " = 0 AND " + cameraOnly;
                 args = new String[]{String.valueOf(since)};
             } else {
-                selection = MediaStore.Images.Media.DATE_ADDED + " > ?";
+                selection = MediaStore.Images.Media.DATE_ADDED + " >= ?";
                 args = new String[]{String.valueOf(since)};
             }
             cursor = getContext().getContentResolver().query(
@@ -183,13 +207,15 @@ public class PhotoWatcherPlugin extends Plugin {
                 long id = cursor.getLong(0);
                 long added = cursor.getLong(1);
                 String mime = cursor.getString(2);
+                String idKey = String.valueOf(id);
+                if (deliveredIds.contains(idKey)) continue;
                 Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
                 String base64 = readScaledBase64(uri);
-                // Only advance the watermark once the photo is fully readable —
-                // half-written captures retry on the next tick.
-                if (base64 == null) continue;
+                if (base64 == null) continue; // still being written — retry next tick
+                deliveredIds.add(idKey);
                 if (added > lastTimestamp) lastTimestamp = added;
                 JSObject data = new JSObject();
+                data.put("id", idKey);
                 data.put("base64", base64);
                 data.put("mimeType", mime != null ? mime : "image/jpeg");
                 data.put("capturedAt", added);
@@ -231,7 +257,9 @@ public class PhotoWatcherPlugin extends Plugin {
         );
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_menu_camera)
-                .setContentTitle("📸 Photo taken near a mapped place")
+                .setContentTitle(placeName != null
+                        ? "📸 Photo taken near " + placeName
+                        : "📸 Photo taken near a mapped place")
                 .setContentText("Tap to post it for your neighbors")
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)

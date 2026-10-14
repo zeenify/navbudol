@@ -43,7 +43,8 @@
 // hero ----------------------------------------------------------------------
 
 .hero {
-  height: 190px;
+  position: relative;
+  height: 210px;
   background: #dfe7f0;
 }
 
@@ -52,18 +53,95 @@
   height: 100%;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.hero-slide {
+  width: 100%;
+  flex-shrink: 0;
+  position: relative;
+  border: none;
+  padding: 0;
+  background: #dfe7f0;
+  cursor: pointer;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 
   img {
     width: 100%;
-    flex-shrink: 0;
+    height: 100%;
     object-fit: cover;
-    scroll-snap-align: start;
+    display: block;
   }
+}
+
+.hero-caption {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 26px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  text-align: left;
+  text-shadow: 0 1px 6px rgba(9, 20, 40, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.hero-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  transition: all 0.15s ease;
+
+  &.on {
+    background: #fff;
+    width: 16px;
+    border-radius: 4px;
+  }
+}
+
+.hero-counter {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(9, 20, 40, 0.55);
+  border-radius: 999px;
+  padding: 3px 9px;
+  z-index: 2;
+}
+
+.hero-hint {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #5b6b7f;
 }
 
 .hero-fallback {
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: linear-gradient(160deg, #dcebff 0%, #eefcf5 100%);
@@ -284,7 +362,6 @@
 // edit + description -----------------------------------------------------------
 
 .edit-card {
-  margin: 0 14px;
   border-radius: 18px;
   padding: 14px;
   display: flex;
@@ -327,7 +404,6 @@
 }
 
 .desc-card {
-  margin: 0 14px;
   border-radius: 18px;
   padding: 13px 15px;
 
@@ -337,6 +413,147 @@
     line-height: 1.5;
     color: #33445c;
     white-space: pre-wrap;
+  }
+
+  &.muted p {
+    color: #9aa7ba;
+    font-style: italic;
+  }
+}
+
+// community segments ------------------------------------------------------------
+
+.place-segments {
+  margin: 2px 14px 0;
+  border-radius: 12px;
+  background: rgba(16, 35, 63, 0.06);
+  padding: 3px;
+
+  ion-segment-button {
+    --background-checked: #fff;
+    --color-checked: #10233f;
+    --color: #5b6b7f;
+    --border-radius: 10px;
+    --indicator-color: #fff;
+    min-height: 34px;
+    min-width: 90px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+}
+
+.seg-count {
+  font-size: 11px;
+  font-weight: 800;
+  color: #007aff;
+  margin-left: 3px;
+}
+
+.segment-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 14px 0;
+}
+
+.gallery-intro {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #33445c;
+  line-height: 1.4;
+
+  .material-symbols-rounded {
+    font-size: 20px;
+    color: #007aff;
+    flex-shrink: 0;
+  }
+}
+
+// ratings breakdown ---------------------------------------------------------------
+
+.ratings-card {
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.ratings-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ratings-score {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+
+  strong {
+    font-size: 34px;
+    font-weight: 800;
+    color: #10233f;
+    line-height: 1;
+  }
+
+  .material-symbols-rounded {
+    font-size: 20px;
+    color: #f5a623;
+    font-variation-settings: 'FILL' 1;
+  }
+}
+
+.ratings-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  color: #7c8aa0;
+}
+
+.ratings-bars {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ratings-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #5b6b7f;
+
+  .bar-label {
+    width: 24px;
+    font-weight: 700;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 7px;
+    border-radius: 4px;
+    background: rgba(16, 35, 63, 0.07);
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #ffc75a, #f5a623);
+  }
+
+  .bar-count {
+    width: 22px;
+    text-align: right;
+    color: #9aa7ba;
   }
 }
 
@@ -431,11 +648,17 @@
 
 .composer {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   border-radius: 15px;
-  padding: 5px 5px 5px 14px;
-  margin-bottom: 12px;
+  padding: 10px;
+  margin-bottom: 2px;
+}
+
+.composer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   input {
     flex: 1;
@@ -445,6 +668,55 @@
     font-size: 14.5px;
     color: #10233f;
   }
+}
+
+.composer-attach {
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  .material-symbols-rounded {
+    font-size: 20px;
+  }
+}
+
+.composer-attachment {
+  position: relative;
+  align-self: flex-start;
+
+  img {
+    width: 74px;
+    height: 74px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+  }
+}
+
+.composer-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #10233f;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .send {
@@ -538,6 +810,24 @@
   white-space: pre-wrap;
 }
 
+.comment-photo {
+  display: block;
+  margin-top: 6px;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+
+  img {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+    box-shadow: 0 3px 10px rgba(16, 35, 63, 0.16);
+  }
+}
+
 .comment-delete {
   border: none;
   background: transparent;
@@ -563,4 +853,128 @@
 
 .head-pin .head-pin-img {
   transform: rotate(45deg);
+}
+
+// fullscreen photo viewer ------------------------------------------------------------
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(9, 14, 24, 0.96);
+  display: flex;
+  flex-direction: column;
+}
+
+.viewer-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.viewer-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.viewer-close {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: 14px;
+  z-index: 3;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 22px;
+  }
+}
+
+.viewer-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 26px;
+  }
+
+  &.prev {
+    left: 10px;
+  }
+
+  &.next {
+    right: 10px;
+  }
+}
+
+.viewer-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px);
+}
+
+.viewer-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viewer-caption {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewer-author {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.viewer-menu {
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  .material-symbols-rounded {
+    font-size: 20px;
+  }
 }
