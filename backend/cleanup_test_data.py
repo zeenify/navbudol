@@ -7,11 +7,11 @@ load_dotenv()
 import db
 from sqlalchemy import text
 
-TEST_USERS = ("alice_", "bob_", "edricktest")
+TEST_USERS = ("alice_", "bob_", "edricktest", "e2echeck")
 
 
 def _is_test_user(username: str) -> bool:
-    return username == "edricktest" or username.startswith("alice_") or username.startswith("bob_")
+    return username in ("edricktest", "e2echeck") or username.startswith("alice_") or username.startswith("bob_")
 
 
 def _in(column: str, values: list[str]) -> tuple[str, dict]:
