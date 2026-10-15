@@ -100,12 +100,18 @@ public class PhotoWatcherPlugin extends Plugin {
         call.resolve();
     }
 
-    /** One-shot sweep — the web layer calls this when the app is resumed. */
+    /** One-shot sweep — the web layer calls this when the app is resumed.
+     * By default it RESCANS (rescan=true): the background poll may have
+     * handed a photo to a frozen WebView that never processed it, so the
+     * sweep must re-offer everything since `since` and let the JS layer's
+     * own id dedupe drop whatever it already handled. */
     @PluginMethod
     public void checkNow(PluginCall call) {
         Double since = call.getDouble("since");
         long sinceTs = since != null ? since.longValue() : lastTimestamp;
-        List<JSObject> photos = collectNew(sinceTs);
+        Boolean rescanArg = call.getBoolean("rescan", true);
+        boolean rescan = rescanArg == null || rescanArg;
+        List<JSObject> photos = collectNew(sinceTs, rescan);
         JSObject result = new JSObject();
         try {
             result.put("photos", JSArray.from(photos.toArray()));
@@ -156,7 +162,7 @@ public class PhotoWatcherPlugin extends Plugin {
     }
 
     private void poll() {
-        List<JSObject> photos = collectNew(lastTimestamp);
+        List<JSObject> photos = collectNew(lastTimestamp, false);
         boolean focused = isAppFocused();
         for (JSObject photo : photos) {
             notifyListeners("photoCaptured", photo);
@@ -168,12 +174,14 @@ public class PhotoWatcherPlugin extends Plugin {
 
     /**
      * Returns every NEW readable camera photo since `since` (inclusive, so
-     * two captures within the same second are both seen — the delivered-id
-     * set prevents re-reading or double-delivering). Advancing the watermark
-     * only counts once a photo is fully readable — half-written captures
-     * retry on the next tick.
+     * two captures within the same second are both seen — delivered ids
+     * prevent the 4-second poll from re-reading or double-delivering).
+     * With rescan=true the delivered-id skip is bypassed so a resume sweep
+     * can re-offer photos the WebView may never have processed; the JS side
+     * dedupes by id. Advancing the watermark only counts once a photo is
+     * fully readable — half-written captures retry on the next tick.
      */
-    private List<JSObject> collectNew(long since) {
+    private List<JSObject> collectNew(long since, boolean rescan) {
         List<JSObject> found = new ArrayList<>();
         Cursor cursor = null;
         try {
@@ -208,7 +216,7 @@ public class PhotoWatcherPlugin extends Plugin {
                 long added = cursor.getLong(1);
                 String mime = cursor.getString(2);
                 String idKey = String.valueOf(id);
-                if (deliveredIds.contains(idKey)) continue;
+                if (!rescan && deliveredIds.contains(idKey)) continue;
                 Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
                 String base64 = readScaledBase64(uri);
                 if (base64 == null) continue; // still being written — retry next tick

@@ -10,7 +10,7 @@ import { LocationService } from './location.service';
 interface PhotoWatcherPlugin {
   startWatch(options: { since: number; placeName?: string }): Promise<void>;
   stopWatch(): Promise<void>;
-  checkNow(options: { since: number }): Promise<{ photos: CapturedPhoto[] }>;
+  checkNow(options: { since: number; rescan?: boolean }): Promise<{ photos: CapturedPhoto[] }>;
   requestNotificationPermission(): Promise<{ granted: boolean }>;
   addListener(
     eventName: 'photoCaptured',
@@ -205,11 +205,13 @@ export class PhotoWatcherService {
     this.listener = null;
   }
 
-  /** Catch photos captured while the app was backgrounded (camera app open). */
+  /** Catch photos captured while the app was backgrounded (camera app open).
+   * rescan=true re-offers photos the background poll may have handed to a
+   * frozen WebView — deliver() dedupes by id, so nothing double-fires. */
   private async checkMissed(): Promise<void> {
     if (!this.active || !this.latched) return;
     try {
-      const res = await PhotoWatcher.checkNow({ since: this.lastSeen });
+      const res = await PhotoWatcher.checkNow({ since: this.lastSeen, rescan: true });
       for (const photo of res.photos ?? []) this.deliver(photo);
     } catch {
       /* the native poll will resurface them */
