@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 import { CommunityPlacesService } from './core/services/community-places.service';
+import { GeminiService } from './core/services/gemini.service';
 import { PlacesService } from './core/services/places.service';
 
 @Component({
@@ -11,14 +12,19 @@ import { PlacesService } from './core/services/places.service';
 })
 export class AppComponent {
   constructor(
-    // Boot-time warmups: re-verify the session, warm the POI cache, and sweep
-    // all community places so search + the AI know the whole town.
+    // Boot-time warmups: re-verify the session, warm the POI cache, sweep
+    // all community places so search + the AI know the whole town, and
+    // construct the chat thread service on EVERY boot route — its saved
+    // thread + mid-run kill note must apply even when the app boots into
+    // Settings or Chat (not where GeminiService would otherwise be built).
     auth: AuthService,
     places: PlacesService,
-    community: CommunityPlacesService
+    community: CommunityPlacesService,
+    gemini: GeminiService
   ) {
     void auth.restore();
     void places.ensureLocalIndex();
     void community.ensureTownSweep();
+    void gemini;
   }
 }

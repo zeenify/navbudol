@@ -115,6 +115,55 @@
         </div>
       </div>
 
+      <!-- pilot driving steps: what it's doing to the page, per command -->
+      <div class="pilot-card" *ngSwitchCase="'pilot'" [class.pilot-card--read]="msg.pilot?.read">
+        <div class="pilot-card__head">
+          <span class="pilot-card__badge">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor">
+              <path d="M13 2 3 14h6l-2 8 10-12h-6l2-8z"/>
+            </svg>
+            {{ msg.pilot?.read ? 'Read page' : 'Pilot driving' }}
+          </span>
+          @if (msg.pilot?.steps?.some(s => s.status === 'run')) {
+            <span class="pilot-card__live"></span>
+          }
+        </div>
+        @if (msg.pilot?.explain; as pe) {
+          <p class="pilot-card__explain">{{ pe }}</p>
+        }
+        <ul class="pilot-card__steps">
+          @for (step of msg.pilot?.steps; track $index) {
+            <li [class]="'is-' + step.status">
+              <span class="pilot-card__icon">
+                @switch (step.status) {
+                  @case ('ok') {
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  }
+                  @case ('fail') {
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  }
+                  @case ('blocked') {
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/></svg>
+                  }
+                  @default {
+                    <span class="pilot-card__spin"></span>
+                  }
+                }
+              </span>
+              <span class="pilot-card__label">{{ step.label }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- honest system note (stop, declined, dangling claim, kill-note) -->
+      <div class="notice-row" *ngSwitchCase="'notice'">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.6" fill="currentColor"/>
+        </svg>
+        <span>{{ msg.text }}</span>
+      </div>
+
       <!-- plain text bubble -->
       <ng-container *ngSwitchDefault>
         <img class="bubble-avatar" *ngIf="msg.role === 'model' && msg.avatar" [src]="msg.avatar" alt="" />

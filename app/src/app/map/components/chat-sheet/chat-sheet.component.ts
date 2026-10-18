@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { CharacterService } from '../../../core/services/character.service';
 import { GeminiService } from '../../../core/services/gemini.service';
+import { PilotRunService } from '../../../core/pilot/run.service';
 import { SpeechService } from '../../../core/services/speech.service';
 import { TtsService } from '../../../core/services/tts.service';
 import { VoiceAssistantService } from '../../../core/services/voice-assistant.service';
@@ -22,10 +23,14 @@ export class ChatSheetComponent implements OnDestroy {
   draft = '';
   readonly voiceState$ = this.voice.state$;
   readonly partial$ = this.speech.partial$;
+  /** Pilot consent gate + mode toggle. */
+  readonly consent$ = this.pilot.consent$;
+  readonly pilotOn$ = this.pilot.enabled$;
 
   constructor(
     public characters: CharacterService,
     private gemini: GeminiService,
+    private pilot: PilotRunService,
     private tts: TtsService,
     private voice: VoiceAssistantService,
     private speech: SpeechService
@@ -43,12 +48,24 @@ export class ChatSheetComponent implements OnDestroy {
     return 'AI is thinking…';
   }
 
+  togglePilot(): void {
+    this.pilot.setEnabled(!this.pilotOn$.value);
+  }
+
   async send(): Promise<void> {
     const text = this.draft.trim();
     if (!text || this.isLocked) return;
     this.draft = '';
     const reply = await this.gemini.chat(text);
     if (reply) void this.tts.speak(reply, this.character);
+  }
+
+  approvePilot(): void {
+    this.pilot.approve();
+  }
+
+  declinePilot(): void {
+    this.pilot.decline();
   }
 
   onMicTap(): void {

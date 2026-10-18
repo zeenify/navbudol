@@ -2,6 +2,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { CharacterService } from '../core/services/character.service';
 import { GeminiService } from '../core/services/gemini.service';
 import { NavigationService } from '../core/services/navigation.service';
+import { PilotRunService } from '../core/pilot/run.service';
 import { SpeechService } from '../core/services/speech.service';
 import { TtsService } from '../core/services/tts.service';
 import { VoiceAssistantService } from '../core/services/voice-assistant.service';
@@ -17,6 +18,9 @@ export class ChatPage implements OnDestroy {
   draft = '';
   readonly voiceState$ = this.voice.state$;
   readonly partial$ = this.speech.partial$;
+  /** Pilot consent gate + mode toggle. */
+  readonly consent$ = this.pilot.consent$;
+  readonly pilotOn$ = this.pilot.enabled$;
 
   get character() {
     return this.characters.getSelected();
@@ -36,10 +40,23 @@ export class ChatPage implements OnDestroy {
     public characters: CharacterService,
     private gemini: GeminiService,
     private nav: NavigationService,
+    private pilot: PilotRunService,
     private tts: TtsService,
     private voice: VoiceAssistantService,
     private speech: SpeechService
   ) {}
+
+  togglePilot(): void {
+    this.pilot.setEnabled(!this.pilotOn$.value);
+  }
+
+  approvePilot(): void {
+    this.pilot.approve();
+  }
+
+  declinePilot(): void {
+    this.pilot.decline();
+  }
 
   async send(): Promise<void> {
     const text = this.draft.trim();

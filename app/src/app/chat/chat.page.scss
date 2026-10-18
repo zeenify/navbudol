@@ -262,3 +262,142 @@ ion-toolbar {
   outline: 2px solid var(--ion-color-primary);
   outline-offset: 2px;
 }
+
+// --- pilot mode (same look as the map chat sheet) ---------------------------
+
+.pilot-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  background: transparent;
+  color: inherit;
+  opacity: 0.75;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-right: 14px;
+  cursor: pointer;
+
+  &.on {
+    border-color: rgba(124, 92, 255, 0.65);
+    background: rgba(124, 92, 255, 0.16);
+    color: #a58bff;
+    opacity: 1;
+  }
+}
+
+.consent-card {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  animation: page-consent-in 0.24s ease;
+  padding: 12px 14px 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(124, 92, 255, 0.5);
+  background: linear-gradient(150deg, rgba(247, 245, 255, 0.98), rgba(240, 245, 255, 0.98));
+  border-color: rgba(124, 92, 255, 0.45);
+  box-shadow: 0 10px 30px rgba(40, 30, 110, 0.22);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  &__explain {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.35;
+    opacity: 0.92;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 30vh;
+    overflow-y: auto;
+
+    li {
+      font-size: 12px;
+      opacity: 0.85;
+      padding-left: 13px;
+      position: relative;
+
+      &::before {
+        content: '›';
+        position: absolute;
+        left: 2px;
+        color: #a58bff;
+        font-weight: 700;
+      }
+    }
+  }
+
+  &__note {
+    margin: 0;
+    font-size: 11px;
+    opacity: 0.6;
+  }
+
+  &__row {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  &__yes {
+    flex: 1;
+    height: 40px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c5cff, #4ca1ff);
+    color: #fff;
+    font-weight: 800;
+    font-size: 13.5px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  &__no {
+    flex: 1;
+    height: 40px;
+    border: 1px solid rgba(127, 127, 127, 0.4);
+    border-radius: 12px;
+    background: transparent;
+    color: inherit;
+    opacity: 0.8;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: inherit;
+  }
+}
+
+@keyframes page-consent-in {
+  from { transform: translateY(14px); opacity: 0; }
+}
+
+body.dark .chat-consent-vars,
+body.dark .consent-card {
+  background: linear-gradient(150deg, rgba(44, 40, 84, 0.98), rgba(32, 30, 64, 0.98));
+  border-color: rgba(124, 92, 255, 0.5);
+  color: #fff;
+
+  .consent-card__explain { opacity: 0.95; }
+  .consent-card__note { opacity: 0.6; }
+  .consent-card__no { border-color: rgba(255, 255, 255, 0.35); }
+}

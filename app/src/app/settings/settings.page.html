@@ -111,6 +111,47 @@
     </div>
   </div>
 
+  <div class="section-label">Pilot</div>
+  <div class="nb-card group">
+    <div class="row">
+      <div class="row-icon bolt">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor">
+          <path d="M13 2 3 14h6l-2 8 10-12h-6l2-8z"/>
+        </svg>
+      </div>
+      <div class="row-main">
+        <div class="row-title">Pilot Mode</div>
+        <div class="row-sub">Chat can drive the app — with your OK, visibly</div>
+      </div>
+      <ion-toggle [checked]="pilotOn$ | async" (ionChange)="togglePilot()"></ion-toggle>
+    </div>
+  </div>
+  <div class="nb-card group">
+    @if (pilotHistory.length === 0) {
+      <div class="pilot-history">
+        <div class="row-title">Pilot history</div>
+        <div class="row-sub">Nothing yet — the pilot logs every drive here.</div>
+      </div>
+    } @else {
+      <div class="pilot-history">
+        <div class="row-title">Pilot history</div>
+        <div class="row-sub">{{ pilotHistory.length }} logged batch{{ pilotHistory.length === 1 ? '' : 'es' }} · local only</div>
+      </div>
+      <div class="pilot-scroll">
+        @for (e of pilotHistory.slice().reverse(); track $index) {
+          <div class="pilot-entry">
+            <div class="pilot-entry__head">
+              <span class="pilot-entry__explain">{{ e.explain || 'Drove the app' }}</span>
+              <span class="pilot-entry__time">{{ pilotTime(e.ts) }}</span>
+            </div>
+            <div class="pilot-entry__cmds">{{ e.commands.join(' · ') }}</div>
+          </div>
+        }
+        <button class="pilot-clear" (click)="clearPilotHistory()">Clear history</button>
+      </div>
+    }
+  </div>
+
   <div class="section-label">About</div>
   <div class="nb-card group">
     <div class="row">

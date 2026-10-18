@@ -242,12 +242,19 @@ export class MapPage implements AfterViewInit, OnDestroy {
     for (const place of this.community.localPool()) {
       const icon = placeIconDef(place.icon)?.key ?? 'location_on';
       const el = document.createElement('div');
+      const pinShape =
+        '<svg class="nb-pin-shape" viewBox="0 0 40 53" aria-hidden="true" focusable="false">' +
+        '<defs><linearGradient id="nbpin-g" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#3a9bff"/><stop offset="1" stop-color="#0069e0"/>' +
+        '</linearGradient></defs>' +
+        '<path d="M20 53C15.5 45 6.5 32.5 6.5 19 6.5 11.5 12.5 6 20 6 27.5 6 33.5 11.5 33.5 19 33.5 32.5 24.5 45 20 53Z" ' +
+        'fill="url(#nbpin-g)" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>';
       const inner = place.customIconUrl
         ? `<img class="community-pin-img" src="${this.community.absoluteUrl(place.customIconUrl)}" alt="" />`
         : `<span class="material-symbols-rounded">${icon}</span>`;
       if (zoom >= 14) {
         el.className = 'community-pin';
-        el.innerHTML = inner;
+        el.innerHTML = pinShape + inner;
       } else {
         el.className = 'community-chip';
         el.innerHTML = inner;
@@ -487,12 +494,22 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
 
     const dest = state.route.destination;
-    if (!this.destMarker) {
+    if (dest.communityPlaceId) {
+      // The destination is already a community teardrop pin — adding the
+      // plain dest pin at the same point just stacks two pins weirdly.
+      this.destMarker?.remove();
+      this.destMarker = null;
+    } else if (!this.destMarker) {
       const el = document.createElement('div');
       el.className = 'dest-pin';
-      el.style.width = '26px';
-      el.style.height = '34px';
-      el.innerHTML = '<div class="nb-pin"></div>';
+      el.innerHTML =
+        '<svg class="nb-pin-shape" viewBox="0 0 40 53" aria-hidden="true" focusable="false">' +
+        '<defs><linearGradient id="nbpin-d" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#3a9bff"/><stop offset="1" stop-color="#0069e0"/>' +
+        '</linearGradient></defs>' +
+        '<path d="M20 53C15.5 45 6.5 32.5 6.5 19 6.5 11.5 12.5 6 20 6 27.5 6 33.5 11.5 33.5 19 33.5 32.5 24.5 45 20 53Z" ' +
+        'fill="url(#nbpin-d)" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>' +
+        '<circle cx="20" cy="19" r="4.75" fill="#fff"/></svg>';
       this.destMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([dest.lng, dest.lat])
         .addTo(this.map);

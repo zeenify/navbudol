@@ -4,6 +4,7 @@
   [class.compact]="compact"
   [attr.aria-hidden]="!open"
   [attr.inert]="!open ? '' : null"
+  data-nbpilot-ignore
 >
   <div class="nb-grabber"></div>
 
@@ -13,6 +14,13 @@
       <div class="sheet-name">{{ character.name }}</div>
       <div class="sheet-role">Your navigation copilot</div>
     </div>
+    <button class="pilot-chip" [class.on]="pilotOn$ | async" (click)="togglePilot()"
+            [attr.aria-pressed]="pilotOn$ | async" aria-label="Toggle Pilot mode">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+        <path d="M13 2 3 14h6l-2 8 10-12h-6l2-8z"/>
+      </svg>
+      Pilot
+    </button>
     <button class="sheet-close" (click)="close()" aria-label="Close chat">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4"
            stroke-linecap="round">
@@ -32,6 +40,29 @@
         <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
       </svg>
       <span>{{ lockLabel }}</span>
+    </div>
+  }
+
+  <!-- Pilot consent gate — structural: acting batches are held in code until this is answered -->
+  @if (consent$ | async; as consent) {
+    <div class="consent-card" role="dialog" aria-label="Pilot wants to take the wheel">
+      <div class="consent-card__title">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+          <path d="M13 2 3 14h6l-2 8 10-12h-6l2-8z"/>
+        </svg>
+        Want me to take the wheel?
+      </div>
+      <p class="consent-card__explain">{{ consent.explain }}</p>
+      <ul class="consent-card__list">
+        @for (c of consent.commands; track $index) {
+        <li>{{ c }}</li>
+      }
+      </ul>
+      <p class="consent-card__note">Every step gets shown. Destructive presses stay yours.</p>
+      <div class="consent-card__row">
+        <button class="consent-card__yes" (click)="approvePilot()">Take the wheel</button>
+        <button class="consent-card__no" (click)="declinePilot()">No thanks</button>
+      </div>
     </div>
   }
 

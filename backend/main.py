@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from db import UPLOADS_DIR
-from routers import chat, geo, places, tts, users
+from routers import chat, geo, places, pilot, tts, users
 
 load_dotenv()
 
@@ -36,6 +36,7 @@ app.add_middleware(
 app.include_router(users.router, prefix="/api")
 app.include_router(places.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(pilot.router, prefix="/api")
 app.include_router(tts.router, prefix="/api")
 app.include_router(geo.router, prefix="/api")
 
@@ -48,9 +49,11 @@ app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 def health():
     gemini_ready = bool(chat.gemini_client.has_key())
     fish_ready = bool(tts.fish_client.has_key())
+    river_ready = bool(pilot.river_client.has_key())
     return {
         "ok": True,
         "service": "navbudol-backend",
         "gemini_key_set": gemini_ready,
         "fish_key_set": fish_ready,
+        "river_ready": river_ready,
     }

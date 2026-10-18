@@ -14,7 +14,7 @@ import {
 } from '../models';
 import { formatDistance, formatDuration, haversineM } from '../geo.utils';
 import { distanceFromGeneralTinio, isWithinGeneralTinioServiceArea } from '../service-area';
-import { buildSystemPrompt, PromptContext } from '../constants/prompts';
+import { buildSystemPrompt, buildPilotSystemPrompt, PromptContext } from '../constants/prompts';
 import { BackendApiService } from './backend-api.service';
 import { CharacterService } from './character.service';
 import { ChatActionsService } from './chat-actions.service';
@@ -27,6 +27,18 @@ import { placeIconDef, PLACE_ICONS } from '../constants/place-icons';
 import { RoutingService } from './routing.service';
 import { SettingsService } from './settings.service';
 import { TtsService } from './tts.service';
+import { PilotRunService } from '../pilot/run.service';
+
+const THREAD_KEY = 'navbudol.chat.thread';
+const THREAD_LIMIT = 40;
+const RUN_FLAG_KEY = 'navbudol.chat.running';
+
+/** OpenAI-format tool declarations for the pilot's brains (River + fallback). */
+export interface PilotToolDeclaration {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
 
 /**
  * The AI brain (plan §7.5). Talks to OUR backend (/api/chat), never to
@@ -159,10 +171,20 @@ export class GeminiService {
     private routing: RoutingService,
     private settings: SettingsService,
     private tts: TtsService,
-    private zone: NgZone
+    private zone: NgZone,
+    private pilot: PilotRunService
   ) {
     this.resetForCharacter(this.characters.getSelected());
-    this.characters.selected$.subscribe((ch) => this.zone.run(() => this.resetForCharacter(ch)));
+    this.restoreThread();
+    // selected$ is a BehaviorSubject — its first emission re-fires right
+    // here and must NOT wipe the thread we just restored.
+    let bootedCharacterId = this.characters.getSelected().id;
+    this.messages$.subscribe((messages) => this.persistThread(messages));
+    this.characters.selected$.subscribe((ch) => {
+      if (ch.id === bootedCharacterId) return;
+      bootedCharacterId = ch.id;
+      this.zone.run(() => this.resetForCharacter(ch));
+    });
     // Keep a reverse-geocoded address warm for the AI context.
     // PlacesService only re-fetches when the user moved >200 m.
     this.location.position$.subscribe((pos) => {
@@ -183,9 +205,53 @@ export class GeminiService {
     ]);
   }
 
+  // --- thread persistence ------------------------------------------------------
+
+  private persistThread(messages: ChatMessage[]): void {
+    try {
+      const slim = messages.slice(-THREAD_LIMIT).map(({ id, ...rest }) => {
+        void id;
+        return rest;
+      });
+      localStorage.setItem(THREAD_KEY, JSON.stringify(slim));
+    } catch {
+      /* quota — the thread is ephemeral in the worst case */
+    }
+  }
+
+  private restoreThread(): void {
+    let thread: ChatMessage[] = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(THREAD_KEY) || '[]');
+      if (Array.isArray(saved) && saved.length > 0) {
+        thread = (saved as Omit<ChatMessage, 'id'>[]).map((m) => ({ ...m, id: this.nextId++ }));
+        this.messages$.next(thread);
+      }
+    } catch {
+      /* corrupt thread — greeting stays */
+    }
+    // A run that never finished (app killed mid-flight) gets an honest note
+    // instead of a dangling question.
+    if (localStorage.getItem(RUN_FLAG_KEY) === '1') {
+      localStorage.removeItem(RUN_FLAG_KEY);
+      this.messages$.next([
+        ...this.messages$.value,
+        {
+          id: this.nextId++,
+          role: 'model',
+          text: '(that last request never finished — ask again)',
+          kind: 'notice',
+          avatar: this.characters.getSelected().avatar,
+        },
+      ]);
+    }
+  }
+
   /**
    * Main entry: send user text, run the agentic function loop.
    * Resolves with the assistant's final line (spoken aloud by TTS).
+   * With Pilot mode on, the message runs through the pilot loop — the
+   * Gemini loop below stays the plain-chat path.
    */
   async chat(userText: string): Promise<string> {
     const text = userText.trim();
@@ -208,6 +274,18 @@ export class GeminiService {
     }
 
     this.pushDisplay({ role: 'user', text });
+
+    if (this.pilot.enabled$.value) {
+      this.thinking$.next(true);
+      this.thinkingLabel$.next('');
+      try {
+        return await this.pilot.chat(text);
+      } finally {
+        this.thinkingLabel$.next(null);
+        this.thinking$.next(false);
+      }
+    }
+
     this.contents.push({ role: 'user', parts: [{ text }] });
     const avatar = this.characters.getSelected().avatar;
     // One transient "thinking" bubble (avatar + dots) that follows the work:
@@ -293,7 +371,8 @@ export class GeminiService {
 
   // --- place cards + choices --------------------------------------------------
 
-  private statusLabelFor(fc: GeminiFunctionCall): string {
+  /** Status chip label for a tool call — shared with the pilot loop. */
+  statusLabelFor(fc: GeminiFunctionCall): string {
     switch (fc.name) {
       case 'search_places':
         return `Searching for “${String(fc.args['query'] ?? '')}”…`;
@@ -311,7 +390,6 @@ export class GeminiService {
         return 'Working on it…';
     }
   }
-
   /** Render what a place search turned up, and remember it for a pick. */
   private async presentPlaces(results: PlaceResult[]): Promise<void> {
     if (results.length === 0) return;
@@ -604,6 +682,133 @@ export class GeminiService {
     }
   }
 
+  // --- pilot integration -----------------------------------------------------
+  // The pilot reuses this loop's tools, cards and map reactions. Gemini
+  // stays the FALLBACK brain; River is primary (see core/pilot/run.service).
+
+  /** The prompt context the pilot charter renders from. */
+  promptContext(): PromptContext {
+    return {
+      position: this.location.position,
+      address: this.lastAddress,
+      nav: this.nav.navState$.value,
+      placeLines: this.communityPlaceLines(),
+    };
+  }
+
+  /** Public tool execution for the pilot loop — identical behavior to the
+   *  plain chat loop (map events, result cards, error wrapping). */
+  async runPilotTool(fc: GeminiFunctionCall): Promise<Record<string, unknown>> {
+    return this.executeFunction(fc);
+  }
+
+  /** Push tool-result cards (places list / route) after a pilot tool call. */
+  flushPendingCards(): void {
+    this.flushPendingDisplay();
+  }
+
+  /** Thread display: push + in-place patch for pilot step rows. */
+  pushDisplay(msg: Omit<ChatMessage, 'id'>): number {
+    const id = this.nextId++;
+    this.messages$.next([...this.messages$.value, { id, ...msg }]);
+    return id;
+  }
+
+  patchDisplay(id: number, patch: Partial<ChatMessage>): void {
+    this.messages$.next(this.messages$.value.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  }
+
+  /** Update a pilot driving-step row with per-command outcomes. */
+  updatePilotRow(id: number, results: Array<{ ok: boolean; blocked?: boolean }>): void {
+    const target = this.messages$.value.find((m) => m.id === id);
+    if (!target?.pilot) return;
+    const steps = target.pilot.steps.map((s, i) => {
+      const r = results[i];
+      if (!r) return s;
+      return { label: s.label, status: (r.blocked ? 'blocked' : r.ok ? 'ok' : 'fail') as 'ok' | 'fail' | 'blocked' };
+    });
+    this.patchDisplay(id, { pilot: { ...target.pilot, steps } });
+  }
+
+  /** Weather for request_data lookups (same endpoint as get_weather). */
+  async weatherAt(lat: number, lng: number): Promise<Record<string, unknown>> {
+    const w = await this.api.get<{ temp: number; feelsLike: number; description: string; city: string }>(
+      `/api/weather?lat=${lat}&lon=${lng}`
+    );
+    return { temperature_c: w.temp, feels_like_c: w.feelsLike, sky: w.description, location: w.city };
+  }
+
+  /**
+   * The pilot's brain call. DeepSeek V4.1 Flash via River (stateless proxy,
+   * no streaming) — with Gemini as the identical-behavior fallback on the
+   * backend. The UI never distinguishes them beyond the app-log line.
+   */
+  async postBrain(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    tools: Array<{ type: 'function'; function: Record<string, unknown> }>
+  ): Promise<{
+    text: string | null;
+    tool_calls: Array<{ name: string; arguments: Record<string, unknown> }> | null;
+    brain: 'river' | 'gemini';
+  }> {
+    return this.api.post('/api/pilot/brain', { messages, tools }, 90000);
+  }
+
+  /** invoke_screen + request_data + the existing app tools, Gemini-style
+   *  declarations (the run service wraps them for the OpenAI-format brain). */
+  pilotToolDeclarations(): PilotToolDeclaration[] {
+    const invokeScreen: PilotToolDeclaration = {
+      name: 'invoke_screen',
+      description:
+        'Operate the NavBudol UI for the user. Batch related commands in one call and set explain to one short ' +
+        "friendly sentence about what you are about to do. point/snapshot/scroll are free reads; the FIRST batch " +
+        'containing goto/click/input/select is held at the user\'s "Take the wheel" approval gate — send the call ' +
+        'and let the gate ask, never also ask in words. Controls marked [DESTRUCTIVE] are never pressed by you; ' +
+        'do everything else the task needs, then hand the user that one press.',
+      parameters: {
+        type: 'object',
+        properties: {
+          explain: { type: 'string', description: "One short friendly sentence: what you're about to do and why." },
+          commands: {
+            type: 'array',
+            description: 'The actions to perform, in order.',
+            items: {
+              type: 'object',
+              properties: {
+                action: { type: 'string', enum: ['goto', 'click', 'input', 'select', 'scroll', 'point', 'snapshot'] },
+                ref: { type: 'integer', description: 'Element ref number from the LATEST snapshot (not for goto).' },
+                path: { type: 'string', description: 'goto only: /tabs/map, /tabs/chat, /tabs/settings, /place/<id> or /add-place.' },
+                value: { type: 'string', description: 'input/select only: the text to type or the option to pick.' },
+                direction: { type: 'string', enum: ['up', 'down'], description: 'scroll only.' },
+              },
+              required: ['action'],
+            },
+          },
+        },
+        required: ['explain', 'commands'],
+      },
+    };
+    const requestData: PilotToolDeclaration = {
+      name: 'request_data',
+      description:
+        'Read app facts without touching the screen: trip_status (active navigation), app_settings (dark/satellite/' +
+        'simulate/speed/travel mode), recent_places (nearby community places), service_area, current_route, ' +
+        'current_location, weather. Results are cached per run — a repeat returns the same data.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            enum: ['trip_status', 'app_settings', 'recent_places', 'service_area', 'current_route', 'current_location', 'weather'],
+          },
+          params: { type: 'object', description: 'Optional parameters for the query.', properties: {} },
+        },
+        required: ['query'],
+      },
+    };
+    return [invokeScreen, requestData, ...(this.functionDeclarations as PilotToolDeclaration[])];
+  }
+
   private routeCardData(destination: PlaceResult, route: RouteResult) {
     return {
       destination,
@@ -713,10 +918,6 @@ export class GeminiService {
       start++;
     }
     return this.contents.slice(start);
-  }
-
-  private pushDisplay(msg: Omit<ChatMessage, 'id'>): void {
-    this.messages$.next([...this.messages$.value, { id: this.nextId++, ...msg }]);
   }
 
   private flushPendingDisplay(): void {

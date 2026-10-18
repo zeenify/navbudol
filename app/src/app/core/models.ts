@@ -84,11 +84,18 @@ export interface ChatMessage {
   text: string;
   avatar?: string;
   error?: boolean;
-  /** text (default) | places (result list) | route (ready-to-start trip) | status (transient chip) */
-  kind?: 'text' | 'places' | 'route' | 'status';
+  /** text (default) | places (result list) | route (ready-to-start trip) | status (transient chip) | pilot (driving steps) | notice (honest system note) */
+  kind?: 'text' | 'places' | 'route' | 'status' | 'pilot' | 'notice';
   /** kind 'places': what the AI found */
   places?: PlaceResult[];
   route?: RouteCardData;
+  /** kind 'pilot': what the pilot is doing to the page */
+  pilot?: {
+    explain: string;
+    /** true for a silent read batch (snapshot/scroll) — renders as "Read page" */
+    read?: boolean;
+    steps: Array<{ label: string; status: 'run' | 'ok' | 'fail' | 'blocked' }>;
+  };
 }
 
 export interface GeminiFunctionCall {
