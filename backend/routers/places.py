@@ -19,6 +19,7 @@ import auth
 from db import (
     UPLOADS_DIR,
     Comment,
+    CommentVote,
     Place,
     PlacePhoto,
     Rating,
@@ -75,6 +76,12 @@ class CommentBody(BaseModel):
     text: str = Field(default="", max_length=1000)
     imageBase64: str | None = None
     mimeType: str | None = None
+    # When set, this comment is a reply attached to a top-level comment.
+    parent_id: str | None = Field(default=None, max_length=32)
+
+
+class CommentVoteBody(BaseModel):
+    value: int = Field(ge=-1, le=1)
 
 
 class RatingBody(BaseModel):
@@ -331,28 +338,12 @@ def place_detail(
         .where(PlacePhoto.place_id == place.id)
         .order_by(PlacePhoto.created_at.desc())
     ).all()
-    comments = db.scalars(
-        select(Comment)
-        .where(Comment.place_id == place.id)
-        .order_by(Comment.created_at.desc())
-        .limit(100)
-    ).all()
 
     detail = _place_summary(db, place, user)
     detail["description"] = place.description
     detail["gallery"] = [_photo_dto(db, p) for p in photos if p.in_gallery]
     detail["communityPhotos"] = [_photo_dto(db, p) for p in photos if not p.in_gallery]
-    detail["comments"] = [
-        {
-            "id": c.id,
-            "text": c.text,
-            "imageUrl": c.image_url,
-            "verifiedVisit": c.verified_visit,
-            "createdAt": c.created_at.isoformat(),
-            "author": _user_ref(db, c.author_id),
-        }
-        for c in comments
-    ]
+    detail["comments"] = _threaded_comments(db, place.id, user)
     return detail
 
 
@@ -513,6 +504,64 @@ def set_photo_gallery(
 # --- comments ----------------------------------------------------------------
 
 
+def _comment_vote_counts(db: Session, comment_id: str) -> tuple[int, int]:
+    likes = db.scalar(
+        select(func.count())
+        .select_from(CommentVote)
+        .where(CommentVote.comment_id == comment_id, CommentVote.value == 1)
+    )
+    dislikes = db.scalar(
+        select(func.count())
+        .select_from(CommentVote)
+        .where(CommentVote.comment_id == comment_id, CommentVote.value == -1)
+    )
+    return likes or 0, dislikes or 0
+
+
+def _comment_dto(
+    db: Session, comment: Comment, viewer: User | None
+) -> dict:
+    likes, dislikes = _comment_vote_counts(db, comment.id)
+    my_vote = 0
+    if viewer is not None:
+        row = db.get(CommentVote, (comment.id, viewer.id))
+        if row is not None:
+            my_vote = row.value
+    return {
+        "id": comment.id,
+        "text": comment.text,
+        "imageUrl": comment.image_url,
+        "verifiedVisit": comment.verified_visit,
+        "createdAt": comment.created_at.isoformat(),
+        "author": _user_ref(db, comment.author_id),
+        "likes": likes,
+        "dislikes": dislikes,
+        "myVote": my_vote,
+        "replies": [],
+    }
+
+
+def _threaded_comments(db: Session, place_id: str, viewer: User | None) -> list[dict]:
+    """Top-level comments (newest first) with their replies (oldest first)."""
+    comments = db.scalars(
+        select(Comment)
+        .where(Comment.place_id == place_id)
+        .order_by(Comment.created_at.desc())
+        .limit(200)
+    ).all()
+    dtos = {c.id: _comment_dto(db, c, viewer) for c in comments}
+    threaded: list[dict] = []
+    for c in comments:
+        dto = dtos[c.id]
+        if c.parent_id and c.parent_id in dtos:
+            # Replies to replies attach to the same top-level thread — one
+            # level of nesting keeps the mobile UI readable.
+            dtos[c.parent_id]["replies"].append(dto)
+        else:
+            threaded.append(dto)
+    return threaded
+
+
 @router.post("/places/{place_id}/comments")
 def add_comment(
     place_id: str,
@@ -529,23 +578,52 @@ def add_comment(
         image_url = stored if stored.startswith("http") else f"/uploads/comments/{stored}"
     if not text and not image_url:
         raise HTTPException(status_code=400, detail="Write something or attach a photo.")
+    parent: Comment | None = None
+    if body.parent_id:
+        parent = db.get(Comment, body.parent_id)
+        if parent is None or parent.place_id != place.id:
+            raise HTTPException(status_code=404, detail="The comment you replied to no longer exists.")
+        # Replies to replies fold into the same top-level thread.
+        if parent.parent_id:
+            parent = db.get(Comment, parent.parent_id) or parent
     comment = Comment(
         place_id=place.id,
         author_id=user.id,
+        parent_id=parent.id if parent else None,
         text=text,
         image_url=image_url,
         verified_visit=_visit_exists(db, place.id, user.id),
     )
     db.add(comment)
     db.commit()
-    return {
-        "id": comment.id,
-        "text": comment.text,
-        "imageUrl": comment.image_url,
-        "verifiedVisit": comment.verified_visit,
-        "createdAt": comment.created_at.isoformat(),
-        "author": {"id": user.id, "displayName": user.display_name, "avatar": user.avatar},
-    }
+    return _comment_dto(db, comment, user)
+
+
+@router.put("/places/{place_id}/comments/{comment_id}/vote")
+def vote_comment(
+    place_id: str,
+    comment_id: str,
+    body: CommentVoteBody,
+    user: User = Depends(auth.require_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    place = _place_or_404(db, place_id)
+    comment = db.get(Comment, comment_id)
+    if comment is None or comment.place_id != place.id:
+        raise HTTPException(status_code=404, detail="No such comment.")
+    vote = db.get(CommentVote, (comment.id, user.id))
+    if body.value == 0:
+        if vote is not None:
+            db.delete(vote)
+            db.commit()
+    elif vote is None:
+        db.add(CommentVote(comment_id=comment.id, user_id=user.id, value=body.value))
+        db.commit()
+    elif vote.value != body.value:
+        vote.value = body.value
+        db.commit()
+    likes, dislikes = _comment_vote_counts(db, comment.id)
+    return {"likes": likes, "dislikes": dislikes, "myVote": body.value}
 
 
 @router.delete("/places/{place_id}/comments/{comment_id}")
@@ -561,6 +639,14 @@ def delete_comment(
         raise HTTPException(status_code=404, detail="No such comment.")
     if comment.author_id != user.id:
         raise HTTPException(status_code=403, detail="You can only delete your own comments.")
+    # Replies die with their thread; their votes go with them.
+    replies = db.scalars(select(Comment).where(Comment.parent_id == comment.id)).all()
+    for reply in replies:
+        for v in db.scalars(select(CommentVote).where(CommentVote.comment_id == reply.id)).all():
+            db.delete(v)
+        db.delete(reply)
+    for v in db.scalars(select(CommentVote).where(CommentVote.comment_id == comment.id)).all():
+        db.delete(v)
     db.delete(comment)
     db.commit()
     return {"ok": True}

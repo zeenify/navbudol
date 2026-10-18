@@ -41,20 +41,28 @@ import java.util.Set;
  * one-tap contribution flow.
  *
  * The user takes the photo in their OWN camera app, so our app is usually in
- * the background at that moment. Detection therefore works in two layers:
- *  - a real system notification (heads-up, visible over the camera app) with
- *    a tap-action that opens the app, posted whenever the app is not focused;
- *  - the JS 'photoCaptured' event for the in-app card when the app IS focused;
- *  - a checkNow() call the web layer uses on resume to catch anything missed.
+ * the background at that moment. Detection therefore works in three layers:
+ *  - PhotoWatchService, a FOREGROUND service started whenever an on-site
+ *    watch is armed: it stays alive while the camera app is foreground and
+ *    posts the heads-up notification (background handler freezing kills any
+ *    poll scheduled from the activity, which is why the service exists);
+ *  - an in-focus poll here for the JS 'photoCaptured' event (in-app card
+ *    when the user happens to shoot with the app itself open);
+ *  - a checkNow() resume sweep that re-offers anything missed.
  *
- * The watch runs only while the web layer keeps it started (app open and the
- * user on-site at a community place) — Android forbids true background
- * listening, and the process must be alive for polling to run.
+ * Reading OTHER apps' camera photos requires READ_MEDIA_IMAGES (33+) /
+ * READ_EXTERNAL_STORAGE (≤32) at runtime — without the grant the MediaStore
+ * query silently returns zero rows, which is exactly the "no notification"
+ * failure mode. The grant is requested when the watch starts.
  */
 @CapacitorPlugin(
     name = "PhotoWatcher",
     permissions = {
-        @Permission(alias = "postNotifications", strings = { Manifest.permission.POST_NOTIFICATIONS })
+        @Permission(alias = "postNotifications", strings = { Manifest.permission.POST_NOTIFICATIONS }),
+        @Permission(alias = "readMedia", strings = {
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        })
     }
 )
 public class PhotoWatcherPlugin extends Plugin {
@@ -62,6 +70,7 @@ public class PhotoWatcherPlugin extends Plugin {
     private static final int MAX_EDGE = 1280;
     private static final String CHANNEL_ID = "navbudol-photos";
     private static final String NOTIF_PERMISSION_ALIAS = "postNotifications";
+    private static final String READ_MEDIA_ALIAS = "readMedia";
 
     private Handler handler;
     private Runnable pollRunnable;
@@ -71,6 +80,7 @@ public class PhotoWatcherPlugin extends Plugin {
     private final Set<String> deliveredIds = new HashSet<>();
     /** Place name for the notification text (set by startWatch). */
     private String placeName;
+    private PluginCall pendingStartCall;
 
     @PluginMethod
     public void startWatch(PluginCall call) {
@@ -80,23 +90,60 @@ public class PhotoWatcherPlugin extends Plugin {
         placeName = name != null && !name.isEmpty() ? name : null;
         ensureChannel();
         stopPolling();
+        // Storage grant first: without it the MediaStore query sees zero
+        // camera photos. The poll + foreground service start after the
+        // permission callback (or immediately when already granted).
+        if (hasMediaRead()) {
+            beginWatch(call);
+        } else {
+            pendingStartCall = call;
+            requestPermissionForAlias(READ_MEDIA_ALIAS, call, "onMediaPermissionResult");
+        }
+    }
+
+    private void beginWatch(PluginCall call) {
         handler = new Handler(Looper.getMainLooper());
         pollRunnable = new Runnable() {
             @Override
             public void run() {
-                poll();
+                pollFocused();
                 if (pollRunnable != null && handler != null) {
                     handler.postDelayed(this, POLL_MS);
                 }
             }
         };
         handler.postDelayed(pollRunnable, POLL_MS);
-        call.resolve();
+        // The FOREGROUND service owns background detection: it survives the
+        // process freeze that would kill everything scheduled above.
+        startBackgroundWatch();
+        if (call != null) call.resolve();
+    }
+
+    private void startBackgroundWatch() {
+        android.content.Intent intent = new android.content.Intent(getContext(), PhotoWatchService.class);
+        intent.putExtra(PhotoWatchService.EXTRA_SINCE, lastTimestamp);
+        if (placeName != null) intent.putExtra(PhotoWatchService.EXTRA_PLACE, placeName);
+        ContextCompat.startForegroundService(getContext(), intent);
+    }
+
+    private void stopBackgroundWatch() {
+        android.content.Intent intent = new android.content.Intent(getContext(), PhotoWatchService.class);
+        getContext().stopService(intent);
+    }
+
+    private boolean hasMediaRead() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            return ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_MEDIA_IMAGES)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
+        return ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     @PluginMethod
     public void stopWatch(PluginCall call) {
         stopPolling();
+        stopBackgroundWatch();
         call.resolve();
     }
 
@@ -141,6 +188,19 @@ public class PhotoWatcherPlugin extends Plugin {
         call.resolve(grantedResult(granted));
     }
 
+    /** Continues the deferred startWatch once the storage grant is answered. */
+    @Permission(alias = "readMedia")
+    public void onMediaPermissionResult(PluginCall call, boolean granted) {
+        if (granted) {
+            beginWatch(pendingStartCall);
+        } else if (pendingStartCall != null) {
+            // Still start: the query just returns zero rows until granted, and
+            // re-asking later happens on the next watch arm.
+            beginWatch(pendingStartCall);
+        }
+        pendingStartCall = null;
+    }
+
     private JSObject grantedResult(boolean granted) {
         JSObject result = new JSObject();
         result.put("granted", granted);
@@ -161,14 +221,14 @@ public class PhotoWatcherPlugin extends Plugin {
                 && activity.getWindow().getDecorView().hasWindowFocus();
     }
 
-    private void poll() {
-        List<JSObject> photos = collectNew(lastTimestamp, false);
+    /** In-app delivery only — the FOREGROUND service owns notifications, so
+     * background freezes can never drop or double-post an alert here. */
+    private void pollFocused() {
         boolean focused = isAppFocused();
+        if (!focused) return;
+        List<JSObject> photos = collectNew(lastTimestamp, false);
         for (JSObject photo : photos) {
             notifyListeners("photoCaptured", photo);
-            if (!focused) {
-                postNotification();
-            }
         }
     }
 
@@ -247,34 +307,6 @@ public class PhotoWatcherPlugin extends Plugin {
                     getContext().getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null) nm.createNotificationChannel(channel);
         }
-    }
-
-    /** Heads-up notification that opens the app (visible over the camera). */
-    private void postNotification() {
-        if (Build.VERSION.SDK_INT >= 33
-                && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        ensureChannel();
-        Intent launch = getContext().getPackageManager().getLaunchIntentForPackage(getContext().getPackageName());
-        if (launch == null) return;
-        PendingIntent contentIntent = PendingIntent.getActivity(
-                getContext(), 0, launch,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_menu_camera)
-                .setContentTitle(placeName != null
-                        ? "📸 Photo taken near " + placeName
-                        : "📸 Photo taken near a mapped place")
-                .setContentText("Tap to post it for your neighbors")
-                .setContentIntent(contentIntent)
-                .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
-        NotificationManager nm = (NotificationManager)
-                getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) nm.notify((int) System.currentTimeMillis(), builder.build());
     }
 
     /** Reads a content URI and returns a downscaled JPEG as base64 (no prefix). */

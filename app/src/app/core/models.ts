@@ -220,6 +220,12 @@ export interface CommunityPlaceComment {
   verifiedVisit: boolean;
   createdAt: string;
   author: UserRef | null;
+  /** comment votes (like/dislike) */
+  likes: number;
+  dislikes: number;
+  myVote?: number;
+  /** replies live one level under a top-level comment */
+  replies?: CommunityPlaceComment[];
 }
 
 export interface CommunityPlaceDetail extends CommunityPlaceSummary {

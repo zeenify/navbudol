@@ -26,14 +26,20 @@
         <div class="avatar-ring">
           @if (editing) {
             <div class="avatar-picker">
-              @for (emoji of avatarChoices; track emoji) {
-                <button type="button" class="avatar-choice" [class.mine]="editAvatar === emoji" (click)="editAvatar = emoji">
-                  {{ emoji }}
+              @for (path of avatarChoices; track path) {
+                <button type="button" class="avatar-choice" [class.mine]="editAvatar === path" (click)="editAvatar = path">
+                  <img [src]="path" alt="Avatar" />
                 </button>
               }
             </div>
           } @else {
-            <div class="avatar-big">{{ profile.user.avatar }}</div>
+            <div class="avatar-big avatar-frame">
+              @if (profile.user.avatar?.startsWith?.('assets/') || profile.user.avatar?.startsWith?.('http')) {
+                <img [src]="profile.user.avatar" alt="Avatar" />
+              } @else {
+                {{ profile.user.avatar }}
+              }
+            </div>
           }
         </div>
 

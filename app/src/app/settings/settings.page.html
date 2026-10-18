@@ -8,7 +8,13 @@
   <div class="section-label">Account</div>
   <div class="nb-card group">
     <button class="row row-btn" (click)="openProfile()">
-      <div class="row-avatar account-avatar">{{ auth.currentUser?.avatar ?? '🙂' }}</div>
+      <div class="row-avatar account-avatar">
+        @if (auth.currentUser?.avatar?.startsWith?.('assets/') || auth.currentUser?.avatar?.startsWith?.('http')) {
+          <img [src]="auth.currentUser?.avatar" alt="Your avatar" />
+        } @else {
+          {{ auth.currentUser?.avatar ?? '🙂' }}
+        }
+      </div>
       <div class="row-main">
         <div class="row-title">{{ auth.currentUser?.displayName ?? 'Signed out' }}</div>
         <div class="row-sub">&#64;{{ auth.currentUser?.username ?? '—' }} · tap to view your contributions</div>
@@ -156,8 +162,9 @@
   <div class="nb-card group">
     <div class="row">
       <div class="row-main">
-        <div class="row-title">NavBudol v1.0</div>
+        <div class="row-title">NavBudol v1.2</div>
         <div class="row-sub">Ionic + Capacitor · Gemini 3.5 Flash Lite · Fish Audio · FastAPI</div>
+        <div class="row-sub credits">Default avatars: "Adventurer" by Lisa Wischofsky via DiceBear (CC BY 4.0)</div>
       </div>
     </div>
   </div>

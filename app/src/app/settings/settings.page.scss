@@ -291,3 +291,16 @@ ion-toggle {
     word-break: break-word;
   }
 }
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.credits {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.55;
+}

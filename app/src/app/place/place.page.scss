@@ -978,3 +978,156 @@
     font-size: 20px;
   }
 }
+
+// --- comments under the reviews ----------------------------------------------
+
+.comments-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.comments-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 800;
+
+  .seg-count { font-size: 12px; font-weight: 700; opacity: 0.65; }
+}
+
+.comment-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(124, 92, 255, 0.14);
+  font-size: 17px;
+  align-self: flex-start;
+
+  &.is-sm {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
+}
+
+.creator-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(124, 92, 255, 0.14);
+  font-size: 15px;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.comment-vote {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.65;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-family: inherit;
+  cursor: pointer;
+
+  .material-symbols-rounded { font-size: 15px; }
+
+  &.mine {
+    background: rgba(33, 150, 83, 0.14);
+    color: #21a053;
+    opacity: 1;
+  }
+  &.is-down.mine-neg {
+    background: rgba(229, 72, 77, 0.14);
+    color: #e5484d;
+    opacity: 1;
+  }
+}
+
+.comment-reply {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.65;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-family: inherit;
+  cursor: pointer;
+
+  .material-symbols-rounded { font-size: 15px; }
+}
+
+.reply-composer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+
+  input {
+    flex: 1;
+    height: 38px;
+    border: 1px solid rgba(127, 127, 127, 0.35);
+    border-radius: 12px;
+    padding: 0 12px;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+  }
+
+  .send {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c5cff, #4ca1ff);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    &:disabled { opacity: 0.4; }
+  }
+
+  .reply-cancel {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: rgba(127, 127, 127, 0.14);
+    color: inherit;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+  }
+}
+
+.replies {
+  margin-top: 9px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(124, 92, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.comment.is-reply .comment-body { font-size: 13.5px; }

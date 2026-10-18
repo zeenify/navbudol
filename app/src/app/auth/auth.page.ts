@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular/lazy';
+import { randomAvatar } from '../core/constants/avatars';
 import { AuthService } from '../core/services/auth.service';
 
 /**
@@ -47,7 +48,13 @@ export class AuthPage {
     this.cdr.markForCheck();
     try {
       if (this.mode === 'register') {
-        await this.auth.register(username, password, this.displayName.trim() || undefined);
+        await this.auth.register({
+          username,
+          password,
+          displayName: this.displayName.trim() || undefined,
+          // every new neighbor starts with a curated avatar — no bare emoji
+          avatar: randomAvatar(),
+        });
       } else {
         await this.auth.login(username, password);
       }

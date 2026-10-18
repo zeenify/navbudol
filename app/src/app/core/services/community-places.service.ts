@@ -159,7 +159,8 @@ export class CommunityPlacesService {
   async addComment(
     placeId: string,
     text: string,
-    imageDataUrl?: string
+    imageDataUrl?: string,
+    parentId?: string
   ): Promise<CommunityPlaceComment> {
     const body: Record<string, unknown> = { text };
     if (imageDataUrl) {
@@ -167,12 +168,22 @@ export class CommunityPlacesService {
       body['imageBase64'] = base64;
       body['mimeType'] = meta.mimeType;
     }
+    if (parentId) body['parent_id'] = parentId;
     const comment = await this.api.post<CommunityPlaceComment>(
       `/api/places/${placeId}/comments`,
       body
     );
     this.bump();
     return comment;
+  }
+
+  /** Like/dislike a comment (+1 / −1 / 0 clears). */
+  voteComment(
+    placeId: string,
+    commentId: string,
+    value: 1 | -1 | 0
+  ): Promise<{ likes: number; dislikes: number; myVote: number }> {
+    return this.api.put(`/api/places/${placeId}/comments/${commentId}/vote`, { value });
   }
 
   deleteComment(placeId: string, commentId: string): Promise<void> {

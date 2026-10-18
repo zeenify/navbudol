@@ -60,8 +60,11 @@ export class PlacePage implements OnInit {
   editName = '';
   editDescription = '';
   editIcon: string | null = null;
-  /** which community section is open */
-  segment: 'overview' | 'gallery' | 'comments' = 'overview';
+  /** which community section is open — comments live under the reviews */
+  segment: 'overview' | 'gallery' = 'overview';
+  /** the comment being replied to (inline reply composer) */
+  replyTo: CommunityPlaceComment | null = null;
+  replyText = '';
   /** carousel position over the creator's gallery */
   heroIndex = 0;
   /** fullscreen photo viewer state */
@@ -361,7 +364,6 @@ export class PlacePage implements OnInit {
       this.place.commentCount += 1;
       this.commentText = '';
       this.commentImage = null;
-      this.segment = 'comments';
     } catch (e) {
       await this.toast(e instanceof Error ? e.message : 'Could not post that comment.');
     } finally {
@@ -370,12 +372,74 @@ export class PlacePage implements OnInit {
     }
   }
 
+  async submitReply(): Promise<void> {
+    const parent = this.replyTo;
+    if (!this.place || !parent || (!this.replyText.trim() && !this.commentImage)) return;
+    this.busy = true;
+    try {
+      const reply = await this.community.addComment(
+        this.place.id,
+        this.replyText.trim(),
+        this.commentImage ?? undefined,
+        parent.id
+      );
+      parent.replies = [...(parent.replies ?? []), reply];
+      this.place.commentCount += 1;
+      this.replyTo = null;
+      this.replyText = '';
+      this.commentImage = null;
+      await this.toast('Reply posted.');
+    } catch (e) {
+      await this.toast(e instanceof Error ? e.message : 'Could not post that reply.');
+    } finally {
+      this.busy = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  startReply(comment: CommunityPlaceComment): void {
+    this.replyTo = this.replyTo?.id === comment.id ? null : comment;
+    this.replyText = '';
+    this.cdr.markForCheck();
+  }
+
+  /** Like / dislike a comment — optimistic, reconciled by the server call. */
+  async commentVote(comment: CommunityPlaceComment, value: 1 | -1): Promise<void> {
+    if (!this.place) return;
+    const mine = comment.myVote === value;
+    const next = mine ? 0 : value;
+    // optimistic: apply immediately, then reconcile with the server counts
+    const before = { likes: comment.likes, dislikes: comment.dislikes, myVote: comment.myVote ?? 0 };
+    comment.likes += next === 1 && !mine ? 1 : next === 0 && before.myVote === 1 ? -1 : 0;
+    comment.dislikes += next === -1 && !mine ? 1 : next === 0 && before.myVote === -1 ? -1 : 0;
+    comment.myVote = next;
+    this.cdr.markForCheck();
+    try {
+      const res = await this.community.voteComment(this.place.id, comment.id, next);
+      comment.likes = res.likes;
+      comment.dislikes = res.dislikes;
+      comment.myVote = res.myVote;
+      this.cdr.markForCheck();
+    } catch {
+      comment.likes = before.likes;
+      comment.dislikes = before.dislikes;
+      comment.myVote = before.myVote;
+      this.cdr.markForCheck();
+      await this.toast('Could not save that vote.');
+    }
+  }
+
   async deleteComment(commentId: string): Promise<void> {
     if (!this.place) return;
     try {
       await this.community.deleteComment(this.place.id, commentId);
+      const removed = this.place.comments.find((c) => c.id === commentId);
+      const replyCount = removed?.replies?.length ?? 0;
       this.place.comments = this.place.comments.filter((c) => c.id !== commentId);
-      this.place.commentCount = Math.max(0, this.place.commentCount - 1);
+      for (const c of this.place.comments) {
+        c.replies = (c.replies ?? []).filter((r) => r.id !== commentId);
+      }
+      this.place.commentCount = Math.max(0, this.place.commentCount - 1 - replyCount);
     } catch (e) {
       await this.toast(e instanceof Error ? e.message : 'Could not delete that comment.');
     }

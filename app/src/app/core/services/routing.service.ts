@@ -22,7 +22,8 @@ export class RoutingService {
     if (!isWithinGeneralTinioServiceArea(destination)) {
       throw new Error('That destination is outside the General Tinio service area.');
     }
-    // 1. ORS via backend — supports foot-walking and returns elevation.
+    // 1. ORS via backend — supports foot-walking and returns elevation. The
+    // backend itself falls back to OSRM server-side when ORS is unavailable.
     try {
       const r = await this.api.post<{
         geometry: LatLng[];
@@ -30,6 +31,7 @@ export class RoutingService {
         distanceM: number;
         durationS: number;
         ascentM: number;
+        source?: 'ors' | 'osrm';
       }>(
         '/api/directions',
         { frm: from, to: { lat: destination.lat, lng: destination.lng }, profile },
@@ -46,11 +48,11 @@ export class RoutingService {
         durationS: this.saneDuration(r.durationS, r.distanceM, profile),
         ascentM: r.ascentM,
         destination,
-        source: 'ors',
+        source: r.source ?? 'ors',
         profile,
       };
     } catch {
-      // ORS/backend unavailable — fall back to OSRM (driving only).
+      // Backend unreachable — fall back to OSRM straight from the device.
     }
 
     // 2. OSRM demo server (driving only, no key).
@@ -172,7 +174,13 @@ export class RoutingService {
 
   private async httpGetJson<T>(url: string): Promise<T> {
     if (Capacitor.isNativePlatform()) {
-      const res = await CapacitorHttp.get({ url, connectTimeout: 15000, readTimeout: 25000 });
+      const res = await CapacitorHttp.get({
+        url,
+        // OSRM's public demo 403s some native default user agents — identify.
+        headers: { 'User-Agent': 'NavBudol/1.2 (case-study navigation app)' },
+        connectTimeout: 15000,
+        readTimeout: 25000,
+      });
       if (res.status >= 400) throw new Error(`Routing HTTP ${res.status}`);
       return (typeof res.data === 'string' ? JSON.parse(res.data) : res.data) as T;
     }

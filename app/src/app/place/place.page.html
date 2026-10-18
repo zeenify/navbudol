@@ -104,7 +104,7 @@
 
         @if (place.creator) {
           <button type="button" class="creator-row" (click)="place.creator && router.navigate(['/profile', place.creator.id])">
-            <span class="creator-avatar">{{ place.creator.avatar }}</span>
+            <app-avatar class="creator-avatar" [avatar]="place.creator.avatar" [name]="place.creator.displayName"></app-avatar>
             <span class="creator-name">Added by <strong>{{ place.creator.displayName }}</strong></span>
             <span class="material-symbols-rounded creator-chevron">chevron_right</span>
           </button>
@@ -128,13 +128,10 @@
       <!-- community sections -->
       <ion-segment class="place-segments" [(ngModel)]="segment" mode="ios">
         <ion-segment-button value="overview">
-          <ion-label>Overview</ion-label>
+          <ion-label>Overview <span class="seg-count">{{ place.commentCount }}</span></ion-label>
         </ion-segment-button>
         <ion-segment-button value="gallery">
           <ion-label>Gallery <span class="seg-count">{{ place.communityPhotos.length }}</span></ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="comments">
-          <ion-label>Comments <span class="seg-count">{{ place.commentCount }}</span></ion-label>
         </ion-segment-button>
       </ion-segment>
 
@@ -203,6 +200,143 @@
                 </div>
               }
             </div>
+
+            <!-- ================== COMMENTS (under the reviews) ================== -->
+            <div class="comments-block">
+              <div class="comments-head">
+                <span class="material-symbols-rounded">forum</span> Comments
+                <span class="seg-count">{{ place.commentCount }}</span>
+              </div>
+
+              <div class="composer nb-glass">
+                @if (commentImage) {
+                  <div class="composer-attachment">
+                    <img [src]="commentImage" alt="Attached photo" />
+                    <button type="button" class="composer-remove" (click)="removeCommentImage()" aria-label="Remove photo">×</button>
+                  </div>
+                }
+                <div class="composer-row">
+                  <button type="button" class="composer-attach" (click)="attachCommentImage()" aria-label="Attach a photo">
+                    <span class="material-symbols-rounded">image</span>
+                  </button>
+                  <input
+                    type="text"
+                    [(ngModel)]="commentText"
+                    placeholder="Share something helpful…"
+                    maxlength="1000"
+                    (keyup.enter)="addComment()"
+                  />
+                  <button type="button" class="send" (click)="addComment()" [disabled]="busy || !canPostComment">
+                    <span class="material-symbols-rounded">send</span>
+                  </button>
+                </div>
+                <input #commentFileInput type="file" accept="image/*" style="display: none" (change)="onCommentFileChosen($event)" />
+              </div>
+
+              <div class="comment-list">
+                @for (comment of place.comments; track comment.id) {
+                  <div class="comment">
+                    <app-avatar class="comment-avatar" [avatar]="comment.author?.avatar" [name]="comment.author?.displayName"></app-avatar>
+                    <div class="comment-body">
+                      <div class="comment-meta">
+                        <button type="button" class="comment-author" (click)="comment.author && router.navigate(['/profile', comment.author.id])">
+                          {{ comment.author?.displayName ?? 'Neighbor' }}
+                        </button>
+                        @if (comment.verifiedVisit) {
+                          <span class="verified-badge" title="GPS-verified visit">
+                            <span class="material-symbols-rounded">verified</span> was here
+                          </span>
+                        }
+                        <span class="comment-time">{{ timeAgo(comment.createdAt) }}</span>
+                      </div>
+                      @if (comment.text) {
+                        <p class="comment-text">{{ comment.text }}</p>
+                      }
+                      @if (comment.imageUrl) {
+                        <button type="button" class="comment-photo" (click)="openCommentImage(comment)">
+                          <img [src]="imgUrl(comment.imageUrl)" alt="Comment photo" loading="lazy" />
+                        </button>
+                      }
+                      <div class="comment-actions">
+                        <button type="button" class="comment-vote" [class.mine]="comment.myVote === 1" (click)="commentVote(comment, 1)" [attr.aria-label]="'Like'">
+                          <span class="material-symbols-rounded">thumb_up</span> {{ comment.likes }}
+                        </button>
+                        <button type="button" class="comment-vote is-down" [class.mine-neg]="comment.myVote === -1" (click)="commentVote(comment, -1)" [attr.aria-label]="'Dislike'">
+                          <span class="material-symbols-rounded">thumb_down</span> {{ comment.dislikes }}
+                        </button>
+                        <button type="button" class="comment-reply" (click)="startReply(comment)">
+                          <span class="material-symbols-rounded">reply</span> Reply
+                        </button>
+                        @if (comment.author?.id === me?.id) {
+                          <button type="button" class="comment-delete" (click)="deleteComment(comment.id)">Delete</button>
+                        }
+                      </div>
+
+                      @if (replyTo?.id === comment.id) {
+                        <div class="reply-composer">
+                          <input
+                            type="text"
+                            [(ngModel)]="replyText"
+                            (keyup.enter)="submitReply()"
+                            placeholder="Reply to {{ comment.author?.displayName ?? 'this neighbor' }}…"
+                            maxlength="500"
+                          />
+                          <button type="button" class="send" (click)="submitReply()" [disabled]="busy || !replyText.trim()">
+                            <span class="material-symbols-rounded">send</span>
+                          </button>
+                          <button type="button" class="reply-cancel" (click)="replyTo = null" aria-label="Cancel reply">×</button>
+                        </div>
+                      }
+
+                      @if (comment.replies?.length) {
+                        <div class="replies">
+                          @for (reply of comment.replies; track reply.id) {
+                            <div class="comment is-reply">
+                              <app-avatar class="comment-avatar is-sm" [avatar]="reply.author?.avatar" [name]="reply.author?.displayName"></app-avatar>
+                              <div class="comment-body">
+                                <div class="comment-meta">
+                                  <button type="button" class="comment-author" (click)="reply.author && router.navigate(['/profile', reply.author.id])">
+                                    {{ reply.author?.displayName ?? 'Neighbor' }}
+                                  </button>
+                                  @if (reply.verifiedVisit) {
+                                    <span class="verified-badge" title="GPS-verified visit">
+                                      <span class="material-symbols-rounded">verified</span> was here
+                                    </span>
+                                  }
+                                  <span class="comment-time">{{ timeAgo(reply.createdAt) }}</span>
+                                </div>
+                                @if (reply.text) {
+                                  <p class="comment-text">{{ reply.text }}</p>
+                                }
+                                @if (reply.imageUrl) {
+                                  <button type="button" class="comment-photo" (click)="openCommentImage(reply)">
+                                    <img [src]="imgUrl(reply.imageUrl)" alt="Reply photo" loading="lazy" />
+                                  </button>
+                                }
+                                <div class="comment-actions">
+                                  <button type="button" class="comment-vote" [class.mine]="reply.myVote === 1" (click)="commentVote(reply, 1)">
+                                    <span class="material-symbols-rounded">thumb_up</span> {{ reply.likes }}
+                                  </button>
+                                  <button type="button" class="comment-vote is-down" [class.mine-neg]="reply.myVote === -1" (click)="commentVote(reply, -1)">
+                                    <span class="material-symbols-rounded">thumb_down</span> {{ reply.dislikes }}
+                                  </button>
+                                  @if (reply.author?.id === me?.id) {
+                                    <button type="button" class="comment-delete" (click)="deleteComment(reply.id)">Delete</button>
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (place.comments.length === 0) {
+                  <p class="section-empty">No comments yet — start the conversation.</p>
+                }
+              </div>
+            </div>
           }
         </div>
       }
@@ -231,71 +365,6 @@
           @if (place.isCreator && place.communityPhotos.length > 0) {
             <p class="creator-note">Tip: tap a photo, then ••• to add it to the main slideshow.</p>
           }
-        </div>
-      }
-
-      <!-- ======================= COMMENTS ======================= -->
-      @if (segment === 'comments') {
-        <div class="segment-body">
-          <div class="composer nb-glass">
-            @if (commentImage) {
-              <div class="composer-attachment">
-                <img [src]="commentImage" alt="Attached photo" />
-                <button type="button" class="composer-remove" (click)="removeCommentImage()" aria-label="Remove photo">×</button>
-              </div>
-            }
-            <div class="composer-row">
-              <button type="button" class="composer-attach" (click)="attachCommentImage()" aria-label="Attach a photo">
-                <span class="material-symbols-rounded">image</span>
-              </button>
-              <input
-                type="text"
-                [(ngModel)]="commentText"
-                placeholder="Share something helpful…"
-                maxlength="1000"
-                (keyup.enter)="addComment()"
-              />
-              <button type="button" class="send" (click)="addComment()" [disabled]="busy || !canPostComment">
-                <span class="material-symbols-rounded">send</span>
-              </button>
-            </div>
-            <input #commentFileInput type="file" accept="image/*" style="display: none" (change)="onCommentFileChosen($event)" />
-          </div>
-
-          <div class="comment-list">
-            @for (comment of place.comments; track comment.id) {
-              <div class="comment">
-                <div class="comment-avatar">{{ comment.author?.avatar ?? '🙂' }}</div>
-                <div class="comment-body">
-                  <div class="comment-meta">
-                    <button type="button" class="comment-author" (click)="comment.author && router.navigate(['/profile', comment.author.id])">
-                      {{ comment.author?.displayName ?? 'Neighbor' }}
-                    </button>
-                    @if (comment.verifiedVisit) {
-                      <span class="verified-badge" title="GPS-verified visit">
-                        <span class="material-symbols-rounded">verified</span> was here
-                      </span>
-                    }
-                    <span class="comment-time">{{ timeAgo(comment.createdAt) }}</span>
-                  </div>
-                  @if (comment.text) {
-                    <p class="comment-text">{{ comment.text }}</p>
-                  }
-                  @if (comment.imageUrl) {
-                    <button type="button" class="comment-photo" (click)="openCommentImage(comment)">
-                      <img [src]="imgUrl(comment.imageUrl)" alt="Comment photo" loading="lazy" />
-                    </button>
-                  }
-                  @if (comment.author?.id === me?.id) {
-                    <button type="button" class="comment-delete" (click)="deleteComment(comment.id)">Delete</button>
-                  }
-                </div>
-              </div>
-            }
-            @if (place.comments.length === 0) {
-              <p class="section-empty">No comments yet — start the conversation.</p>
-            }
-          </div>
         </div>
       }
     </div>

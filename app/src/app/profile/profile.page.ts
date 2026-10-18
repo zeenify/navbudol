@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastController } from '@ionic/angular/lazy';
 import { UserProfile } from '../core/models';
+import { AVATAR_PATHS } from '../core/constants/avatars';
 import { AuthService } from '../core/services/auth.service';
 import { CommunityPlacesService } from '../core/services/community-places.service';
 
@@ -30,8 +31,9 @@ export class ProfilePage implements OnInit {
   editing = false;
   editName = '';
   editBio = '';
-  editAvatar = '🙂';
-  avatarChoices = ['🙂', '😎', '🧕', '🧔', '👩‍🍳', '👨‍🔧', '🦸', '🐱', '🌳', '☕', '🛺', '⭐'];
+  editAvatar = '';
+  /** the curated Discord-style set (bundled, offline) */
+  avatarChoices = AVATAR_PATHS;
 
   get me() {
     return this.auth.currentUser;

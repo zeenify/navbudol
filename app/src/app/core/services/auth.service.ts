@@ -45,11 +45,19 @@ export class AuthService {
     }
   }
 
-  async register(username: string, password: string, displayName?: string): Promise<AppUser> {
+  /** Accepts the snake_case wire names the backend speaks; `avatar` is a
+   * bundled curated avatar path (assets/avatars/*.svg). */
+  async register(user: {
+    username: string;
+    password: string;
+    displayName?: string;
+    avatar?: string;
+  }): Promise<AppUser> {
     const res = await this.api.post<AuthResponse>('/api/auth/register', {
-      username,
-      password,
-      display_name: displayName || undefined,
+      username: user.username,
+      password: user.password,
+      display_name: user.displayName || undefined,
+      avatar: user.avatar || undefined,
     });
     this.acceptSession(res);
     return res.user;

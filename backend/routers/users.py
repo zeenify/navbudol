@@ -26,6 +26,8 @@ class RegisterBody(BaseModel):
     username: str
     password: str = Field(min_length=6, max_length=72)
     display_name: str | None = Field(default=None, max_length=48)
+    # A curated bundled avatar path (assets/avatars/*.svg) chosen client-side.
+    avatar: str | None = Field(default=None, max_length=96)
 
 
 class LoginBody(BaseModel):
@@ -35,7 +37,7 @@ class LoginBody(BaseModel):
 
 class ProfileUpdateBody(BaseModel):
     display_name: str | None = Field(default=None, min_length=1, max_length=48)
-    avatar: str | None = Field(default=None, max_length=16)
+    avatar: str | None = Field(default=None, max_length=96)
     bio: str | None = Field(default=None, max_length=280)
 
 
@@ -53,6 +55,7 @@ def register(body: RegisterBody, db: Session = Depends(get_db)) -> dict:
         username=username,
         display_name=(body.display_name or username).strip(),
         password_hash=auth.hash_password(body.password),
+        avatar=(body.avatar or "").strip() or "🙂",
     )
     db.add(user)
     db.commit()

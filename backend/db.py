@@ -89,7 +89,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(32), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(48))
     password_hash: Mapped[str] = mapped_column(String(128))
-    avatar: Mapped[str] = mapped_column(String(16), default="🙂")
+    avatar: Mapped[str] = mapped_column(String(96), default="🙂")
     bio: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now)
 
@@ -138,12 +138,26 @@ class Comment(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
     place_id: Mapped[str] = mapped_column(ForeignKey("places.id"), index=True)
     author_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    parent_id: Mapped[str | None] = mapped_column(String(32), default=None)
     text: Mapped[str] = mapped_column(Text)
     # Optional photo attached to the comment (full CDN URL or /uploads path).
     image_url: Mapped[str | None] = mapped_column(String(255), default=None)
     # True when we have GPS proof this author was actually at the place.
     verified_visit: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now)
+
+
+class CommentVote(Base):
+    """Like (+1) / dislike (−1) on a comment; one per user per comment."""
+
+    __tablename__ = "comment_votes"
+
+    comment_id: Mapped[str] = mapped_column(
+        ForeignKey("comments.id"), primary_key=True
+    )
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    value: Mapped[int] = mapped_column(Integer)  # 1 | -1
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=now, onupdate=now)
 
 
 class Rating(Base):
@@ -191,7 +205,7 @@ def _ensure_columns() -> None:
     from sqlalchemy import inspect, text
 
     wanted = {
-        "comments": {"image_url": "VARCHAR(255)"},
+        "comments": {"image_url": "VARCHAR(255)", "parent_id": "VARCHAR(32)"},
     }
     inspector = inspect(engine)
     with engine.begin() as conn:
@@ -200,6 +214,12 @@ def _ensure_columns() -> None:
             for name, ddl in columns.items():
                 if name not in existing:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+        # Avatar grew from emoji (VARCHAR(16)) to asset paths — SQLite ignores
+        # varchar widths (no-op there); Postgres needs an explicit widening.
+        if engine.dialect.name != "sqlite":
+            user_cols = {c["name"]: c for c in inspector.get_columns("users")}
+            if "avatar" in user_cols and (user_cols["avatar"].get("length") or 0) < 96:
+                conn.execute(text("ALTER TABLE users ALTER COLUMN avatar TYPE VARCHAR(96)"))
 
 
 def _init_schema() -> None:

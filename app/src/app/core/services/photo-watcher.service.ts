@@ -12,6 +12,7 @@ interface PhotoWatcherPlugin {
   stopWatch(): Promise<void>;
   checkNow(options: { since: number; rescan?: boolean }): Promise<{ photos: CapturedPhoto[] }>;
   requestNotificationPermission(): Promise<{ granted: boolean }>;
+  requestMediaPermission(): Promise<{ granted: boolean }>;
   addListener(
     eventName: 'photoCaptured',
     listener: (photo: CapturedPhoto) => void
@@ -190,7 +191,14 @@ export class PhotoWatcherService {
     const place = this.latched;
     if (!place || this.watching) return;
     this.watching = true;
-    PhotoWatcher.startWatch({ since: this.lastSeen, placeName: place.name })
+    // Reading OTHER apps' camera photos needs the storage grant (Android 13+:
+    // READ_MEDIA_IMAGES) — without it the MediaStore query silently returns
+    // zero rows and the whole camera-event flow never fires.
+    PhotoWatcher.requestMediaPermission()
+      .catch(() => ({ granted: false }))
+      .then(() =>
+        PhotoWatcher.startWatch({ since: this.lastSeen, placeName: place.name })
+      )
       .then(() => this.attachListener())
       .catch(() => {
         this.watching = false;

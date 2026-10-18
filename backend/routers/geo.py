@@ -293,8 +293,30 @@ def reverse(lat: float, lon: float):
     return {"label": label}
 
 
+class _ORSUnavailable(Exception):
+    """ORS is down / key rejected / over quota — the OSRM fallback takes over."""
+
+
 @router.post("/directions")
 def directions(req: DirectionsRequest):
+    """Routing with provider resilience: ORS first (walking + elevation),
+    OSRM as the server-side fallback whenever ORS is unavailable — an ORS
+    outage must never surface as an error toast when a road route exists.
+    Coordinate IO: [lng, lat] upstream (ORS/OSRM/GeoJSON), [lat, lng] out."""
+    rings = _avoid_rings(req.avoidReports)
+    try:
+        return _directions_ors(req, rings)
+    except _ORSUnavailable:
+        print("[GEO] ORS unavailable — falling back to OSRM", flush=True)
+        return _directions_osrm(req)
+    except HTTPException as e:
+        if e.status_code == 400:  # ORS key not configured — OSRM still routes
+            print("[GEO] ORS key missing — falling back to OSRM", flush=True)
+            return _directions_osrm(req)
+        raise
+
+
+def _directions_ors(req: DirectionsRequest, rings: list) -> dict:
     key = _ors_key()
     body = {
         "coordinates": [[req.frm["lng"], req.frm["lat"]], [req.to["lng"], req.to["lat"]]],
@@ -302,14 +324,13 @@ def directions(req: DirectionsRequest):
         "instructions": True,
         "preference": "recommended",
     }
-    rings = _avoid_rings(req.avoidReports)
     if rings:
         body["options"] = {"avoid_polygons": {"type": "MultiPolygon", "coordinates": rings}}
 
     def _post_ors() -> httpx.Response:
         return httpx.post(
             f"{ORS_BASE}/directions/{req.profile}/geojson",
-            headers={"Authorization": key, "Content-Type": "application/json"},
+            headers={"Authorization": key, "Content-Type": "application/json", **_UA},
             json=body,
             timeout=30,
         )
@@ -317,7 +338,7 @@ def directions(req: DirectionsRequest):
     try:
         resp = _post_ors()
     except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"ORS failed: {e}")
+        raise _ORSUnavailable(f"ORS unreachable: {e}")
     if resp.status_code == 400 and rings:
         # Some profiles/plans reject avoid_polygons — route without it rather
         # than fail the trip; the app still surfaces the reports itself.
@@ -326,9 +347,11 @@ def directions(req: DirectionsRequest):
         try:
             resp = _post_ors()
         except httpx.HTTPError as e:
-            raise HTTPException(status_code=502, detail=f"ORS failed: {e}")
+            raise _ORSUnavailable(f"ORS unreachable: {e}")
     if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"ORS HTTP {resp.status_code}: {resp.text[:200]}")
+        # 4xx (bad key, quota) and 5xx (provider outage — seen as nginx 502s)
+        # both mean "try the fallback", not "the trip is impossible".
+        raise _ORSUnavailable(f"ORS HTTP {resp.status_code}: {resp.text[:200]}")
 
     feature = resp.json()["features"][0]
     props = feature["properties"]
@@ -366,6 +389,97 @@ def directions(req: DirectionsRequest):
         "durationS": props.get("summary", {}).get("duration", 0),
         "ascentM": props.get("ascent", 0),
         "avoidedReports": len(rings),
+    }
+
+
+def _osrm_instruction(m: dict, road: str) -> str:
+    """Voice-friendly OSRM maneuver text — mirrors the client's converter so
+    both routing paths speak the same way."""
+    onto = f" onto {road}" if road else ""
+    mod = (m.get("modifier") or "").lower()
+    mtype = (m.get("type") or "continue").lower()
+    if mtype in ("arrive",):
+        return "You have arrived at your destination"
+    if mtype == "depart":
+        return f"Head out{onto}" if not mod or mod == "uturn" else f"Head {mod}{onto}"
+    if mtype in ("turn", "end of road"):
+        prefix = "At the end of the road, " if mtype == "end of road" else ""
+        return f"{prefix}Turn {mod}{onto}"
+    if mtype == "new name":
+        return f"Continue{onto}"
+    if mtype == "merge":
+        return f"Merge {mod}{onto}"
+    if mtype == "on ramp":
+        return f"Take the ramp{' on the ' + mod if mod else ''}{onto}"
+    if mtype == "off ramp":
+        return f"Take the exit{onto}"
+    if mtype == "fork":
+        return f"Keep {mod}{onto}"
+    if mtype in ("roundabout", "rotary"):
+        exit_no = m.get("exit")
+        return f"At the roundabout, take exit {exit_no}{onto}" if exit_no else f"Enter the roundabout{onto}"
+    if mtype in ("roundabout turn",):
+        return f"At the roundabout, turn {mod}{onto}"
+    if mtype in ("exit roundabout", "exit rotary"):
+        return f"Exit the roundabout{onto}"
+    return f"Continue{onto}"
+
+
+def _directions_osrm(req: DirectionsRequest) -> dict:
+    """Keyless OSRM fallback — driving profile (walk stays drivable-distance;
+    the client's own duration cap presents it honestly)."""
+    url = (
+        "https://router.project-osrm.org/route/v1/driving/"
+        f"{req.frm['lng']},{req.frm['lat']};{req.to['lng']},{req.to['lat']}"
+        "?steps=true&geometries=geojson&overview=full"
+    )
+    try:
+        resp = httpx.get(url, headers=_UA, timeout=30)
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Both routers unavailable (OSRM: {e})")
+    if resp.status_code != 200:
+        raise HTTPException(
+            status_code=502, detail=f"Both routers unavailable (OSRM HTTP {resp.status_code})"
+        )
+    route = (resp.json().get("routes") or [{}])[0]
+    if not route:
+        raise HTTPException(status_code=502, detail="No route found.")
+
+    coords = [[c[1], c[0]] for c in (route.get("geometry") or {}).get("coordinates", [])]
+    steps = []
+    cumulative = 0.0
+    for leg in route.get("legs", []):
+        for s in leg.get("steps", []):
+            maneuver = s.get("maneuver") or {}
+            lng, lat = maneuver.get("location") or (0, 0)
+            step = {
+                "instruction": _osrm_instruction(maneuver, s.get("name") or ""),
+                "name": s.get("name") or "",
+                "distanceM": s.get("distance", 0),
+                "durationS": s.get("duration", 0),
+                "maneuverType": (maneuver.get("type") or "continue").lower(),
+                "maneuverModifier": (maneuver.get("modifier") or "").lower(),
+                "location": {"lat": lat, "lng": lng},
+                "cumulativeDistanceM": 0,
+            }
+            cumulative += step["distanceM"]
+            step["cumulativeDistanceM"] = cumulative
+            steps.append(step)
+
+    # OSRM knows no walking speeds: present the walk time honestly so the
+    # client's cap never has to guess.
+    profile_seconds = route.get("duration", 0)
+    if req.profile == "foot-walking":
+        profile_seconds = route.get("distance", 0) / 1.389
+
+    return {
+        "geometry": coords,
+        "steps": steps,
+        "distanceM": route.get("distance", 0),
+        "durationS": profile_seconds,
+        "ascentM": 0,
+        "source": "osrm",
+        "avoidedReports": 0,
     }
 
 

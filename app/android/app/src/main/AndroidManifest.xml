@@ -33,6 +33,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+        <service
+            android:name=".PhotoWatchService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 
     <!-- Permissions -->
@@ -43,4 +47,14 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Photo watch: reading new camera shots from the shared MediaStore.
+         Camera photos belong to the camera app - without these the query
+         returns nothing and no notification can ever fire. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Keeps the photo-watch poll alive while the camera app is foreground. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 </manifest>
