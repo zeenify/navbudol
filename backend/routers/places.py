@@ -12,7 +12,8 @@ import os
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import auth
@@ -623,7 +624,10 @@ def vote_comment(
         vote.value = body.value
         db.commit()
     likes, dislikes = _comment_vote_counts(db, comment.id)
-    return {"likes": likes, "dislikes": dislikes, "myVote": body.value}
+    final = db.get(CommentVote, (comment.id, user.id))
+    # Report what the DB settled on, not what was asked — racing double-taps
+    # could land in either order, and the optimistic UI reconciles off this.
+    return {"likes": likes, "dislikes": dislikes, "myVote": final.value if final else 0}
 
 
 @router.delete("/places/{place_id}/comments/{comment_id}")
@@ -639,17 +643,21 @@ def delete_comment(
         raise HTTPException(status_code=404, detail="No such comment.")
     if comment.author_id != user.id:
         raise HTTPException(status_code=403, detail="You can only delete your own comments.")
-    # Replies die with their thread; their votes go with them.
-    replies = db.scalars(select(Comment).where(Comment.parent_id == comment.id)).all()
-    for reply in replies:
-        for v in db.scalars(select(CommentVote).where(CommentVote.comment_id == reply.id)).all():
-            db.delete(v)
-        db.delete(reply)
-    for v in db.scalars(select(CommentVote).where(CommentVote.comment_id == comment.id)).all():
-        db.delete(v)
-    db.delete(comment)
-    db.commit()
-    return {"ok": True}
+    # A like landing at the same moment used to wedge this behind an FK error
+    # (postgres 500s skip our CORS middleware, so browsers saw a cryptic
+    # CORS failure instead). Bulk-delete the votes, retry once, then give up.
+    for attempt in range(2):
+        try:
+            reply_ids = db.scalars(select(Comment.id).where(Comment.parent_id == comment.id)).all()
+            db.execute(delete(CommentVote).where(CommentVote.comment_id.in_([comment.id, *reply_ids])))
+            if reply_ids:
+                db.execute(delete(Comment).where(Comment.id.in_(reply_ids)))
+            db.delete(comment)
+            db.commit()
+            return {"ok": True}
+        except IntegrityError:
+            db.rollback()
+    raise HTTPException(status_code=409, detail="That comment is busy — try again in a second.")
 
 
 # --- ratings + votes -----------------------------------------------------------
@@ -693,7 +701,8 @@ def set_vote(
         vote.value = body.value
         db.commit()
     counts = _counts(db, place.id)
-    return {"likes": counts["likes"], "dislikes": counts["dislikes"], "myVote": body.value}
+    final = db.get(Vote, (place.id, user.id))
+    return {"likes": counts["likes"], "dislikes": counts["dislikes"], "myVote": final.value if final else 0}
 
 
 # --- visits ------------------------------------------------------------------

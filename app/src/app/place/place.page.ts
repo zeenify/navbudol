@@ -403,8 +403,34 @@ export class PlacePage implements OnInit {
     this.cdr.markForCheck();
   }
 
-  /** Like / dislike a comment — optimistic, reconciled by the server call. */
+  /** Like / dislike a comment — optimistic, reconciled by the server call.
+   *  Concurrent taps are serialized: an in-flight vote queues the latest
+   *  intent instead of racing it (the race once corrupted deletes). */
+  private voting = new Set<string>();
+  private queuedVote = new Map<string, 1 | -1>();
+
   async commentVote(comment: CommunityPlaceComment, value: 1 | -1): Promise<void> {
+    if (!this.place) return;
+    if (this.voting.has(comment.id)) {
+      this.queuedVote.set(comment.id, value);
+      return;
+    }
+    this.voting.add(comment.id);
+    try {
+      await this.applyCommentVote(comment, value);
+    } finally {
+      this.voting.delete(comment.id);
+    }
+    const queued = this.queuedVote.get(comment.id);
+    if (queued !== undefined) {
+      this.queuedVote.delete(comment.id);
+      // always re-apply: it toggles whatever state the settled vote left
+      await this.commentVote(comment, queued);
+    }
+    this.cdr.markForCheck();
+  }
+
+  private async applyCommentVote(comment: CommunityPlaceComment, value: 1 | -1): Promise<void> {
     if (!this.place) return;
     const mine = comment.myVote === value;
     const next = mine ? 0 : value;
@@ -442,6 +468,15 @@ export class PlacePage implements OnInit {
       this.place.commentCount = Math.max(0, this.place.commentCount - 1 - replyCount);
     } catch (e) {
       await this.toast(e instanceof Error ? e.message : 'Could not delete that comment.');
+      // The delete may have half-landed server-side (racing votes); converge
+      // on what the database actually has instead of trusting our copy.
+      try {
+        const fresh = await this.community.detail(this.place.id);
+        this.place.comments = fresh.comments;
+        this.place.commentCount = fresh.commentCount;
+      } catch {
+        /* keep the local view if the refresh also fails */
+      }
     }
     this.cdr.markForCheck();
   }
