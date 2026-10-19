@@ -612,17 +612,25 @@ def vote_comment(
     comment = db.get(Comment, comment_id)
     if comment is None or comment.place_id != place.id:
         raise HTTPException(status_code=404, detail="No such comment.")
-    vote = db.get(CommentVote, (comment.id, user.id))
-    if body.value == 0:
-        if vote is not None:
-            db.delete(vote)
+    try:
+        vote = db.get(CommentVote, (comment.id, user.id))
+        if body.value == 0:
+            if vote is not None:
+                db.delete(vote)
+                db.commit()
+        elif vote is None:
+            db.add(CommentVote(comment_id=comment.id, user_id=user.id, value=body.value))
             db.commit()
-    elif vote is None:
-        db.add(CommentVote(comment_id=comment.id, user_id=user.id, value=body.value))
-        db.commit()
-    elif vote.value != body.value:
-        vote.value = body.value
-        db.commit()
+        elif vote.value != body.value:
+            vote.value = body.value
+            db.commit()
+    except IntegrityError:
+        # The comment was deleted while the like was in flight — that race
+        # used to be a raw 500 (which browsers read as a CORS error).
+        db.rollback()
+        if db.get(Comment, comment_id) is None:
+            raise HTTPException(status_code=404, detail="No such comment.")
+        raise HTTPException(status_code=409, detail="That tap raced the one before it — try again.")
     likes, dislikes = _comment_vote_counts(db, comment.id)
     final = db.get(CommentVote, (comment.id, user.id))
     # Report what the DB settled on, not what was asked — racing double-taps
