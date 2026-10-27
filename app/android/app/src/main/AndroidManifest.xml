@@ -37,6 +37,9 @@
             android:name=".PhotoWatchService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <receiver
+            android:name=".PhotoActionReceiver"
+            android:exported="false" />
     </application>
 
     <!-- Permissions -->

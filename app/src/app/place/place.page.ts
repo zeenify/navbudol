@@ -62,6 +62,8 @@ export class PlacePage implements OnInit {
   editIcon: string | null = null;
   /** which community section is open — comments live under the reviews */
   segment: 'overview' | 'gallery' = 'overview';
+  /** photo id ringing in the gallery (just posted from the map flow) */
+  highlightedPhotoId: string | null = null;
   /** the comment being replied to (inline reply composer) */
   replyTo: CommunityPlaceComment | null = null;
   replyText = '';
@@ -80,6 +82,21 @@ export class PlacePage implements OnInit {
   }
 
   ngOnInit(): void {
+    // "?segment=gallery&photo=<id>" (set by the photo post flow) opens the
+    // gallery tab with the new upload ringing.
+    const q = this.route.snapshot.queryParamMap;
+    const segment = q.get('segment');
+    if (segment === 'gallery' || segment === 'overview') {
+      this.segment = segment;
+    }
+    this.highlightedPhotoId = q.get('photo');
+    if (this.highlightedPhotoId) {
+      // ring fades out after a few seconds
+      setTimeout(() => {
+        this.highlightedPhotoId = null;
+        this.cdr.markForCheck();
+      }, 6000);
+    }
     void this.load();
   }
 

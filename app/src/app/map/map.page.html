@@ -24,18 +24,12 @@
 
   <!-- one-tap contribution: a camera photo taken on-site -->
   @if (photoPrompt; as pp) {
-    <div class="photo-prompt nb-glass-soft">
+    <div class="photo-prompt">
       <div class="photo-prompt-main">
         <img class="photo-prompt-thumb" [src]="pp.dataUrl" alt="Your photo" />
         <div class="photo-prompt-text">
-          <div class="photo-prompt-title">📸 Post this to {{ pp.placeName }}?</div>
-          <input
-            class="photo-prompt-comment"
-            type="text"
-            maxlength="200"
-            placeholder="Quick caption (optional)"
-            [(ngModel)]="pp.comment"
-          />
+          <div class="photo-prompt-title">Post this to {{ pp.placeName }}?</div>
+          <div class="photo-prompt-sub">It'll be added to the place gallery</div>
         </div>
       </div>
       <div class="photo-prompt-actions">

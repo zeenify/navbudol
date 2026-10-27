@@ -310,3 +310,28 @@ body.dark .maplibregl-ctrl-attrib a {
 .community-chip .community-pin-img {
   top: 50%;
 }
+
+// Branded app-wide toast: a dark navy pill instead of the bare white card
+ion-toast.nb-toast {
+  --background: rgba(13, 28, 48, 0.96);
+  --color: #f2f7ff;
+  --border-radius: 999px;
+  --box-shadow: 0 12px 34px rgba(8, 20, 38, 0.42), 0 2px 6px rgba(8, 20, 38, 0.28);
+  --max-width: 88vw;
+  --min-height: 40px;
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+}
+
+ion-toast.nb-toast .toast-wrapper {
+  border: 1px solid rgba(127, 196, 255, 0.28);
+}
+
+ion-toast.nb-toast.toast-top .toast-wrapper {
+  padding-top: calc(env(safe-area-inset-top) + 6px);
+}
+
+ion-toast.nb-toast.toast-position-top .toast-wrapper {
+  padding-top: calc(env(safe-area-inset-top) + 6px);
+}

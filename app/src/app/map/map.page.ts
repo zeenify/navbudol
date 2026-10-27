@@ -57,7 +57,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   chatOpen = false;
   backendOk: boolean | null = null;
   /** Camera photo taken on-site → one-tap "post it?" card. */
-  photoPrompt: { placeId: string; placeName: string; dataUrl: string; comment: string } | null = null;
+  photoPrompt: { placeId: string; placeName: string; dataUrl: string } | null = null;
   postingPhoto = false;
   /** Search result selected → preview card (details + directions), not a surprise route. */
   previewPlace: PlaceResult | null = null;
@@ -151,7 +151,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
             placeId: event.place.id,
             placeName: event.place.name,
             dataUrl: `data:${event.photo.mimeType};base64,${event.photo.base64}`,
-            comment: '',
           };
           this.cdr.markForCheck();
         })
@@ -291,14 +290,19 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.postingPhoto = true;
     this.cdr.markForCheck();
     try {
-      await this.community.addPhoto(
+      const created = await this.community.addPhoto(
         prompt.placeId,
         prompt.dataUrl,
-        prompt.comment.trim(),
+        '',
         pos ? { lat: pos.lat, lng: pos.lng } : undefined
       );
       this.photoPrompt = null;
+      this.cdr.markForCheck();
       await this.toast('Posted — thanks for contributing!');
+      // Show the result: the place gallery with the new photo highlighted.
+      this.router.navigate(['/place', prompt.placeId], {
+        queryParams: { segment: 'gallery', photo: created?.id },
+      });
     } catch (e) {
       await this.toast(e instanceof Error ? e.message : 'Could not post that photo.');
     } finally {

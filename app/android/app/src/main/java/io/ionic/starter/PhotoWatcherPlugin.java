@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -71,6 +72,7 @@ public class PhotoWatcherPlugin extends Plugin {
     private static final String CHANNEL_ID = "navbudol-photos";
     private static final String NOTIF_PERMISSION_ALIAS = "postNotifications";
     private static final String READ_MEDIA_ALIAS = "readMedia";
+    private static final String TAG = "PhotoWatch";
 
     private Handler handler;
     private Runnable pollRunnable;
@@ -88,6 +90,19 @@ public class PhotoWatcherPlugin extends Plugin {
         lastTimestamp = since != null ? since.longValue() : System.currentTimeMillis() / 1000;
         String name = call.getString("placeName");
         placeName = name != null && !name.isEmpty() ? name : null;
+        // Everything the background "Add" action needs, persisted so a fresh
+        // process (service restart) can still upload without the app.
+        android.content.SharedPreferences prefs =
+                getContext().getSharedPreferences("navbudol_photo_watch", Context.MODE_PRIVATE);
+        prefs.edit()
+                .putString("placeName", placeName)
+                .putString("placeId", call.getString("placeId"))
+                .putString("authToken", call.getString("authToken"))
+                .putString("backendUrl", call.getString("backendUrl"))
+                .apply();
+        Log.i(TAG, "startWatch: since=" + lastTimestamp + " place=" + placeName
+                + " mediaRead=" + hasMediaRead()
+                + " hasToken=" + (call.getString("authToken") != null && !call.getString("authToken").isEmpty()));
         ensureChannel();
         stopPolling();
         // Storage grant first: without it the MediaStore query sees zero
@@ -102,6 +117,7 @@ public class PhotoWatcherPlugin extends Plugin {
     }
 
     private void beginWatch(PluginCall call) {
+        Log.i(TAG, "beginWatch: in-focus poll + foreground service");
         handler = new Handler(Looper.getMainLooper());
         pollRunnable = new Runnable() {
             @Override
@@ -159,6 +175,7 @@ public class PhotoWatcherPlugin extends Plugin {
         Boolean rescanArg = call.getBoolean("rescan", true);
         boolean rescan = rescanArg == null || rescanArg;
         List<JSObject> photos = collectNew(sinceTs, rescan);
+        Log.i(TAG, "checkNow: since=" + sinceTs + " rescan=" + rescan + " found=" + photos.size());
         JSObject result = new JSObject();
         try {
             result.put("photos", JSArray.from(photos.toArray()));
@@ -191,6 +208,7 @@ public class PhotoWatcherPlugin extends Plugin {
     /** Continues the deferred startWatch once the storage grant is answered. */
     @Permission(alias = "readMedia")
     public void onMediaPermissionResult(PluginCall call, boolean granted) {
+        Log.i(TAG, "media permission result: granted=" + granted);
         if (granted) {
             beginWatch(pendingStartCall);
         } else if (pendingStartCall != null) {
@@ -227,6 +245,9 @@ public class PhotoWatcherPlugin extends Plugin {
         boolean focused = isAppFocused();
         if (!focused) return;
         List<JSObject> photos = collectNew(lastTimestamp, false);
+        if (!photos.isEmpty()) {
+            Log.i(TAG, "focused poll delivering " + photos.size() + " photo(s) to JS");
+        }
         for (JSObject photo : photos) {
             notifyListeners("photoCaptured", photo);
         }

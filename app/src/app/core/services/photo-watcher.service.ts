@@ -1,14 +1,23 @@
 import { Injectable, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
 import { Capacitor, PluginListenerHandle, registerPlugin } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { CommunityPlaceSummary } from '../models';
 import { haversineM } from '../geo.utils';
 import { CommunityPlacesService } from './community-places.service';
 import { LocationService } from './location.service';
+import { TOKEN_KEY } from './backend-api.service';
 
 interface PhotoWatcherPlugin {
-  startWatch(options: { since: number; placeName?: string }): Promise<void>;
+  startWatch(options: {
+    since: number;
+    placeName?: string;
+    placeId?: string;
+    authToken?: string;
+    backendUrl?: string;
+  }): Promise<void>;
   stopWatch(): Promise<void>;
   checkNow(options: { since: number; rescan?: boolean }): Promise<{ photos: CapturedPhoto[] }>;
   requestNotificationPermission(): Promise<{ granted: boolean }>;
@@ -82,6 +91,7 @@ export class PhotoWatcherService {
   constructor(
     private community: CommunityPlacesService,
     private location: LocationService,
+    private router: Router,
     private zone: NgZone
   ) {}
 
@@ -197,7 +207,15 @@ export class PhotoWatcherService {
     PhotoWatcher.requestMediaPermission()
       .catch(() => ({ granted: false }))
       .then(() =>
-        PhotoWatcher.startWatch({ since: this.lastSeen, placeName: place.name })
+        PhotoWatcher.startWatch({
+          since: this.lastSeen,
+          placeName: place.name,
+          // Everything the native side needs to post IN THE BACKGROUND from
+          // the notification's Add button, without opening the app.
+          placeId: place.id,
+          authToken: localStorage.getItem(TOKEN_KEY) ?? '',
+          backendUrl: environment.backendBaseUrl,
+        })
       )
       .then(() => this.attachListener())
       .catch(() => {
@@ -220,7 +238,7 @@ export class PhotoWatcherService {
     if (!this.active || !this.latched) return;
     try {
       const res = await PhotoWatcher.checkNow({ since: this.lastSeen, rescan: true });
-      for (const photo of res.photos ?? []) this.deliver(photo);
+      for (const photo of res.photos ?? []) this.deliver(photo, true);
     } catch {
       /* the native poll will resurface them */
     }
@@ -232,7 +250,10 @@ export class PhotoWatcherService {
       .catch(() => undefined);
   }
 
-  private deliver(photo: CapturedPhoto): void {
+  /** `navigate` = the user is returning from a notification tap or the
+   * camera app — make sure the post card is actually on screen by jumping
+   * to the map tab (harmless no-op when already there). */
+  private deliver(photo: CapturedPhoto, navigate = false): void {
     const key = photo.id ?? `t${photo.capturedAt}`;
     if (this.handled.has(key)) return;
     this.handled.add(key);
@@ -247,7 +268,10 @@ export class PhotoWatcherService {
     // taken where the user WAS; GPS may have drifted since.
     const place = this.latched;
     if (!place) return;
-    this.zone.run(() => this.photoCaptured$.next({ place, photo }));
+    this.zone.run(() => {
+      if (navigate) void this.router.navigateByUrl('/tabs/map');
+      this.photoCaptured$.next({ place, photo });
+    });
   }
 
   // --- watermark persistence ------------------------------------------------------

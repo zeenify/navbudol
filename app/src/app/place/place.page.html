@@ -354,6 +354,7 @@
                 <app-photo-tile
                   [photo]="photo"
                   [actions]="place.isCreator === true || photo.uploader?.id === me?.id"
+                  [highlighted]="photo.id === highlightedPhotoId"
                   (menu)="openPhoto(photo, place.communityPhotos)"
                   (open)="openPhoto(photo, place.communityPhotos)"
                 ></app-photo-tile>

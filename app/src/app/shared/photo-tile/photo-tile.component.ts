@@ -5,13 +5,19 @@ import { CommunityPlacesService } from '../../core/services/community-places.ser
 /**
  * One community photo tile with the right ownership actions surfaced:
  * creator curates the gallery; uploader (or creator) can delete.
+ * A small date chip keeps uploads contextually recent — for people AND
+ * for the AI summarizing the place.
  */
 @Component({
   selector: 'app-photo-tile',
   standalone: false,
+  host: { '[class.flash]': 'highlighted' },
   template: `
     <div class="photo-tile" (click)="openPhoto()" role="button" [attr.aria-label]="photo.caption || 'View photo'">
       <img [src]="community.absoluteUrl(photo.url)" [alt]="photo.caption || 'Community photo'" loading="lazy" />
+      @if (dateLabel) {
+        <div class="tile-date">{{ dateLabel }}</div>
+      }
       @if (photo.caption) {
         <div class="photo-caption">{{ photo.caption }}</div>
       }
@@ -41,6 +47,18 @@ import { CommunityPlacesService } from '../../core/services/community-places.ser
         object-fit: cover;
         display: block;
       }
+      .tile-date {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+        background: rgba(16, 35, 63, 0.62);
+        border-radius: 8px;
+        padding: 2px 7px;
+        backdrop-filter: blur(2px);
+      }
       .photo-caption {
         position: absolute;
         left: 6px;
@@ -54,6 +72,9 @@ import { CommunityPlacesService } from '../../core/services/community-places.ser
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      .tile-date + .photo-caption {
+        bottom: 24px;
       }
       .gallery-flag {
         position: absolute;
@@ -90,16 +111,47 @@ import { CommunityPlacesService } from '../../core/services/community-places.ser
       .tile-menu .material-symbols-rounded {
         font-size: 16px;
       }
+      :host(.flash) .photo-tile {
+        outline: 3px solid #2f8bff;
+        outline-offset: 2px;
+        animation: tile-flash 1.1s ease-out 3;
+      }
+      @keyframes tile-flash {
+        0% {
+          box-shadow: 0 0 0 0 rgba(47, 139, 255, 0.55);
+        }
+        70% {
+          box-shadow: 0 0 0 14px rgba(47, 139, 255, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(47, 139, 255, 0);
+        }
+      }
     `,
   ],
 })
 export class PhotoTileComponent {
   @Input({ required: true }) photo!: CommunityPlacePhoto;
   @Input() actions = false;
+  @Input() highlighted = false;
   @Output() menu = new EventEmitter<void>();
   @Output() open = new EventEmitter<void>();
 
   public community = inject(CommunityPlacesService);
+
+  /** 'Sep 30' this year, 'Sep 30, 2025' otherwise — nothing today-only. */
+  get dateLabel(): string {
+    const raw = this.photo?.createdAt;
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return '';
+    const now = new Date();
+    const opts: Intl.DateTimeFormatOptions =
+      d.getFullYear() === now.getFullYear()
+        ? { month: 'short', day: 'numeric' }
+        : { month: 'short', day: 'numeric', year: 'numeric' };
+    return new Intl.DateTimeFormat('en-US', opts).format(d);
+  }
 
   openMenu(): void {
     this.menu.emit();
