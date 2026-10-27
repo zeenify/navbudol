@@ -26,9 +26,16 @@
         <div class="avatar-ring">
           @if (editing) {
             <div class="avatar-picker">
-              @for (path of avatarChoices; track path) {
-                <button type="button" class="avatar-choice" [class.mine]="editAvatar === path" (click)="editAvatar = path">
-                  <img [src]="path" alt="Avatar" />
+              @for (path of avatarChoices; track path; let i = $index) {
+                <button
+                  type="button"
+                  class="avatar-choice"
+                  [class.mine]="editAvatar === path"
+                  [attr.aria-label]="'Avatar ' + (i + 1) + ' of ' + avatarChoices.length"
+                  [attr.aria-pressed]="editAvatar === path"
+                  (click)="editAvatar = path"
+                >
+                  <img [src]="path" [alt]="'Avatar ' + (i + 1)" />
                 </button>
               }
             </div>

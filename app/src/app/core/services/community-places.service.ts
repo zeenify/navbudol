@@ -44,14 +44,45 @@ export class CommunityPlacesService {
   /**
    * One town-wide fetch (25 km around the service-area center) so search and
    * the AI see every community place, not just the ones near the camera.
+   *
+   * CACHE-FIRST: the last sweep persists in localStorage. When the DB is slow
+   * (free-tier Neon can take 40s+ to answer nearby), search must never wait
+   * on it — the last known town lands instantly and the network only
+   * freshens behind it.
    */
   ensureTownSweep(): Promise<void> {
     if (!this.townSweep) {
-      this.townSweep = this.refreshNearby(
-        environment.defaultCenter.lat,
-        environment.defaultCenter.lng,
-        25000
-      ).then(() => undefined);
+      this.townSweep = (async () => {
+        const KEY = 'navbudol.town.places';
+        const TS = 'navbudol.town.places.ts';
+        let bootstrapped = false;
+        try {
+          const raw = localStorage.getItem(KEY);
+          if (raw) {
+            const places = JSON.parse(raw) as CommunityPlaceSummary[];
+            for (const p of places) this.cache.set(p.id, p);
+            this.nearby$.next(Array.from(this.cache.values()));
+            bootstrapped = true;
+            const freshEnough = Date.now() - Number(localStorage.getItem(TS) || 0) < 10 * 60_000;
+            if (freshEnough) return;
+          }
+        } catch {
+          /* unreadable cache — fall through to the network */
+        }
+        const fresh = await this.refreshNearby(
+          environment.defaultCenter.lat,
+          environment.defaultCenter.lng,
+          25000
+        );
+        if (fresh.length > 0 || !bootstrapped) {
+          try {
+            localStorage.setItem(KEY, JSON.stringify(fresh));
+            localStorage.setItem(TS, String(Date.now()));
+          } catch {
+            /* storage full / private mode — memory cache still works */
+          }
+        }
+      })();
     }
     return this.townSweep;
   }

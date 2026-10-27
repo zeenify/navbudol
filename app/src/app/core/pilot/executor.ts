@@ -47,17 +47,7 @@ export interface ExecuteContext {
   batchExplain: string;
 }
 
-// In-app routes the pilot may drive to. Anything else is refused.
-const GOTO_WHITELIST = [/^\/tabs(\/[a-z0-9-]+)?\/?$/, /^\/place\/[A-Za-z0-9_-]+$/, /^\/add-place\/?$/];
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-function normalizeGotoPath(raw: string): string | null {
-  const path = raw.trim();
-  if (!path.startsWith('/')) return null;
-  if (!GOTO_WHITELIST.some((re) => re.test(path))) return null;
-  return path;
-}
 
 function throwIfAborted(signal: ExecuteContext['signal']): void {
   if (signal.aborted) throw new DOMException('aborted', 'AbortError');
@@ -203,18 +193,16 @@ async function runOne(cmd: PilotCommand, ctx: ExecuteContext): Promise<PilotComm
   throwIfAborted(ctx.signal);
 
   if (action === 'goto') {
-    const path = normalizeGotoPath(String(cmd.path || value || ''));
-    if (!path) {
-      return {
-        action,
-        ok: false,
-        message: `goto refused — only in-app routes are allowed: /tabs/map, /tabs/chat, /tabs/settings, /place/<id>, /add-place. Ask the user to press that control yourself if it lives elsewhere.`,
-      };
-    }
-    overlay.hideHighlight();
-    await ctx.navigate(path);
-    await waitForPageSettle(ctx);
-    return { action, ok: true, message: `navigated to ${path}` };
+    // Removed on purpose: the pilot navigates BY CLICKING real controls, like
+    // a human. A stale goto from the model gets a loud refusal instead of a
+    // teleport, so the brain self-corrects to the tab bar / rows / back.
+    return {
+      action,
+      ok: false,
+      message:
+        'goto is disabled — this pilot navigates ONLY by clicking real screen controls ' +
+        '(bottom tab bar for tabs, rows, back buttons). Take a snapshot, find the control to click, and click your way there.',
+    };
   }
 
   if (action === 'snapshot') {
@@ -477,7 +465,7 @@ export async function executeBatch(commands: PilotCommand[], ctx: ExecuteContext
     }
     results.push(result);
     if (result.blocked) break; // destructive refusal ends the batch
-    if (result.ok === false && ['click', 'goto'].includes(String(cmd.action))) break;
+    if (result.ok === false && String(cmd.action) === 'click') break;
   }
 
   return { results };

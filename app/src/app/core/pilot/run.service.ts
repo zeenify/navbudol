@@ -26,7 +26,7 @@ import { installNetWatch } from './net-watch';
  *
  * The consent gate is structural, not prompt-hoped: acting commands are held
  * in code until "Take the wheel" is pressed. The executor independently
- * refuses destructive controls and off-whitelist gotos regardless.
+ * refuses destructive controls and any goto (navigation is click-only).
  */
 
 interface OpenAiToolCall {
@@ -47,25 +47,17 @@ interface HeldBatch {
 }
 
 // Actions that move or change the page — the "take the wheel" set. goto is
-// in deliberately: driving the user somewhere uninvited IS acting. point/
+// NOT here anymore: the pilot has no jump command at all (the executor
+// refuses it), so navigation happens only through real clicks. point/
 // snapshot/scroll stay free reads.
-const ACTING_ACTIONS = new Set(['goto', 'click', 'input', 'select']);
+const ACTING_ACTIONS = new Set(['click', 'input', 'select']);
 // Batches made ONLY of these are invisible reads — they run without the
 // takeover UI; a "Read page" row still lands in the thread.
 const SILENT_ACTIONS = new Set(['snapshot', 'point']);
 
-const MAX_TOOL_TURNS = 30;
+// Click-only navigation burns more honest turns than a goto shortcut did.
+const MAX_TOOL_TURNS = 40;
 const RUN_FLAG_KEY = 'navbudol.chat.running';
-
-/** tab paths in user words, for the consent card */
-function gotoWords(path: string): string {
-  if (/^\/tabs\/map/.test(path)) return 'Open the Map tab';
-  if (/^\/tabs\/chat/.test(path)) return 'Open the Chat tab';
-  if (/^\/tabs\/settings/.test(path)) return 'Open the Settings tab';
-  if (/^\/place\//.test(path)) return 'Open the place page';
-  if (/^\/add-place/.test(path)) return 'Open the Add Place form';
-  return `Go to ${path}`;
-}
 
 // A follow-up continues the run (consent, trail, caches survive); anything
 // else starts a NEW goal and resets them — consent is per run.
@@ -239,7 +231,7 @@ export class PilotRunService {
     const label = c.ref != null ? this.snapshot.byRef.get(Number(c.ref))?.name : undefined;
     switch (c.action) {
       case 'goto':
-        return gotoWords(String(c.path || c.value || ''));
+        return 'Jump to a screen (refused — navigation is click-only)';
       case 'click':
         return `Tap ${label ? `“${label}”` : `element ${c.ref}`}`;
       case 'input':
@@ -437,6 +429,10 @@ export class PilotRunService {
     return messages;
   }
 
+  /** Persisted cross-run history (plain text turns only) — tool/lookup
+   *  traffic inside a run travels in the turn content, not the history.
+   *  Deliberately SHORT: older requests are context, never the plan. The
+   *  latest user message (carried in turnContent) is the only task. */
   private chatHistoryLines(): Array<{ role: 'user' | 'assistant'; text: string }> {
     const out: Array<{ role: 'user' | 'assistant'; text: string }> = [];
     for (const m of this.gem.messages$.value) {
@@ -444,7 +440,7 @@ export class PilotRunService {
       if (m.role === 'user') out.push({ role: 'user' as const, text: m.text.slice(0, 600) });
       else if (!m.kind || m.kind === 'text') out.push({ role: 'assistant' as const, text: m.text.slice(0, 600) });
     }
-    return out.slice(-16);
+    return out.slice(-8);
   }
 
   private turnContent(kind: 'start' | 'tool-result' | 'lookup-result', data: Record<string, unknown>): string {
@@ -464,7 +460,8 @@ export class PilotRunService {
         `CONSENT STATE: ${consentLine}\n\n` +
         `PAGE ELEMENTS (address controls by [ref] numbers):\n${this.snapshot.text}\n\n` +
         `USER REQUEST: ${this.task}\n` +
-        '(The earlier conversation is background context only. THIS request is the live task. ' +
+        '(The earlier conversation is background context ONLY — including what you did in previous requests. ' +
+        'THIS request is the live task: resolve it from the latest screen, not from what you did last time. ' +
         'Reply with your short spoken line AND — when the screen must change — the ONE tool call for it, ' +
         'in the same reply. The approval gate asks the user for you; never also ask in words.)'
       );
@@ -480,7 +477,7 @@ export class PilotRunService {
       if (data['nudge']) {
         lines.push(
           'NOTE: your last reply CLAIMED an action ("I\'m opening…") but sent NO tool call and didn\'t deliver the ' +
-            'words. Fix it NOW, in this reply: send the tool call (point/scroll/snapshot run freely; a goto or click ' +
+            'words. Fix it NOW, in this reply: send the tool call (point/scroll/snapshot run freely; a click or input ' +
             'lands at the approval gate — the gate asks, so don\'t ask in words too), OR deliver the answer you ' +
             'promised, OR ask one concrete question. Never claim without doing. If the request already approved ' +
             'exactly this read-only action, send the tool call — do not re-ask.'
@@ -703,7 +700,7 @@ export class PilotRunService {
             message:
               this.oscillation >= 2
                 ? "this batch is ping-ponging with the previous one — classic toggle flip-flop: a toggle's label describes the action from the CURRENT state, so if the page already shows the state the user asked for, that step is DONE. Move to the next part of the task."
-                : `identical batch repeated ${this.identicalStreak}× — this exact sequence is not progressing. Change approach: act on a different ref, scroll, or tell the user this control doesn't exist.`,
+                : `identical batch repeated ${this.identicalStreak}× — this exact sequence is not progressing. Change the PATH, not just the ref: take a fresh snapshot, go via a different screen (bottom tab bar), scroll, use a different control for the same goal — or tell the user this control doesn't exist.`,
           }
         : null;
 

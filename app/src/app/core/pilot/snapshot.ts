@@ -5,13 +5,21 @@
  * by ref ("click 17"), the way browser agents do: enumerate → number → the
  * model picks. Ported from the EUNA Pilot.
  *
+ * The output is a TREE, not a flat ref wall:
+ *   Page: <title> — <path> (theme: …)
+ *   == "Section heading" (section heading — …)
+ *   ## pointer-card owner (a row/card the UI marks clickable)
+ *     [12] button "…"
+ * Headings and clickable-card owners open sections; their controls nest
+ * under them; every control stays addressable by its global [ref].
+ *
  * The chat panel marks itself [data-nbpilot-ignore], so the pilot never
  * tries to operate itself.
  */
 
-export const MAX_ELEMENTS = 140;
+export const MAX_ELEMENTS = 220;
 export const NAME_LIMIT = 60;
-export const MAX_SNAPSHOT_CHARS = 12000;
+export const MAX_SNAPSHOT_CHARS = 20000;
 
 export interface PilotElementEntry {
   ref: number;
@@ -43,6 +51,14 @@ const INTERACTIVE_SELECTOR = [
   'input',
   'textarea',
   'select',
+  // Ionic's interactive custom elements are NOT <button> tags — without
+  // these the snapshot never sees the tab bar, back buttons, segments or
+  // FABs, and a click-only pilot has no wayfinding at all.
+  'ion-button',
+  'ion-back-button',
+  'ion-tab-button',
+  'ion-fab-button',
+  'ion-segment-button',
   '[role="button"]',
   '[role="tab"]',
   '[role="menuitem"]',
@@ -67,13 +83,13 @@ const INTERACTIVE_SELECTOR = [
 // consent — the user's own finger finishes destructive actions.
 const DESTRUCTIVE_RE = /\b(delete|remove|confirm|clear|sign out|logout|reset|stop navigation)\b/i;
 
-// Capture window: the viewport plus ~2 viewport-heights of below-fold
-// margin. Controls that merely scrolled out of view still EXIST — a
-// snapshot that omits them teaches the model "this page has no add-place
-// control" while the control is one scroll away. The executor scrolls to
-// refs before acting, so below-fold entries are fully actionable.
+// Capture window: the WHOLE page, top to bottom. A partial snapshot teaches
+// the model "this page has no <thing>" while the thing is one scroll away —
+// the #1 cause of stuck loops. The executor scrolls to refs before acting,
+// so far-below-fold entries are fully actionable; each carries a ~distance
+// hint so the brain knows the section it belongs to.
 function belowFoldMargin(): number {
-  return Math.max(1000, window.innerHeight * 2);
+  return Math.max(document.body.scrollHeight, window.innerHeight * 3) + 600;
 }
 
 function isVisible(el: HTMLElement): boolean {
@@ -120,6 +136,10 @@ function describeElement(el: HTMLElement, ref: number): PilotElementEntry {
   // Toggles, checkboxes and bare inputs usually carry no text of their own —
   // borrow the human-visible row/label name (checked BEFORE the entries loop
   // drops unnamed controls).
+  if (!name && el.tagName === 'ION-BACK-BUTTON') {
+    const custom = el.getAttribute('aria-label');
+    name = custom && custom.trim() ? custom.trim().slice(0, NAME_LIMIT) : 'Back';
+  }
   if (!name) name = labelFromContext(el);
   const rect = el.getBoundingClientRect();
 
@@ -171,19 +191,28 @@ function describeElement(el: HTMLElement, ref: number): PilotElementEntry {
   return entry;
 }
 
+const HEADING_TAG_RE = /^h[1-4]$/;
+
 function entryLine(entry: PilotElementEntry): string {
-  const parts = [`[${entry.ref}] ${entry.role}`];
-  if (entry.name) parts.push(`"${entry.name}"`);
-  if (entry.owner) parts.push(`↳ in "${entry.owner}"`);
-  if (entry.href) parts.push(`→ ${entry.href}`);
-  if (entry.on !== undefined) parts.push(entry.on ? '· ON' : '· OFF');
-  if (entry.clickable) parts.push('· clickable');
-  if (entry.belowFold) parts.push('· below fold');
-  if (entry.input) parts.push('(text input)');
-  if (entry.value !== undefined) parts.push(`value: "${entry.value}"`);
-  if (entry.disabled) parts.push('[disabled]');
-  if (entry.dangerous) parts.push('[DESTRUCTIVE — never click]');
-  return parts.join(' ');
+  // Headings read as SECTION headers, not buttons — wayfinding first.
+  if (HEADING_TAG_RE.test(entry.tag)) {
+    return `== "${entry.name}" (section heading — everything below it until the next heading belongs to it)`;
+  }
+  let line = `  [${entry.ref}] ${entry.role}`;
+  if (entry.name) line += ` "${entry.name}"`;
+  if (entry.href) line += ` → ${entry.href}`;
+  if (entry.on !== undefined) line += entry.on ? ' · ON' : ' · OFF';
+  if (entry.clickable) line += ' · clickable';
+  if (entry.belowFold) {
+    const vh = window.innerHeight || 800;
+    const screens = Math.max(1, Math.round((entry.rect.y - vh) / Math.max(vh, 1)));
+    line += ` · below fold (~${screens} screen${screens === 1 ? '' : 's'} down)`;
+  }
+  if (entry.input) line += ' (text input)';
+  if (entry.value !== undefined) line += ` value: "${entry.value}"`;
+  if (entry.disabled) line += ' [disabled]';
+  if (entry.dangerous) line += ' [DESTRUCTIVE — never click]';
+  return line;
 }
 
 function cardNameOf(el: HTMLElement): string {
@@ -238,6 +267,7 @@ export function buildElementSnapshot(): ElementSnapshot {
   });
 
   const entries: PilotElementEntry[] = [];
+  let lastOwner: string | null = null;
   // Ionic applies dark mode via a `.dark` class on <body> (SettingsService).
   // The theme is otherwise invisible to a snapshot — the toggle's label
   // "Dark Mode" describes the OPPOSITE state. Naming the CURRENT state ends
@@ -334,6 +364,17 @@ export function buildElementSnapshot(): ElementSnapshot {
     entry.owner = owner ?? undefined;
     entries.push(entry);
     captured.add(el);
+
+    // TREE: a new pointer-card owner opens a section; its controls nest
+    // under it. Top-level items (no owner) sit flush — the outline reads
+    // screen → section → control instead of a flat ref wall.
+    if ((owner ?? null) !== lastOwner) {
+      if (owner) {
+        lines.push('');
+        lines.push(`## ${owner}`);
+      }
+      lastOwner = owner ?? null;
+    }
     lines.push(entryLine(entry));
   }
 

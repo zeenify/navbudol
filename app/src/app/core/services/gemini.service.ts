@@ -492,7 +492,14 @@ export class GeminiService {
       switch (fc.name) {
         case 'search_places': {
           const query = String(fc.args['query'] ?? '');
+          // Community places live in the town sweep cache (localStorage-first,
+          // network behind it) — warm it before a cold-boot search so the
+          // neighborhood's places never lose to remote geocodes.
+          if (this.community.localPool().length === 0) {
+            await this.community.ensureTownSweep().catch(() => undefined);
+          }
           const results = await this.places.search(query, pos, 5);
+          console.log(`[search_places] q="${query}" results=${results.length} [${results.map((r) => r.name).join('; ').slice(0, 120)}]`);
           this.mapEvents$.next({ type: 'places', places: results });
           await this.presentPlaces(results);
           return {
@@ -762,9 +769,10 @@ export class GeminiService {
       description:
         'Operate the NavBudol UI for the user. Batch related commands in one call and set explain to one short ' +
         "friendly sentence about what you are about to do. point/snapshot/scroll are free reads; the FIRST batch " +
-        'containing goto/click/input/select is held at the user\'s "Take the wheel" approval gate — send the call ' +
-        'and let the gate ask, never also ask in words. Controls marked [DESTRUCTIVE] are never pressed by you; ' +
-        'do everything else the task needs, then hand the user that one press.',
+        'containing click/input/select is held at the user\'s "Take the wheel" approval gate — send the call ' +
+        'and let the gate ask, never also ask in words. There is NO goto/jump command: navigate ONLY by clicking ' +
+        'real screen controls (tab bar, rows, back buttons). Controls marked [DESTRUCTIVE] are never pressed by ' +
+        'you; do everything else the task needs, then hand the user that one press.',
       parameters: {
         type: 'object',
         properties: {
@@ -775,9 +783,8 @@ export class GeminiService {
             items: {
               type: 'object',
               properties: {
-                action: { type: 'string', enum: ['goto', 'click', 'input', 'select', 'scroll', 'point', 'snapshot'] },
-                ref: { type: 'integer', description: 'Element ref number from the LATEST snapshot (not for goto).' },
-                path: { type: 'string', description: 'goto only: /tabs/map, /tabs/chat, /tabs/settings, /place/<id> or /add-place.' },
+                action: { type: 'string', enum: ['click', 'input', 'select', 'scroll', 'point', 'snapshot'] },
+                ref: { type: 'integer', description: 'Element ref number from the LATEST snapshot.' },
                 value: { type: 'string', description: 'input/select only: the text to type or the option to pick.' },
                 direction: { type: 'string', enum: ['up', 'down'], description: 'scroll only.' },
               },
